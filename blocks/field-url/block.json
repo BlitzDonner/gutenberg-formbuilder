@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-url",
+  "version": "0.2.0",
+  "title": "URL",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "admin-links",
+  "description": "Webadresse (URL).",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": { "type": "string", "default": "Website" },
+    "name": { "type": "string", "default": "" },
+    "placeholder": { "type": "string", "default": "https://" },
+    "required": { "type": "boolean", "default": false }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

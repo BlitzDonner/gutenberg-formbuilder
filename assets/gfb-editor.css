@@ -1,0 +1,205 @@
+/**
+ * Nur Block-Editor-Canvas (iframe): wird über block.json → editorStyle geladen.
+ * enqueue_block_editor_assets erreicht den Canvas oft nicht.
+ */
+
+.gfb-editor-form {
+	--gfb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+	--gfb-label-size: 0.8125rem;
+	--gfb-label-weight: 500;
+	--gfb-body-size: 1.0625rem;
+	--gfb-label: #6e6e73;
+	--gfb-text: #1d1d1f;
+	--gfb-placeholder: #aeaeb2;
+	--gfb-border: #d2d2d7;
+	--gfb-border-focus: #007aff;
+	--gfb-submit-bg: var(--gfb-border-focus);
+	--gfb-submit-text: #ffffff;
+	--gfb-bg: #ffffff;
+	--gfb-bg-subtle: #f5f5f7;
+	--gfb-radius: 10px;
+	--gfb-radius-sm: 8px;
+	--gfb-field-gap: 0.5rem;
+	--gfb-stack-gap: 1.25rem;
+	--gfb-input-pad-y: 0.75rem;
+	--gfb-input-pad-x: 0.875rem;
+	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+	.gfb-editor-form {
+		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
+	}
+}
+
+.gfb-editor-form {
+	font-family: var(--gfb-font);
+	color: var(--gfb-text);
+	max-width: 32rem;
+	margin-inline: 0;
+	padding: 1rem 1.125rem;
+	border-radius: var(--gfb-radius);
+	border: 1px solid #d2d2d7;
+	background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.gfb-editor-form *,
+.gfb-editor-form *::before,
+.gfb-editor-form *::after {
+	box-sizing: border-box;
+}
+
+.gfb-editor-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gfb-field-gap);
+	margin-bottom: var(--gfb-stack-gap);
+}
+
+.gfb-editor-field:last-child {
+	margin-bottom: 0;
+}
+
+.gfb-editor-field label,
+.gfb-radio-group-label {
+	font-size: var(--gfb-label-size);
+	font-weight: var(--gfb-label-weight);
+	color: var(--gfb-label);
+	letter-spacing: -0.01em;
+}
+
+.gfb-editor-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.gfb-editor-field textarea,
+.gfb-editor-field select {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+	font-family: inherit;
+	font-size: var(--gfb-body-size);
+	line-height: 1.35;
+	color: var(--gfb-text);
+	background: var(--gfb-bg);
+	border: 1px solid var(--gfb-border);
+	border-radius: var(--gfb-radius);
+	padding: var(--gfb-input-pad-y) var(--gfb-input-pad-x);
+	min-height: 2.75rem;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Vorschaufelder sind oft disabled – nicht wie „totes“ Browser-Grau darstellen */
+.gfb-editor-field input:disabled,
+.gfb-editor-field textarea:disabled,
+.gfb-editor-field select:disabled {
+	opacity: 1;
+	color: var(--gfb-text);
+	-webkit-text-fill-color: var(--gfb-text);
+	background-color: var(--gfb-bg);
+	cursor: default;
+}
+
+.gfb-editor-field textarea {
+	min-height: 5rem;
+	resize: vertical;
+}
+
+.gfb-editor-field select {
+	cursor: default;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236e6e73' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 0.875rem center;
+	padding-right: 2.25rem;
+}
+
+.gfb-editor-field .gfb-range-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
+	width: 100%;
+}
+
+.gfb-editor-field .gfb-range-row input[type="range"] {
+	flex: 1;
+	min-width: 0;
+	min-height: 2rem;
+	padding: 0.5rem 0;
+	accent-color: var(--gfb-border-focus);
+}
+
+.gfb-editor-field .gfb-range-value {
+	min-width: 2.75rem;
+	padding: 0.35rem 0.55rem;
+	font-size: var(--gfb-body-size);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	color: var(--gfb-text);
+	background: var(--gfb-bg-subtle);
+	border-radius: var(--gfb-radius-sm);
+	border: 1px solid var(--gfb-border);
+}
+
+.gfb-editor-field input[type="checkbox"] {
+	width: 1.25rem;
+	height: 1.25rem;
+	min-width: 1.25rem;
+	accent-color: var(--gfb-border-focus);
+}
+
+.gfb-editor-field button[type="button"] {
+	width: 100%;
+	font-family: inherit;
+	font-size: 1.0625rem;
+	font-weight: 600;
+	color: var(--gfb-submit-text, #ffffff);
+	background: var(--gfb-submit-bg, var(--gfb-border-focus));
+	border: none;
+	border-radius: var(--gfb-radius);
+	padding: 0.875rem 1.25rem;
+	min-height: 3rem;
+	cursor: default;
+	opacity: 1;
+}
+
+.gfb-editor-radio-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-top: 0.25rem;
+}
+
+.gfb-editor-radio-options label {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--gfb-body-size);
+	font-weight: 400;
+	color: var(--gfb-text);
+}
+
+@media (prefers-color-scheme: dark) {
+	.gfb-editor-form:not(.gfb-form-colors-custom) {
+		--gfb-label: #98989d;
+		--gfb-text: #f5f5f7;
+		--gfb-placeholder: #636366;
+		--gfb-border: #424245;
+		--gfb-bg: #1c1c1e;
+		--gfb-bg-subtle: #2c2c2e;
+		--gfb-border-focus: #0a84ff;
+		--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
+		border-color: #424245;
+		background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
+	}
+
+	.gfb-editor-form:not(.gfb-form-colors-custom) .gfb-editor-field input:disabled,
+	.gfb-editor-form:not(.gfb-form-colors-custom) .gfb-editor-field textarea:disabled,
+	.gfb-editor-form:not(.gfb-form-colors-custom) .gfb-editor-field select:disabled {
+		background-color: var(--gfb-bg);
+		color: var(--gfb-text);
+		-webkit-text-fill-color: var(--gfb-text);
+	}
+}

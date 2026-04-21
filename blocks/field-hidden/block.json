@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-hidden",
+  "version": "0.2.0",
+  "title": "Verstecktes Feld",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "editor-code",
+  "description": "Technischer Wert (nicht sichtbar).",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "name": { "type": "string", "default": "" },
+    "hiddenValue": { "type": "string", "default": "" }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

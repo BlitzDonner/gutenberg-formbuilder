@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-radio",
+  "version": "0.2.0",
+  "title": "Radio-Auswahl",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "marker",
+  "description": "Eine Option aus mehreren wählen.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": { "type": "string", "default": "Auswahl" },
+    "name": { "type": "string", "default": "" },
+    "options": { "type": "string", "default": "Option A\nOption B\nOption C" },
+    "required": { "type": "boolean", "default": false }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

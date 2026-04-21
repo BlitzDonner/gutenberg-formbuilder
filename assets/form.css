@@ -1,0 +1,426 @@
+/**
+ * Gutenberg Formbuilder – Frontend & Editor
+ * Angelehnt an Apple Human Interface (klare Hierarchie, großzügige Abstände, System-Schrift).
+ */
+
+.gfb-form-wrapper {
+	--gfb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+	--gfb-label-size: 0.8125rem;
+	--gfb-label-weight: 500;
+	--gfb-body-size: 1.0625rem;
+	--gfb-label: #6e6e73;
+	--gfb-text: #1d1d1f;
+	--gfb-placeholder: #aeaeb2;
+	--gfb-border: #d2d2d7;
+	--gfb-border-focus: #007aff;
+	--gfb-submit-bg: var(--gfb-border-focus);
+	--gfb-submit-text: #ffffff;
+	--gfb-bg: #ffffff;
+	--gfb-bg-subtle: #f5f5f7;
+	--gfb-radius: 10px;
+	--gfb-radius-sm: 8px;
+	--gfb-field-gap: 0.5rem;
+	--gfb-stack-gap: 1.25rem;
+	--gfb-input-pad-y: 0.75rem;
+	--gfb-input-pad-x: 0.875rem;
+	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+	.gfb-form-wrapper {
+		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
+	}
+}
+
+.gfb-form-wrapper {
+	box-sizing: border-box;
+	font-family: var(--gfb-font);
+	color: var(--gfb-text);
+	max-width: 32rem;
+	margin-inline: auto;
+}
+
+.gfb-form-wrapper *,
+.gfb-form-wrapper *::before,
+.gfb-form-wrapper *::after {
+	box-sizing: border-box;
+}
+
+.gfb-form {
+	margin: 0;
+	padding: 0;
+}
+
+/* Statusmeldung */
+.gfb-notice {
+	font-size: var(--gfb-body-size);
+	line-height: 1.4;
+	padding: 0.875rem 1rem;
+	margin: 0 0 var(--gfb-stack-gap);
+	border-radius: var(--gfb-radius-sm);
+	background: var(--gfb-bg-subtle);
+	border: 1px solid var(--gfb-border);
+}
+
+.gfb-notice-success {
+	background: #ecfdf3;
+	border-color: #34c759;
+	color: #1d1d1f;
+}
+
+.gfb-notice-error {
+	background: #fff2f2;
+	border-color: #ff3b30;
+}
+
+/* Draft-Zeile */
+.gfb-draft-tools {
+	margin: 0 0 var(--gfb-stack-gap);
+	padding: 0;
+}
+
+.gfb-draft-reset-button {
+	font-family: inherit;
+	font-size: var(--gfb-label-size);
+	font-weight: 500;
+	color: var(--gfb-border-focus);
+	background: transparent;
+	border: none;
+	padding: 0.25rem 0;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+.gfb-draft-reset-button:hover {
+	opacity: 0.85;
+}
+
+.gfb-draft-reset-button:focus-visible {
+	outline: 2px solid var(--gfb-border-focus);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* Feldzeilen */
+.gfb-field {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--gfb-field-gap);
+	margin: 0 0 var(--gfb-stack-gap);
+	padding: 0;
+}
+
+.gfb-field:last-child {
+	margin-bottom: 0;
+}
+
+.gfb-field > label {
+	font-size: var(--gfb-label-size);
+	font-weight: var(--gfb-label-weight);
+	line-height: 1.3;
+	color: var(--gfb-label);
+	letter-spacing: -0.01em;
+}
+
+/* Pflicht-Kennzeichnung */
+.gfb-field:has(> input[required]) > label:first-child::after,
+.gfb-field:has(> textarea[required]) > label:first-child::after,
+.gfb-field:has(> select[required]) > label:first-child::after,
+.gfb-field:has(> input[type="file"][required]) > label:first-child::after {
+	content: " *";
+	color: #ff3b30;
+	font-weight: 600;
+}
+
+.gfb-field-checkbox:has(input[required]) > label::after {
+	content: " *";
+	color: #ff3b30;
+	font-weight: 600;
+}
+
+.gfb-field-radio:has(input[required]) > legend::after {
+	content: " *";
+	color: #ff3b30;
+	font-weight: 600;
+}
+
+/* Text, E-Mail, Zahl, Tel, URL, Datum, Zeit, Datei */
+.gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.gfb-field textarea,
+.gfb-field select {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+	font-family: inherit;
+	font-size: var(--gfb-body-size);
+	line-height: 1.35;
+	color: var(--gfb-text);
+	background: var(--gfb-bg);
+	border: 1px solid var(--gfb-border);
+	border-radius: var(--gfb-radius);
+	padding: var(--gfb-input-pad-y) var(--gfb-input-pad-x);
+	min-height: 2.75rem;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gfb-field textarea {
+	min-height: 7rem;
+	resize: vertical;
+}
+
+.gfb-field select {
+	cursor: pointer;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236e6e73' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 0.875rem center;
+	padding-right: 2.25rem;
+}
+
+.gfb-field input::placeholder,
+.gfb-field textarea::placeholder {
+	color: var(--gfb-placeholder);
+}
+
+.gfb-field input:focus,
+.gfb-field textarea:focus,
+.gfb-field select:focus {
+	outline: none;
+	border-color: var(--gfb-border-focus);
+	box-shadow: var(--gfb-shadow-focus);
+}
+
+.gfb-field input:disabled,
+.gfb-field textarea:disabled,
+.gfb-field select:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+/* Datums-/Zeit-Picker: native Controls etwas luftiger */
+.gfb-field input[type="date"],
+.gfb-field input[type="time"],
+.gfb-field input[type="datetime-local"] {
+	min-height: 2.75rem;
+}
+
+.gfb-field input[type="file"] {
+	padding: 0.5rem 0;
+	min-height: auto;
+	border: none;
+	font-size: var(--gfb-label-size);
+}
+
+.gfb-field input[type="file"]::file-selector-button {
+	font-family: inherit;
+	font-size: var(--gfb-label-size);
+	font-weight: 500;
+	margin-right: 0.75rem;
+	padding: 0.5rem 0.875rem;
+	border-radius: var(--gfb-radius-sm);
+	border: 1px solid var(--gfb-border);
+	background: var(--gfb-bg-subtle);
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.gfb-field input[type="file"]::file-selector-button:hover {
+	background: #e8e8ed;
+}
+
+/* Checkbox */
+.gfb-field-checkbox > label {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 0.75rem;
+	font-size: var(--gfb-body-size);
+	font-weight: 400;
+	line-height: 1.45;
+	color: var(--gfb-text);
+	cursor: pointer;
+	min-height: 2.75rem;
+	padding-top: 0.125rem;
+}
+
+.gfb-field-checkbox input[type="checkbox"] {
+	width: 1.25rem;
+	height: 1.25rem;
+	min-width: 1.25rem;
+	margin: 0.15rem 0 0;
+	accent-color: var(--gfb-border-focus);
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+/* Radio-Gruppe */
+.gfb-field-radio {
+	border: none;
+	padding: 0;
+	margin: 0 0 var(--gfb-stack-gap);
+	min-width: 0;
+}
+
+.gfb-field-radio legend {
+	display: block;
+	width: 100%;
+	font-size: var(--gfb-label-size);
+	font-weight: var(--gfb-label-weight);
+	color: var(--gfb-label);
+	padding: 0;
+	margin: 0 0 0.375rem;
+	letter-spacing: -0.01em;
+}
+
+.gfb-radio-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.65rem;
+	margin: 0 0 0.5rem;
+	padding: 0;
+}
+
+.gfb-radio-row:last-child {
+	margin-bottom: 0;
+}
+
+.gfb-radio-row input[type="radio"] {
+	width: 1.25rem;
+	height: 1.25rem;
+	min-width: 1.25rem;
+	margin: 0;
+	accent-color: var(--gfb-border-focus);
+	cursor: pointer;
+}
+
+.gfb-radio-row label {
+	font-size: var(--gfb-body-size);
+	line-height: 1.4;
+	color: var(--gfb-text);
+	cursor: pointer;
+	margin: 0;
+	font-weight: 400;
+}
+
+/* Range */
+.gfb-field-range .gfb-range-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
+	width: 100%;
+}
+
+.gfb-field-range .gfb-range-row input[type="range"] {
+	flex: 1;
+	min-width: 0;
+	width: auto;
+	min-height: 2.25rem;
+	padding: 0.5rem 0;
+	accent-color: var(--gfb-border-focus);
+}
+
+.gfb-field-range .gfb-range-value {
+	display: inline-block;
+	min-width: 2.75rem;
+	padding: 0.35rem 0.55rem;
+	font-size: var(--gfb-body-size);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.2;
+	text-align: right;
+	color: var(--gfb-text);
+	background: var(--gfb-bg-subtle);
+	border-radius: var(--gfb-radius-sm);
+	border: 1px solid var(--gfb-border);
+}
+
+/* Absenden */
+.gfb-field-submit {
+	margin-top: 0.25rem;
+}
+
+.gfb-field-submit button[type="submit"] {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 100%;
+	font-family: inherit;
+	font-size: 1.0625rem;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--gfb-submit-text, #ffffff);
+	background: var(--gfb-submit-bg, var(--gfb-border-focus));
+	border: none;
+	border-radius: var(--gfb-radius);
+	padding: 0.875rem 1.25rem;
+	min-height: 3rem;
+	cursor: pointer;
+	transition: filter 0.15s ease, transform 0.05s ease;
+	letter-spacing: -0.02em;
+}
+
+.gfb-field-submit button[type="submit"]:hover {
+	filter: brightness(0.93);
+}
+
+.gfb-field-submit button[type="submit"]:active {
+	transform: scale(0.99);
+}
+
+.gfb-field-submit button[type="submit"]:focus-visible {
+	outline: none;
+	box-shadow: var(--gfb-shadow-focus);
+}
+
+/* Honeypot bleibt unsichtbar */
+.gfb-hp-field {
+	position: absolute !important;
+	left: -9999px !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+/* ----- Dark Mode (System) ----- */
+@media (prefers-color-scheme: dark) {
+	.gfb-form-wrapper:not(.gfb-form-colors-custom) {
+		--gfb-label: #98989d;
+		--gfb-text: #f5f5f7;
+		--gfb-placeholder: #636366;
+		--gfb-border: #424245;
+		--gfb-bg: #1c1c1e;
+		--gfb-bg-subtle: #2c2c2e;
+		--gfb-border-focus: #0a84ff;
+		--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
+	}
+
+	.gfb-notice-success {
+		background: #14231a;
+		border-color: #34c759;
+	}
+
+	.gfb-notice-error {
+		background: #2a1515;
+		border-color: #ff453a;
+	}
+
+	.gfb-field input[type="file"]::file-selector-button {
+		background: #3a3a3c;
+		border-color: #48484a;
+		color: var(--gfb-text);
+	}
+
+	.gfb-field input[type="file"]::file-selector-button:hover {
+		background: #48484a;
+	}
+
+	.gfb-field-submit button[type="submit"]:hover {
+		filter: brightness(1.08);
+	}
+}
+
+/* Editor-Vorschau: eigene Datei (wird zusätzlich per block.json → editorStyle im Canvas-iframe geladen) */
+@import url("gfb-editor.css");

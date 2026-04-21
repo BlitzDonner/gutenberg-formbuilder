@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-time",
+  "version": "0.2.0",
+  "title": "Uhrzeit",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "clock",
+  "description": "Uhrzeit.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": { "type": "string", "default": "Uhrzeit" },
+    "name": { "type": "string", "default": "" },
+    "required": { "type": "boolean", "default": false }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

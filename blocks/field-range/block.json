@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-range",
+  "version": "0.2.2",
+  "title": "Schieberegler",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "image-flip-horizontal",
+  "description": "Bereich (Slider).",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": { "type": "string", "default": "Wert" },
+    "name": { "type": "string", "default": "" },
+    "required": { "type": "boolean", "default": false },
+    "min": { "type": "string", "default": "0" },
+    "max": { "type": "string", "default": "100" },
+    "step": { "type": "string", "default": "1" },
+    "defaultValue": { "type": "string", "default": "" }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

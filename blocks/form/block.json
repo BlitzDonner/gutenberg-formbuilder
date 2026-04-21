@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/form",
+  "version": "0.3.1",
+  "title": "Formular",
+  "category": "widgets",
+  "icon": "feedback",
+  "description": "Formular-Container für den seitenbasierten Formbuilder.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "formId": {
+      "type": "string"
+    },
+    "blockInstanceId": {
+      "type": "string"
+    },
+    "draftEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "draftTtlDays": {
+      "type": "number",
+      "default": 7
+    },
+    "restoreMode": {
+      "type": "string",
+      "default": "prompt"
+    },
+    "showDraftReset": {
+      "type": "boolean",
+      "default": true
+    },
+    "colorLabel": { "type": "string", "default": "" },
+    "colorText": { "type": "string", "default": "" },
+    "colorPlaceholder": { "type": "string", "default": "" },
+    "colorFieldBg": { "type": "string", "default": "" },
+    "colorBorder": { "type": "string", "default": "" },
+    "colorFocus": { "type": "string", "default": "" },
+    "colorButtonBg": { "type": "string", "default": "" },
+    "colorButtonText": { "type": "string", "default": "" }
+  },
+  "supports": {
+    "html": false
+  },
+  "providesContext": {
+    "gfb/formId": "formId",
+    "gfb/colorLabel": "colorLabel",
+    "gfb/colorText": "colorText",
+    "gfb/colorPlaceholder": "colorPlaceholder",
+    "gfb/colorFieldBg": "colorFieldBg",
+    "gfb/colorBorder": "colorBorder",
+    "gfb/colorFocus": "colorFocus",
+    "gfb/colorButtonBg": "colorButtonBg",
+    "gfb/colorButtonText": "colorButtonText"
+  },
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

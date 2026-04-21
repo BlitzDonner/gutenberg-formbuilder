@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-select",
+  "version": "0.1.0",
+  "title": "Auswahlfeld",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "list-view",
+  "description": "Dropdown-Auswahlfeld.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Auswahl"
+    },
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "options": {
+      "type": "string",
+      "default": "Option 1\nOption 2"
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "usesContext": [
+    "gfb/formId"
+  ],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

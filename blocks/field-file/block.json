@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-file",
+  "version": "0.2.0",
+  "title": "Datei-Upload",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "upload",
+  "description": "Datei hochladen.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": { "type": "string", "default": "Datei" },
+    "name": { "type": "string", "default": "" },
+    "required": { "type": "boolean", "default": false },
+    "accept": { "type": "string", "default": "" },
+    "maxSizeMb": { "type": "number", "default": 8 }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

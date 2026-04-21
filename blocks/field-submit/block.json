@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-submit",
+  "version": "0.3.1",
+  "title": "Absenden-Button",
+  "ancestor": [
+    "gfb/form"
+  ],
+  "category": "widgets",
+  "icon": {
+    "src": "button",
+    "foreground": "#1b2627"
+  },
+  "description": "Button zum Absenden des Formulars.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Formular absenden"
+    },
+    "colorFocus": {
+      "type": "string",
+      "default": ""
+    },
+    "colorButtonBg": {
+      "type": "string",
+      "default": ""
+    },
+    "colorButtonText": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "usesContext": [
+    "gfb/formId",
+    "gfb/colorLabel",
+    "gfb/colorText",
+    "gfb/colorPlaceholder",
+    "gfb/colorFieldBg",
+    "gfb/colorBorder",
+    "gfb/colorFocus",
+    "gfb/colorButtonBg",
+    "gfb/colorButtonText"
+  ],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

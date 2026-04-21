@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-date",
+  "version": "0.2.0",
+  "title": "Datum",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "calendar",
+  "description": "Datumsauswahl.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": { "type": "string", "default": "Datum" },
+    "name": { "type": "string", "default": "" },
+    "required": { "type": "boolean", "default": false },
+    "min": { "type": "string", "default": "" },
+    "max": { "type": "string", "default": "" }
+  },
+  "supports": { "html": false },
+  "usesContext": ["gfb/formId"],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}

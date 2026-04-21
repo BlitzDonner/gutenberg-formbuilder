@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/field-email",
+  "version": "0.1.0",
+  "title": "E-Mail-Feld",
+  "ancestor": ["gfb/form"],
+  "category": "widgets",
+  "icon": "email",
+  "description": "E-Mail-Eingabefeld.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "E-Mail"
+    },
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "usesContext": [
+    "gfb/formId"
+  ],
+  "editorScript": "gfb-editor",
+  "editorStyle": "file:../../assets/gfb-editor.css"
+}
