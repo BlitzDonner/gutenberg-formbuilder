@@ -9,13 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class GFB_Plugin {
 	/**
-	 * Laufende Nummer je Seitenaufruf, falls mehrere `gfb/form`-Blöcke dieselbe formId haben.
-	 *
-	 * @var int
-	 */
-	private static $form_render_seq = 0;
-
-	/**
 	 * Boot hooks.
 	 *
 	 * @return void
@@ -252,8 +245,12 @@ class GFB_Plugin {
 
 		$action = esc_url( admin_url( 'admin-post.php' ) );
 
-		++self::$form_render_seq;
-		$key = $post_id . ':' . $form_id . ':' . self::$form_render_seq;
+		// Stabiler Draft-Key pro Block-Instanz (IndexedDB), nicht pro PHP-Render (sonst Löschen/Restore falsch).
+		$instance_id = isset( $attributes['blockInstanceId'] ) ? sanitize_key( (string) $attributes['blockInstanceId'] ) : '';
+		if ( '' === $instance_id ) {
+			$instance_id = '0';
+		}
+		$key = $post_id . ':' . $form_id . ':' . $instance_id;
 		$draft_enabled   = ! isset( $attributes['draftEnabled'] ) || (bool) $attributes['draftEnabled'];
 		$restore_mode    = isset( $attributes['restoreMode'] ) ? sanitize_key( (string) $attributes['restoreMode'] ) : 'prompt';
 		$draft_ttl_days  = isset( $attributes['draftTtlDays'] ) ? absint( $attributes['draftTtlDays'] ) : 7;

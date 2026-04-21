@@ -85,6 +85,12 @@
 				values[ field.name ] = field.checked ? '1' : '0';
 				return;
 			}
+			if ( field.type === 'radio' ) {
+				if ( field.checked ) {
+					values[ field.name ] = field.value;
+				}
+				return;
+			}
 			values[ field.name ] = field.value;
 		} );
 		return values;
@@ -101,6 +107,10 @@
 			}
 			if ( field.type === 'checkbox' ) {
 				field.checked = values[ field.name ] === '1';
+				return;
+			}
+			if ( field.type === 'radio' ) {
+				field.checked = String( values[ field.name ] ) === String( field.value );
 				return;
 			}
 			field.value = values[ field.name ];
@@ -156,6 +166,8 @@
 		}
 		/** Nach manuellem Löschen kurz kein erneutes Speichern (sonst z. B. Safari: Alert → visibilitychange → Draft ist sofort wieder da). */
 		var persistAllowed = true;
+		/** Nach reset()/Löschen: Events vom Browser blockieren, die sonst sofort wieder speichern. */
+		var draftSuppressUntil = 0;
 		var draftEnabledField = form.querySelector( 'input[name="gfb_draft_enabled"]' );
 		var draftModeField = form.querySelector( 'input[name="gfb_draft_mode"]' );
 		var draftTtlField = form.querySelector( 'input[name="gfb_draft_ttl_days"]' );
@@ -171,12 +183,17 @@
 		}
 
 		if ( resetButton ) {
-			resetButton.addEventListener( 'click', function () {
+			resetButton.addEventListener( 'click', function ( e ) {
+				e.preventDefault();
+				e.stopPropagation();
 				window.clearTimeout( persistDebounceTimer );
 				persistDebounceTimer = null;
 				persistAllowed = false;
+				draftSuppressUntil = Date.now() + 1600;
 				removeDraft( db, key )
 					.then( function () {
+						form.reset();
+						initRangeValueDisplays( form );
 						window.alert( 'Lokaler Draft wurde gelöscht.' );
 					} )
 					.catch( function () {
@@ -187,7 +204,7 @@
 					.finally( function () {
 						window.setTimeout( function () {
 							persistAllowed = true;
-						}, 100 );
+						}, 450 );
 					} );
 			} );
 		}
@@ -200,6 +217,14 @@
 		getDraft( db, key )
 			.then( function ( draft ) {
 				if ( ! draft || ! draft.payload ) {
+					return;
+				}
+				if (
+					typeof draft.payload === 'object' &&
+					draft.payload !== null &&
+					! Array.isArray( draft.payload ) &&
+					Object.keys( draft.payload ).length === 0
+				) {
 					return;
 				}
 				if ( ! draft.updatedAt || Date.now() - draft.updatedAt > ttlMs ) {
@@ -223,13 +248,16 @@
 		 * schließen sich Transaktionen oft, bevor ein verzögerter Timeout läuft.
 		 */
 		function flushDraft() {
-			if ( ! persistAllowed ) {
+			if ( ! persistAllowed || Date.now() < draftSuppressUntil ) {
 				return;
 			}
 			setDraft( db, key, collectValues( form ) ).catch( function () {} );
 		}
 
 		function schedulePersistDebounced() {
+			if ( Date.now() < draftSuppressUntil ) {
+				return;
+			}
 			window.clearTimeout( persistDebounceTimer );
 			persistDebounceTimer = window.setTimeout( function () {
 				persistDebounceTimer = null;
