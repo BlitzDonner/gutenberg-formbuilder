@@ -2,7 +2,7 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "gfb/form",
-  "version": "0.3.1",
+  "version": "0.5.2",
   "title": "Formular",
   "category": "widgets",
   "icon": "feedback",
@@ -31,6 +31,10 @@
       "type": "boolean",
       "default": true
     },
+    "appearanceMode": {
+      "type": "string",
+      "default": "auto"
+    },
     "colorLabel": { "type": "string", "default": "" },
     "colorText": { "type": "string", "default": "" },
     "colorPlaceholder": { "type": "string", "default": "" },
@@ -38,13 +42,22 @@
     "colorBorder": { "type": "string", "default": "" },
     "colorFocus": { "type": "string", "default": "" },
     "colorButtonBg": { "type": "string", "default": "" },
-    "colorButtonText": { "type": "string", "default": "" }
+    "colorButtonText": { "type": "string", "default": "" },
+    "darkColorLabel": { "type": "string", "default": "" },
+    "darkColorText": { "type": "string", "default": "" },
+    "darkColorPlaceholder": { "type": "string", "default": "" },
+    "darkColorFieldBg": { "type": "string", "default": "" },
+    "darkColorBorder": { "type": "string", "default": "" },
+    "darkColorFocus": { "type": "string", "default": "" },
+    "darkColorButtonBg": { "type": "string", "default": "" },
+    "darkColorButtonText": { "type": "string", "default": "" }
   },
   "supports": {
     "html": false
   },
   "providesContext": {
     "gfb/formId": "formId",
+    "gfb/appearanceMode": "appearanceMode",
     "gfb/colorLabel": "colorLabel",
     "gfb/colorText": "colorText",
     "gfb/colorPlaceholder": "colorPlaceholder",
@@ -52,7 +65,15 @@
     "gfb/colorBorder": "colorBorder",
     "gfb/colorFocus": "colorFocus",
     "gfb/colorButtonBg": "colorButtonBg",
-    "gfb/colorButtonText": "colorButtonText"
+    "gfb/colorButtonText": "colorButtonText",
+    "gfb/darkColorLabel": "darkColorLabel",
+    "gfb/darkColorText": "darkColorText",
+    "gfb/darkColorPlaceholder": "darkColorPlaceholder",
+    "gfb/darkColorFieldBg": "darkColorFieldBg",
+    "gfb/darkColorBorder": "darkColorBorder",
+    "gfb/darkColorFocus": "darkColorFocus",
+    "gfb/darkColorButtonBg": "darkColorButtonBg",
+    "gfb/darkColorButtonText": "darkColorButtonText"
   },
   "editorScript": "gfb-editor",
   "editorStyle": "file:../../assets/gfb-editor.css"

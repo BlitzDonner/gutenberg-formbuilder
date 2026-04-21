@@ -100,10 +100,24 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Erlaubt nur leere oder gültige Hex-Farben für Inline-CSS.
+	 * Erscheinungsmodus für Hell/Dunkel/Automatisch.
 	 *
 	 * @param mixed $value Raw attribute.
-	 * @return string Hex oder leer.
+	 * @return string auto|light|dark
+	 */
+	private static function sanitize_appearance_mode( $value ) {
+		$v = is_string( $value ) ? sanitize_key( $value ) : 'auto';
+		if ( in_array( $v, array( 'auto', 'light', 'dark' ), true ) ) {
+			return $v;
+		}
+		return 'auto';
+	}
+
+	/**
+	 * Farbwert für style="--var: …" (wie im Block-Editor, nicht nur 6-stelliges Hex).
+	 *
+	 * @param mixed $value Raw attribute.
+	 * @return string Sicherer CSS-Farbwert oder leer.
 	 */
 	private static function sanitize_gfb_color( $value ) {
 		if ( ! is_string( $value ) ) {
@@ -114,7 +128,26 @@ class GFB_Plugin {
 			return '';
 		}
 		$hex = sanitize_hex_color( $value );
-		return is_string( $hex ) ? $hex : '';
+		if ( is_string( $hex ) && '' !== $hex ) {
+			return $hex;
+		}
+		// 8-stelliges Hex (#RRGGBBAA), von Color-Pickern üblich — sanitize_hex_color lehnt das ab.
+		if ( preg_match( '/^#([A-Fa-f0-9]{8})$/', $value ) ) {
+			return $value;
+		}
+		// Theme-/Block-Presets: var(--wp--preset--color--…)
+		if ( preg_match( '/^var\(\s*(--[a-zA-Z0-9\-]+)\s*\)$/', $value ) ) {
+			return $value;
+		}
+		// rgb() / rgba() (inkl. Prozent, z. B. rgb(100%, 0%, 0%))
+		if ( preg_match( '/^rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+%?\s*)?\)$/i', $value ) ) {
+			return $value;
+		}
+		// hsl() / hsla()
+		if ( preg_match( '/^hsla?\(\s*[\d.]+\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*(,\s*[\d.]+\s*)?\)$/i', $value ) ) {
+			return $value;
+		}
+		return '';
 	}
 
 	/**
@@ -124,18 +157,37 @@ class GFB_Plugin {
 	 * @return string Semikolon-getrennte Deklarationen ohne abschließendes Semikolon am Ende (für style="").
 	 */
 	private static function build_form_inline_color_style( $attributes ) {
-		$map = array(
-			'colorLabel'       => '--gfb-label',
-			'colorText'        => '--gfb-text',
-			'colorPlaceholder' => '--gfb-placeholder',
-			'colorFieldBg'     => '--gfb-bg',
-			'colorBorder'      => '--gfb-border',
-			'colorFocus'       => '--gfb-border-focus',
-			'colorButtonBg'    => '--gfb-submit-bg',
-			'colorButtonText'  => '--gfb-submit-text',
+		$light_map = array(
+			'colorLabel'       => '--gfb-light-label',
+			'colorText'        => '--gfb-light-text',
+			'colorPlaceholder' => '--gfb-light-placeholder',
+			'colorFieldBg'     => '--gfb-light-bg',
+			'colorBorder'      => '--gfb-light-border',
+			'colorFocus'       => '--gfb-light-border-focus',
+			'colorButtonBg'    => '--gfb-light-submit-bg',
+			'colorButtonText'  => '--gfb-light-submit-text',
 		);
-		$parts = array();
-		foreach ( $map as $attr => $var ) {
+		$dark_map  = array(
+			'darkColorLabel'       => '--gfb-dark-label',
+			'darkColorText'        => '--gfb-dark-text',
+			'darkColorPlaceholder' => '--gfb-dark-placeholder',
+			'darkColorFieldBg'     => '--gfb-dark-bg',
+			'darkColorBorder'      => '--gfb-dark-border',
+			'darkColorFocus'       => '--gfb-dark-border-focus',
+			'darkColorButtonBg'    => '--gfb-dark-submit-bg',
+			'darkColorButtonText'  => '--gfb-dark-submit-text',
+		);
+		$parts     = array();
+		foreach ( $light_map as $attr => $var ) {
+			if ( empty( $attributes[ $attr ] ) ) {
+				continue;
+			}
+			$c = self::sanitize_gfb_color( $attributes[ $attr ] );
+			if ( '' !== $c ) {
+				$parts[] = $var . ':' . $c;
+			}
+		}
+		foreach ( $dark_map as $attr => $var ) {
 			if ( empty( $attributes[ $attr ] ) ) {
 				continue;
 			}
@@ -145,6 +197,37 @@ class GFB_Plugin {
 			}
 		}
 		return implode( ';', $parts );
+	}
+
+	/**
+	 * @param array<string,mixed> $attributes Block-Attribute.
+	 * @return bool Ob mindestens eine Hell- oder Dunkelfarbe gesetzt ist.
+	 */
+	private static function form_has_any_custom_colors( $attributes ) {
+		$keys = array(
+			'colorLabel',
+			'colorText',
+			'colorPlaceholder',
+			'colorFieldBg',
+			'colorBorder',
+			'colorFocus',
+			'colorButtonBg',
+			'colorButtonText',
+			'darkColorLabel',
+			'darkColorText',
+			'darkColorPlaceholder',
+			'darkColorFieldBg',
+			'darkColorBorder',
+			'darkColorFocus',
+			'darkColorButtonBg',
+			'darkColorButtonText',
+		);
+		foreach ( $keys as $k ) {
+			if ( ! empty( $attributes[ $k ] ) && '' !== self::sanitize_gfb_color( $attributes[ $k ] ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -195,14 +278,15 @@ class GFB_Plugin {
 			$has_file_field = self::parsed_blocks_contain_block( $block->parsed_block['innerBlocks'], 'gfb/field-file' );
 		}
 
+		$appearance        = self::sanitize_appearance_mode( isset( $attributes['appearanceMode'] ) ? $attributes['appearanceMode'] : 'auto' );
 		$wrapper_classes   = array( 'gfb-form-wrapper' );
 		$form_color_style = self::build_form_inline_color_style( $attributes );
-		if ( '' !== $form_color_style ) {
+		if ( self::form_has_any_custom_colors( $attributes ) ) {
 			$wrapper_classes[] = 'gfb-form-colors-custom';
 		}
 		ob_start();
 		?>
-		<div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>"<?php
+		<div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" data-gfb-appearance="<?php echo esc_attr( $appearance ); ?>"<?php
 		if ( '' !== $form_color_style ) :
 			echo ' style="' . esc_attr( $form_color_style ) . '"';
 		endif;

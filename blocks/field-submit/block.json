@@ -4,14 +4,9 @@
   "name": "gfb/field-submit",
   "version": "0.3.1",
   "title": "Absenden-Button",
-  "ancestor": [
-    "gfb/form"
-  ],
+  "ancestor": ["gfb/form"],
   "category": "widgets",
-  "icon": {
-    "src": "button",
-    "foreground": "#1b2627"
-  },
+  "icon": "button",
   "description": "Button zum Absenden des Formulars.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
@@ -19,24 +14,16 @@
       "type": "string",
       "default": "Formular absenden"
     },
-    "colorFocus": {
-      "type": "string",
-      "default": ""
-    },
-    "colorButtonBg": {
-      "type": "string",
-      "default": ""
-    },
-    "colorButtonText": {
-      "type": "string",
-      "default": ""
-    }
+    "colorFocus": { "type": "string", "default": "" },
+    "colorButtonBg": { "type": "string", "default": "" },
+    "colorButtonText": { "type": "string", "default": "" }
   },
   "supports": {
     "html": false
   },
   "usesContext": [
     "gfb/formId",
+    "gfb/appearanceMode",
     "gfb/colorLabel",
     "gfb/colorText",
     "gfb/colorPlaceholder",
@@ -44,8 +31,15 @@
     "gfb/colorBorder",
     "gfb/colorFocus",
     "gfb/colorButtonBg",
-    "gfb/colorButtonText"
+    "gfb/colorButtonText",
+    "gfb/darkColorLabel",
+    "gfb/darkColorText",
+    "gfb/darkColorPlaceholder",
+    "gfb/darkColorFieldBg",
+    "gfb/darkColorBorder",
+    "gfb/darkColorFocus",
+    "gfb/darkColorButtonBg",
+    "gfb/darkColorButtonText"
   ],
-  "editorScript": "gfb-editor",
-  "editorStyle": "file:../../assets/gfb-editor.css"
+  "editorScript": "gfb-editor"
 }

@@ -249,29 +249,72 @@
 			( attrs.colorBorder && String( attrs.colorBorder ).trim() ) ||
 			( attrs.colorFocus && String( attrs.colorFocus ).trim() ) ||
 			( attrs.colorButtonBg && String( attrs.colorButtonBg ).trim() ) ||
-			( attrs.colorButtonText && String( attrs.colorButtonText ).trim() )
+			( attrs.colorButtonText && String( attrs.colorButtonText ).trim() ) ||
+			( attrs.darkColorLabel && String( attrs.darkColorLabel ).trim() ) ||
+			( attrs.darkColorText && String( attrs.darkColorText ).trim() ) ||
+			( attrs.darkColorPlaceholder && String( attrs.darkColorPlaceholder ).trim() ) ||
+			( attrs.darkColorFieldBg && String( attrs.darkColorFieldBg ).trim() ) ||
+			( attrs.darkColorBorder && String( attrs.darkColorBorder ).trim() ) ||
+			( attrs.darkColorFocus && String( attrs.darkColorFocus ).trim() ) ||
+			( attrs.darkColorButtonBg && String( attrs.darkColorButtonBg ).trim() ) ||
+			( attrs.darkColorButtonText && String( attrs.darkColorButtonText ).trim() )
 		);
+	}
+
+	/**
+	 * Welche Palette im Editor für Feld-Overrides genutzt wird (bei „Automatisch“: System).
+	 *
+	 * @param {string|undefined} appearanceMode
+	 * @return {'light'|'dark'}
+	 */
+	function resolveActivePalette( appearanceMode ) {
+		var mode = appearanceMode || 'auto';
+		if ( mode === 'light' ) {
+			return 'light';
+		}
+		if ( mode === 'dark' ) {
+			return 'dark';
+		}
+		if (
+			typeof window !== 'undefined' &&
+			window.matchMedia &&
+			window.matchMedia( '(prefers-color-scheme: dark)' ).matches
+		) {
+			return 'dark';
+		}
+		return 'light';
 	}
 
 	function mergeFieldColorAttrs( fieldAttrs, ctx ) {
 		ctx = ctx || {};
-		function pick( key, ctxKey ) {
+		var palette = resolveActivePalette( ctx['gfb/appearanceMode'] );
+		function pick( key, ctxLight, ctxDark ) {
 			var fv = fieldAttrs[ key ];
 			if ( fv && String( fv ).trim() !== '' ) {
 				return fv;
 			}
-			var cv = ctx[ ctxKey ];
-			return cv && String( cv ).trim() !== '' ? cv : '';
+			var light = ctx[ ctxLight ];
+			var dark = ctx[ ctxDark ];
+			if ( palette === 'dark' ) {
+				if ( dark && String( dark ).trim() !== '' ) {
+					return dark;
+				}
+				return light && String( light ).trim() !== '' ? light : '';
+			}
+			if ( light && String( light ).trim() !== '' ) {
+				return light;
+			}
+			return dark && String( dark ).trim() !== '' ? dark : '';
 		}
 		return {
-			colorLabel: pick( 'colorLabel', 'gfb/colorLabel' ),
-			colorText: pick( 'colorText', 'gfb/colorText' ),
-			colorPlaceholder: pick( 'colorPlaceholder', 'gfb/colorPlaceholder' ),
-			colorFieldBg: pick( 'colorFieldBg', 'gfb/colorFieldBg' ),
-			colorBorder: pick( 'colorBorder', 'gfb/colorBorder' ),
-			colorFocus: pick( 'colorFocus', 'gfb/colorFocus' ),
-			colorButtonBg: pick( 'colorButtonBg', 'gfb/colorButtonBg' ),
-			colorButtonText: pick( 'colorButtonText', 'gfb/colorButtonText' ),
+			colorLabel: pick( 'colorLabel', 'gfb/colorLabel', 'gfb/darkColorLabel' ),
+			colorText: pick( 'colorText', 'gfb/colorText', 'gfb/darkColorText' ),
+			colorPlaceholder: pick( 'colorPlaceholder', 'gfb/colorPlaceholder', 'gfb/darkColorPlaceholder' ),
+			colorFieldBg: pick( 'colorFieldBg', 'gfb/colorFieldBg', 'gfb/darkColorFieldBg' ),
+			colorBorder: pick( 'colorBorder', 'gfb/colorBorder', 'gfb/darkColorBorder' ),
+			colorFocus: pick( 'colorFocus', 'gfb/colorFocus', 'gfb/darkColorFocus' ),
+			colorButtonBg: pick( 'colorButtonBg', 'gfb/colorButtonBg', 'gfb/darkColorButtonBg' ),
+			colorButtonText: pick( 'colorButtonText', 'gfb/colorButtonText', 'gfb/darkColorButtonText' ),
 		};
 	}
 
@@ -301,6 +344,49 @@
 		if ( attrs.colorButtonText && String( attrs.colorButtonText ).trim() !== '' ) {
 			o['--gfb-submit-text'] = attrs.colorButtonText;
 		}
+		return Object.keys( o ).length ? o : undefined;
+	}
+
+	/**
+	 * Inline-Styles für .gfb-editor-form / PHP: Hell- und Dunkel-Variablen.
+	 *
+	 * @param {Object} attrs Formular-Attribute.
+	 * @return {Object|undefined}
+	 */
+	function formWrapperColorStyleObject( attrs ) {
+		var o = {};
+		var lightPairs = [
+			[ 'colorLabel', '--gfb-light-label' ],
+			[ 'colorText', '--gfb-light-text' ],
+			[ 'colorPlaceholder', '--gfb-light-placeholder' ],
+			[ 'colorFieldBg', '--gfb-light-bg' ],
+			[ 'colorBorder', '--gfb-light-border' ],
+			[ 'colorFocus', '--gfb-light-border-focus' ],
+			[ 'colorButtonBg', '--gfb-light-submit-bg' ],
+			[ 'colorButtonText', '--gfb-light-submit-text' ],
+		];
+		var darkPairs = [
+			[ 'darkColorLabel', '--gfb-dark-label' ],
+			[ 'darkColorText', '--gfb-dark-text' ],
+			[ 'darkColorPlaceholder', '--gfb-dark-placeholder' ],
+			[ 'darkColorFieldBg', '--gfb-dark-bg' ],
+			[ 'darkColorBorder', '--gfb-dark-border' ],
+			[ 'darkColorFocus', '--gfb-dark-border-focus' ],
+			[ 'darkColorButtonBg', '--gfb-dark-submit-bg' ],
+			[ 'darkColorButtonText', '--gfb-dark-submit-text' ],
+		];
+		lightPairs.forEach( function ( pair ) {
+			var v = attrs[ pair[ 0 ] ];
+			if ( v && String( v ).trim() !== '' ) {
+				o[ pair[ 1 ] ] = v;
+			}
+		} );
+		darkPairs.forEach( function ( pair ) {
+			var v = attrs[ pair[ 0 ] ];
+			if ( v && String( v ).trim() !== '' ) {
+				o[ pair[ 1 ] ] = v;
+			}
+		} );
 		return Object.keys( o ).length ? o : undefined;
 	}
 
@@ -382,6 +468,67 @@
 		];
 	}
 
+	function createDarkFormColorSettings( attributes, setAttributes ) {
+		return [
+			{
+				label: __( 'Label', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorLabel || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorLabel: v || '' } );
+				},
+			},
+			{
+				label: __( 'Eingabetext', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorText || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorText: v || '' } );
+				},
+			},
+			{
+				label: __( 'Platzhalter', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorPlaceholder || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorPlaceholder: v || '' } );
+				},
+			},
+			{
+				label: __( 'Feldhintergrund', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorFieldBg || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorFieldBg: v || '' } );
+				},
+			},
+			{
+				label: __( 'Rahmen', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorBorder || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorBorder: v || '' } );
+				},
+			},
+			{
+				label: __( 'Fokus (Rahmen, Schieberegler)', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorFocus || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorFocus: v || '' } );
+				},
+			},
+			{
+				label: __( 'Button-Hintergrund', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorButtonBg || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorButtonBg: v || '' } );
+				},
+			},
+			{
+				label: __( 'Button-Text', 'gutenberg-formbuilder' ),
+				value: attributes.darkColorButtonText || '',
+				onChange: function ( v ) {
+					setAttributes( { darkColorButtonText: v || '' } );
+				},
+			},
+		];
+	}
+
 	function renderFieldColorOverrideControls( attributes, setAttributes ) {
 		return el( PanelColorSettings, {
 			title: __( 'Farben (Feld überschreiben)', 'gutenberg-formbuilder' ),
@@ -427,16 +574,8 @@
 			var setAttributes = props.setAttributes;
 			var formClassName =
 				'gfb-editor-form' + ( formHasCustomColors( attributes ) ? ' gfb-form-colors-custom' : '' );
-			var formColorStyle = colorAttrsToStyleObject( {
-				colorLabel: attributes.colorLabel || '',
-				colorText: attributes.colorText || '',
-				colorPlaceholder: attributes.colorPlaceholder || '',
-				colorFieldBg: attributes.colorFieldBg || '',
-				colorBorder: attributes.colorBorder || '',
-				colorFocus: attributes.colorFocus || '',
-				colorButtonBg: attributes.colorButtonBg || '',
-				colorButtonText: attributes.colorButtonText || '',
-			} );
+			var appearance = attributes.appearanceMode || 'auto';
+			var formColorStyle = formWrapperColorStyleObject( attributes );
 
 			var allowedInnerBlocks = useSelect( function ( select ) {
 				try {
@@ -460,7 +599,11 @@
 
 			return el(
 				'div',
-				{ className: formClassName, style: formColorStyle },
+				{
+					className: formClassName,
+					style: formColorStyle,
+					'data-gfb-appearance': appearance,
+				},
 				el(
 					InspectorControls,
 					null,
@@ -556,10 +699,32 @@
 							disabled: attributes.draftEnabled === false,
 						} )
 					),
+					el( PanelBody, {
+						title: __( 'Erscheinungsbild', 'gutenberg-formbuilder' ),
+						initialOpen: false,
+					},
+					el( SelectControl, {
+						label: __( 'Farbmodus', 'gutenberg-formbuilder' ),
+						value: appearance,
+						options: [
+							{ label: __( 'Automatisch (System)', 'gutenberg-formbuilder' ), value: 'auto' },
+							{ label: __( 'Hell', 'gutenberg-formbuilder' ), value: 'light' },
+							{ label: __( 'Dunkel', 'gutenberg-formbuilder' ), value: 'dark' },
+						],
+						onChange: function ( value ) {
+							setAttributes( { appearanceMode: value || 'auto' } );
+						},
+					} )
+					),
 					el( PanelColorSettings, {
-						title: __( 'Formularfarben', 'gutenberg-formbuilder' ),
+						title: __( 'Formularfarben (Hell)', 'gutenberg-formbuilder' ),
 						initialOpen: false,
 						colorSettings: createFormColorSettings( attributes, setAttributes ),
+					} ),
+					el( PanelColorSettings, {
+						title: __( 'Formularfarben (Dunkel)', 'gutenberg-formbuilder' ),
+						initialOpen: false,
+						colorSettings: createDarkFormColorSettings( attributes, setAttributes ),
 					} )
 				),
 				el( InnerBlocks, {
