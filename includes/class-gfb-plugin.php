@@ -16,6 +16,7 @@ class GFB_Plugin {
 	public static function boot() {
 		add_action( 'init', array( __CLASS__, 'register_assets' ) );
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_for_redirect_query' ), 5 );
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor_assets' ) );
 		add_action( 'admin_post_gfb_submit', array( 'GFB_Submit_Handler', 'handle' ) );
 		add_action( 'admin_post_nopriv_gfb_submit', array( 'GFB_Submit_Handler', 'handle' ) );
@@ -31,7 +32,7 @@ class GFB_Plugin {
 		wp_register_script(
 			'gfb-editor',
 			GFB_PLUGIN_URL . 'assets/editor.js',
-			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-components', 'wp-block-editor', 'wp-data' ),
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-components', 'wp-block-editor', 'wp-data', 'wp-core-data' ),
 			GFB_PLUGIN_VERSION,
 			true
 		);
@@ -50,6 +51,24 @@ class GFB_Plugin {
 			array(),
 			GFB_PLUGIN_VERSION
 		);
+	}
+
+	/**
+	 * Lädt gfb-frontend auf Folgeseiten ohne Formularblock (IndexedDB-Draft per URL löschen).
+	 *
+	 * @return void
+	 */
+	public static function enqueue_frontend_for_redirect_query() {
+		if ( is_admin() ) {
+			return;
+		}
+		if ( empty( $_GET['gfb_status'] ) || empty( $_GET['gfb_draft_key'] ) ) {
+			return;
+		}
+		if ( 'success' !== sanitize_key( wp_unslash( $_GET['gfb_status'] ) ) ) {
+			return;
+		}
+		wp_enqueue_script( 'gfb-frontend' );
 	}
 
 	/**
@@ -300,6 +319,7 @@ class GFB_Plugin {
 				<input type="hidden" name="action" value="gfb_submit" />
 				<input type="hidden" name="gfb_post_id" value="<?php echo esc_attr( $post_id ); ?>" />
 				<input type="hidden" name="gfb_form_id" value="<?php echo esc_attr( $form_id ); ?>" />
+				<input type="hidden" name="gfb_draft_key" value="<?php echo esc_attr( $key ); ?>" />
 				<input type="hidden" name="gfb_draft_enabled" value="<?php echo esc_attr( $draft_enabled ? '1' : '0' ); ?>" />
 				<input type="hidden" name="gfb_draft_mode" value="<?php echo esc_attr( $restore_mode ); ?>" />
 				<input type="hidden" name="gfb_draft_ttl_days" value="<?php echo esc_attr( (string) $draft_ttl_days ); ?>" />
@@ -335,6 +355,26 @@ class GFB_Plugin {
 		}
 
 		return self::extract_fields_from_inner_blocks( $form_block['innerBlocks'] ?? array() );
+	}
+
+	/**
+	 * Attribute des gfb/form-Blocks (z. B. Folgeseite nach Absenden).
+	 *
+	 * @param int    $post_id Post-ID.
+	 * @param string $form_id Formular-ID.
+	 * @return array<string,mixed>
+	 */
+	public static function get_form_block_attributes_from_post( $post_id, $form_id ) {
+		$content = get_post_field( 'post_content', $post_id );
+		if ( ! $content ) {
+			return array();
+		}
+		$blocks     = parse_blocks( $content );
+		$form_block = self::find_form_block_recursive( $blocks, $form_id );
+		if ( null === $form_block ) {
+			return array();
+		}
+		return isset( $form_block['attrs'] ) && is_array( $form_block['attrs'] ) ? $form_block['attrs'] : array();
 	}
 
 	/**

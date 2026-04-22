@@ -595,6 +595,32 @@
 				}
 			}, [] );
 
+			var publishedPages = useSelect( function ( select ) {
+				try {
+					return select( 'core' ).getEntityRecords( 'postType', 'page', {
+						per_page: 100,
+						status: 'publish',
+						orderby: 'title',
+						order: 'asc',
+					} );
+				} catch ( err2 ) {
+					return null;
+				}
+			}, [] );
+
+			var thankYouPageOptions = [
+				{
+					label: __( 'Formularseite mit Erfolgshinweis (Standard)', 'gutenberg-formbuilder' ),
+					value: '',
+				},
+			];
+			if ( publishedPages && Array.isArray( publishedPages ) ) {
+				publishedPages.forEach( function ( p ) {
+					var title = p.title && p.title.rendered ? p.title.rendered : '#' + String( p.id );
+					thankYouPageOptions.push( { label: title, value: String( p.id ) } );
+				} );
+			}
+
 			syncFormInstance( attributes, setAttributes, props.clientId );
 
 			return el(
@@ -697,6 +723,16 @@
 								setAttributes( { showDraftReset: value } );
 							},
 							disabled: attributes.draftEnabled === false,
+						} ),
+						el( SelectControl, {
+							label: __( 'Folgeseite nach erfolgreichem Absenden', 'gutenberg-formbuilder' ),
+							help: __( 'Öffentlich sichtbare Seite. Ohne Auswahl bleibt die Besucherin auf der Formularseite (Hinweis oben).', 'gutenberg-formbuilder' ),
+							value: attributes.thankYouPageId ? String( attributes.thankYouPageId ) : '',
+							options: thankYouPageOptions,
+							onChange: function ( v ) {
+								var n = parseInt( v, 10 );
+								setAttributes( { thankYouPageId: v === '' || Number.isNaN( n ) ? 0 : n } );
+							},
 						} )
 					),
 					el( PanelBody, {

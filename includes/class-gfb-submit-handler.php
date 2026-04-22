@@ -51,6 +51,16 @@ class GFB_Submit_Handler {
 
 		check_admin_referer( 'gfb_submit_' . $form_id . '_' . $post_id, 'gfb_nonce' );
 
+		$form_attrs         = GFB_Plugin::get_form_block_attributes_from_post( $post_id, $form_id );
+		$thank_you_page_id  = isset( $form_attrs['thankYouPageId'] ) ? absint( $form_attrs['thankYouPageId'] ) : 0;
+		$draft_key_redirect = '';
+		if ( ! empty( $_POST['gfb_draft_key'] ) ) {
+			$raw_dk = sanitize_text_field( wp_unslash( $_POST['gfb_draft_key'] ) );
+			if ( preg_match( '/^[0-9]+:[a-z0-9_-]+:[a-z0-9_-]+$/i', $raw_dk ) ) {
+				$draft_key_redirect = $raw_dk;
+			}
+		}
+
 		if ( ! empty( $_POST['gfb_hp_field'] ) ) {
 			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Die Anfrage wurde als Spam erkannt.', 'gutenberg-formbuilder' ) );
 		}
@@ -131,25 +141,47 @@ class GFB_Submit_Handler {
 		}
 
 		self::send_notification_mail( $post_id, $form_id, $payload );
-		self::redirect_with_state( $post_id, $form_id, 'success', __( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' ) );
+		self::redirect_with_state(
+			$post_id,
+			$form_id,
+			'success',
+			__( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' ),
+			$draft_key_redirect,
+			$thank_you_page_id
+		);
 	}
 
 	/**
-	 * Redirect back to post with query data.
+	 * Redirect back to post (oder Folgeseite) mit Query-Parametern.
 	 *
 	 * @param int    $post_id Post id.
 	 * @param string $form_id Form id.
 	 * @param string $status Status key.
 	 * @param string $message Message for UI.
+	 * @param string $draft_key Optional. IndexedDB-Schlüssel für Draft-Löschung auf Folgeseiten.
+	 * @param int    $thank_you_page_id Optional. Bei success: Seiten-ID für Weiterleitung (0 = Formularseite).
 	 * @return void
 	 */
-	private static function redirect_with_state( $post_id, $form_id, $status, $message ) {
+	private static function redirect_with_state( $post_id, $form_id, $status, $message, $draft_key = '', $thank_you_page_id = 0 ) {
 		$target = $post_id ? get_permalink( $post_id ) : home_url( '/' );
-		$args   = array(
+		if ( 'success' === $status && $thank_you_page_id > 0 ) {
+			$page = get_post( $thank_you_page_id );
+			if ( $page instanceof WP_Post && is_post_publicly_viewable( $page ) ) {
+				$permalink = get_permalink( $page );
+				if ( $permalink ) {
+					$target = $permalink;
+				}
+			}
+		}
+
+		$args = array(
 			'gfb_status' => $status,
 			'gfb_form'   => $form_id,
 			'gfb_msg'    => $message,
 		);
+		if ( '' !== $draft_key ) {
+			$args['gfb_draft_key'] = $draft_key;
+		}
 
 		wp_safe_redirect( add_query_arg( $args, $target ) );
 		exit;

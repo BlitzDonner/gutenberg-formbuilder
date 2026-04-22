@@ -284,6 +284,18 @@
 	}
 
 	document.addEventListener( 'DOMContentLoaded', function () {
+		var sp = new URLSearchParams( window.location.search );
+		if ( sp.get( 'gfb_status' ) === 'success' && sp.get( 'gfb_draft_key' ) ) {
+			var dk = sp.get( 'gfb_draft_key' );
+			if ( /^[0-9]+:[a-z0-9_-]+:[a-z0-9_-]+$/i.test( dk ) ) {
+				openDb()
+					.then( function ( db ) {
+						return removeDraft( db, dk );
+					} )
+					.catch( function () {} );
+			}
+		}
+
 		var forms = document.querySelectorAll( 'form.gfb-form[data-gfb-key]' );
 		forms.forEach( function ( form ) {
 			initRangeValueDisplays( form );
