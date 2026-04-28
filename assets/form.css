@@ -3,7 +3,12 @@
  * Angelehnt an Apple Human Interface (klare Hierarchie, großzügige Abstände, System-Schrift).
  */
 
-.gfb-form-wrapper {
+/*
+ * Plugin-Variablen und Layout gelten nur für Hell/Dunkel/Automatisch.
+ * „Theme (Standard)“: keine dieser Regeln → kein --gfb-* aus form.css (auch wenn die Datei
+ * wegen eines anderen Formulars auf derselben Seite geladen wird).
+ */
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) {
 	--gfb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
 	--gfb-label-size: 0.8125rem;
 	--gfb-label-weight: 500;
@@ -36,11 +41,16 @@
 	--gfb-dark-bg-subtle: #2c2c2e;
 	--gfb-dark-submit-bg: var(--gfb-dark-border-focus);
 	--gfb-dark-submit-text: #ffffff;
+
+	box-sizing: border-box;
+	font-family: var(--gfb-font);
+	color: var(--gfb-text);
+	max-width: 32rem;
+	margin-inline: auto;
 }
 
 /* Aufgelöste Tokens für Komponenten (Abwärtskompatibilität: --gfb-*) */
-.gfb-form-wrapper[data-gfb-appearance="light"],
-.gfb-form-wrapper:not([data-gfb-appearance]) {
+.gfb-form-wrapper[data-gfb-appearance="light"] {
 	--gfb-label: var(--gfb-light-label);
 	--gfb-text: var(--gfb-light-text);
 	--gfb-placeholder: var(--gfb-light-placeholder);
@@ -50,6 +60,8 @@
 	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
 	--gfb-submit-bg: var(--gfb-light-submit-bg);
 	--gfb-submit-text: var(--gfb-light-submit-text);
+	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
+	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
 	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
 }
 
@@ -63,6 +75,8 @@
 	--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
 	--gfb-submit-bg: var(--gfb-dark-submit-bg);
 	--gfb-submit-text: var(--gfb-dark-submit-text);
+	--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
+	--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
 	--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
 }
 
@@ -76,6 +90,8 @@
 	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
 	--gfb-submit-bg: var(--gfb-light-submit-bg);
 	--gfb-submit-text: var(--gfb-light-submit-text);
+	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
+	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
 	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
 }
 
@@ -90,13 +106,14 @@
 		--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
 		--gfb-submit-bg: var(--gfb-dark-submit-bg);
 		--gfb-submit-text: var(--gfb-dark-submit-text);
+		--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
+		--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
 		--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
 	}
 }
 
 @supports (color: color-mix(in srgb, red, blue)) {
 	.gfb-form-wrapper[data-gfb-appearance="light"],
-	.gfb-form-wrapper:not([data-gfb-appearance]),
 	.gfb-form-wrapper[data-gfb-appearance="auto"] {
 		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
 	}
@@ -117,37 +134,58 @@
  * während Felder --gfb-bg nutzen (ungleiche Lesbarkeit bei Dunkel-Farben).
  */
 .gfb-form-wrapper[data-gfb-appearance="light"],
-.gfb-form-wrapper:not([data-gfb-appearance]),
 .gfb-form-wrapper[data-gfb-appearance="dark"],
 .gfb-form-wrapper[data-gfb-appearance="auto"] {
 	padding: 1rem 1.125rem;
 	border-radius: var(--gfb-radius);
 	border: 1px solid var(--gfb-border);
-	background: linear-gradient(180deg, var(--gfb-bg-subtle) 0%, var(--gfb-bg) 100%);
+	background: linear-gradient(180deg, var(--gfb-shell-top, var(--gfb-bg-subtle)) 0%, var(--gfb-shell-bottom, var(--gfb-bg)) 100%);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.gfb-form-wrapper {
-	box-sizing: border-box;
-	font-family: var(--gfb-font);
-	color: var(--gfb-text);
-	max-width: 32rem;
-	margin-inline: auto;
+/*
+ * Formularbereich: ein echter Verlauf in --gfb-*-form-shell darf nicht als „Farbe“ in
+ * linear-gradient(180deg, var(--gfb-shell-top), …) stehen (ungültig → wirkt weiß).
+ */
+.gfb-form-wrapper[data-gfb-appearance="light"].gfb-form-shell-gradient--light {
+	background: var(--gfb-light-form-shell);
 }
 
-.gfb-form-wrapper *,
-.gfb-form-wrapper *::before,
-.gfb-form-wrapper *::after {
+.gfb-form-wrapper[data-gfb-appearance="auto"].gfb-form-shell-gradient--light {
+	background: var(--gfb-light-form-shell);
+}
+
+@media (prefers-color-scheme: dark) {
+	.gfb-form-wrapper[data-gfb-appearance="auto"]:not(.gfb-form-shell-gradient--dark) {
+		background: linear-gradient(
+			180deg,
+			var(--gfb-shell-top, var(--gfb-bg-subtle)) 0%,
+			var(--gfb-shell-bottom, var(--gfb-bg)) 100%
+		);
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="auto"].gfb-form-shell-gradient--dark {
+		background: var(--gfb-dark-form-shell);
+	}
+}
+
+.gfb-form-wrapper[data-gfb-appearance="dark"].gfb-form-shell-gradient--dark {
+	background: var(--gfb-dark-form-shell);
+}
+
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) *,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) *::before,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) *::after {
 	box-sizing: border-box;
 }
 
-.gfb-form {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-form {
 	margin: 0;
 	padding: 0;
 }
 
 /* Statusmeldung */
-.gfb-notice {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-notice {
 	font-size: var(--gfb-body-size);
 	line-height: 1.4;
 	padding: 0.875rem 1rem;
@@ -157,24 +195,24 @@
 	border: 1px solid var(--gfb-border);
 }
 
-.gfb-notice-success {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-notice-success {
 	background: #ecfdf3;
 	border-color: #34c759;
 	color: var(--gfb-text);
 }
 
-.gfb-notice-error {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-notice-error {
 	background: #fff2f2;
 	border-color: #ff3b30;
 }
 
 /* Draft-Zeile */
-.gfb-draft-tools {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-draft-tools {
 	margin: 0 0 var(--gfb-stack-gap);
 	padding: 0;
 }
 
-.gfb-draft-reset-button {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-draft-reset-button {
 	font-family: inherit;
 	font-size: var(--gfb-label-size);
 	font-weight: 500;
@@ -187,18 +225,18 @@
 	text-underline-offset: 0.2em;
 }
 
-.gfb-draft-reset-button:hover {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-draft-reset-button:hover {
 	opacity: 0.85;
 }
 
-.gfb-draft-reset-button:focus-visible {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-draft-reset-button:focus-visible {
 	outline: 2px solid var(--gfb-border-focus);
 	outline-offset: 2px;
 	border-radius: 4px;
 }
 
 /* Feldzeilen */
-.gfb-field {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
@@ -207,11 +245,18 @@
 	padding: 0;
 }
 
-.gfb-field:last-child {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:last-child {
 	margin-bottom: 0;
 }
 
-.gfb-field > label {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field.gfb-field-hidden {
+	margin: 0;
+	padding: 0;
+	min-height: 0;
+	gap: 0;
+}
+
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field > label {
 	font-size: var(--gfb-label-size);
 	font-weight: var(--gfb-label-weight);
 	line-height: 1.3;
@@ -220,31 +265,31 @@
 }
 
 /* Pflicht-Kennzeichnung */
-.gfb-field:has(> input[required]) > label:first-child::after,
-.gfb-field:has(> textarea[required]) > label:first-child::after,
-.gfb-field:has(> select[required]) > label:first-child::after,
-.gfb-field:has(> input[type="file"][required]) > label:first-child::after {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> input[required]) > label:first-child::after,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> textarea[required]) > label:first-child::after,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> select[required]) > label:first-child::after,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> input[type="file"][required]) > label:first-child::after {
 	content: " *";
 	color: #ff3b30;
 	font-weight: 600;
 }
 
-.gfb-field-checkbox:has(input[required]) > label::after {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-checkbox:has(input[required]) > label::after {
 	content: " *";
 	color: #ff3b30;
 	font-weight: 600;
 }
 
-.gfb-field-radio:has(input[required]) > legend::after {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio:has(input[required]) > legend::after {
 	content: " *";
 	color: #ff3b30;
 	font-weight: 600;
 }
 
 /* Text, E-Mail, Zahl, Tel, URL, Datum, Zeit, Datei */
-.gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-.gfb-field textarea,
-.gfb-field select {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select {
 	appearance: none;
 	-webkit-appearance: none;
 	width: 100%;
@@ -262,12 +307,12 @@
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.gfb-field textarea {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea {
 	min-height: 7rem;
 	resize: vertical;
 }
 
-.gfb-field select {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select {
 	cursor: pointer;
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236e6e73' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
@@ -275,41 +320,41 @@
 	padding-right: 2.25rem;
 }
 
-.gfb-field input::placeholder,
-.gfb-field textarea::placeholder {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input::placeholder,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea::placeholder {
 	color: var(--gfb-placeholder);
 }
 
-.gfb-field input:focus,
-.gfb-field textarea:focus,
-.gfb-field select:focus {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:focus,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea:focus,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select:focus {
 	outline: none;
 	border-color: var(--gfb-border-focus);
 	box-shadow: var(--gfb-shadow-focus);
 }
 
-.gfb-field input:disabled,
-.gfb-field textarea:disabled,
-.gfb-field select:disabled {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:disabled,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea:disabled,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
 }
 
 /* Datums-/Zeit-Picker: native Controls etwas luftiger */
-.gfb-field input[type="date"],
-.gfb-field input[type="time"],
-.gfb-field input[type="datetime-local"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="date"],
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="time"],
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="datetime-local"] {
 	min-height: 2.75rem;
 }
 
-.gfb-field input[type="file"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"] {
 	padding: 0.5rem 0;
 	min-height: auto;
 	border: none;
 	font-size: var(--gfb-label-size);
 }
 
-.gfb-field input[type="file"]::file-selector-button {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"]::file-selector-button {
 	font-family: inherit;
 	font-size: var(--gfb-label-size);
 	font-weight: 500;
@@ -322,12 +367,12 @@
 	transition: background 0.15s ease;
 }
 
-.gfb-field input[type="file"]::file-selector-button:hover {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"]::file-selector-button:hover {
 	background: #e8e8ed;
 }
 
 /* Checkbox */
-.gfb-field-checkbox > label {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-checkbox > label {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -341,7 +386,7 @@
 	padding-top: 0.125rem;
 }
 
-.gfb-field-checkbox input[type="checkbox"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-checkbox input[type="checkbox"] {
 	width: 1.25rem;
 	height: 1.25rem;
 	min-width: 1.25rem;
@@ -352,14 +397,14 @@
 }
 
 /* Radio-Gruppe */
-.gfb-field-radio {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio {
 	border: none;
 	padding: 0;
 	margin: 0 0 var(--gfb-stack-gap);
 	min-width: 0;
 }
 
-.gfb-field-radio legend {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio legend {
 	display: block;
 	width: 100%;
 	font-size: var(--gfb-label-size);
@@ -370,7 +415,27 @@
 	letter-spacing: -0.01em;
 }
 
-.gfb-radio-row {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+}
+
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options--row {
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: 1rem;
+	row-gap: 0.5rem;
+}
+
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options .gfb-radio-row {
+	margin: 0;
+}
+
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -379,11 +444,12 @@
 	padding: 0;
 }
 
-.gfb-radio-row:last-child {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio > .gfb-radio-row:last-child,
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options > .gfb-radio-row:last-child {
 	margin-bottom: 0;
 }
 
-.gfb-radio-row input[type="radio"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row input[type="radio"] {
 	width: 1.25rem;
 	height: 1.25rem;
 	min-width: 1.25rem;
@@ -392,7 +458,7 @@
 	cursor: pointer;
 }
 
-.gfb-radio-row label {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row label {
 	font-size: var(--gfb-body-size);
 	line-height: 1.4;
 	color: var(--gfb-text);
@@ -402,7 +468,7 @@
 }
 
 /* Range */
-.gfb-field-range .gfb-range-row {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-range .gfb-range-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -410,7 +476,7 @@
 	width: 100%;
 }
 
-.gfb-field-range .gfb-range-row input[type="range"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-range .gfb-range-row input[type="range"] {
 	flex: 1;
 	min-width: 0;
 	width: auto;
@@ -419,7 +485,7 @@
 	accent-color: var(--gfb-border-focus);
 }
 
-.gfb-field-range .gfb-range-value {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-range .gfb-range-value {
 	display: inline-block;
 	min-width: 2.75rem;
 	padding: 0.35rem 0.55rem;
@@ -435,11 +501,11 @@
 }
 
 /* Absenden */
-.gfb-field-submit {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit {
 	margin-top: 0.25rem;
 }
 
-.gfb-field-submit button[type="submit"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"] {
 	appearance: none;
 	-webkit-appearance: none;
 	width: 100%;
@@ -458,15 +524,15 @@
 	letter-spacing: -0.02em;
 }
 
-.gfb-field-submit button[type="submit"]:hover {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:hover {
 	filter: brightness(0.93);
 }
 
-.gfb-field-submit button[type="submit"]:active {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:active {
 	transform: scale(0.99);
 }
 
-.gfb-field-submit button[type="submit"]:focus-visible {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:focus-visible {
 	outline: none;
 	box-shadow: var(--gfb-shadow-focus);
 }

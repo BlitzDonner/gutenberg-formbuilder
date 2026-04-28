@@ -4,21 +4,60 @@
   "name": "gfb/field-number",
   "version": "0.2.0",
   "title": "Zahl",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "calculator",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "calculator",
+    "foreground": "#1b2627"
+  },
   "description": "Numerisches Eingabefeld.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
-    "label": { "type": "string", "default": "Zahl" },
-    "name": { "type": "string", "default": "" },
-    "placeholder": { "type": "string", "default": "" },
-    "required": { "type": "boolean", "default": false },
-    "min": { "type": "string", "default": "" },
-    "max": { "type": "string", "default": "" },
-    "step": { "type": "string", "default": "" }
+    "label": {
+      "type": "string",
+      "default": "Zahl"
+    },
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    },
+    "min": {
+      "type": "string",
+      "default": ""
+    },
+    "max": {
+      "type": "string",
+      "default": ""
+    },
+    "step": {
+      "type": "string",
+      "default": ""
+    }
   },
-  "supports": { "html": false },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
+  },
   "usesContext": [
     "gfb/formId",
     "gfb/appearanceMode",
@@ -37,7 +76,23 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Zahl",
+      "name": "sb_num",
+      "placeholder": "",
+      "min": "0",
+      "max": "100",
+      "step": "1",
+      "required": false
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

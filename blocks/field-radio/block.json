@@ -2,20 +2,54 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "gfb/field-radio",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "title": "Radio-Auswahl",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "marker",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "marker",
+    "foreground": "#1b2627"
+  },
   "description": "Eine Option aus mehreren wählen.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
-    "label": { "type": "string", "default": "Auswahl" },
-    "name": { "type": "string", "default": "" },
-    "options": { "type": "string", "default": "Option A\nOption B\nOption C" },
-    "required": { "type": "boolean", "default": false }
+    "label": {
+      "type": "string",
+      "default": "Auswahl"
+    },
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "options": {
+      "type": "string",
+      "default": "Option A\nOption B\nOption C"
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    },
+    "optionsLayout": {
+      "type": "string",
+      "default": "column"
+    }
   },
-  "supports": { "html": false },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
+  },
   "usesContext": [
     "gfb/formId",
     "gfb/appearanceMode",
@@ -34,7 +68,20 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Radio",
+      "name": "sb_radio",
+      "options": "Wahl A\nWahl B",
+      "required": false
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

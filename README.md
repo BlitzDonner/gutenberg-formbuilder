@@ -2,7 +2,7 @@
 
 WordPress-Plugin: Formular-Builder **nur mit Gutenberg-Blöcken**, serverseitige Speicherung der Einsendungen, lokale Drafts im Browser (IndexedDB).
 
-**Aktuelle Version:** in `gutenberg-formbuilder.php` → `GFB_PLUGIN_VERSION` / Header `Version:` (bei Releases immer beide Stellen anheben).
+**Aktuelle Version:** in `gutenberg-formbuilder.php` → `GFB_PLUGIN_VERSION` / Header `Version:` (bei Releases immer **beide** Stellen sowie `blocks/form/block.json` → `version` anheben, damit Browser-Caches für `editor.js` / `frontend.js` / CSS greifen).
 
 ---
 
@@ -10,20 +10,28 @@ WordPress-Plugin: Formular-Builder **nur mit Gutenberg-Blöcken**, serverseitige
 
 Am Block **Formular** (`gfb/form`) steuern:
 
-- **Farbmodus** (`appearanceMode`): `auto` (System `prefers-color-scheme`), `light` oder `dark`.
+- **Farbmodus** (`appearanceMode`): `theme` (Theme-Standard), `auto` (System `prefers-color-scheme`), `light` oder `dark`.
 - **Zwei Paletten:** **Formularfarben (Hell)** (`colorLabel`, `colorText`, …) und **Formularfarben (Dunkel)** (`darkColorLabel`, …). Beide sind unabhängig einstellbar.
+- **Inspector:** Wo verfügbar, nutzt der Editor `PanelColorGradientSettings` (Farbe inkl. **Transparenz** und **Verläufe**). Dafür werden `disableCustomColors` / `disableCustomGradients` für diese Panels auf „erlaubt“ gesetzt, damit auch ohne Theme-Gradient-Palette eigene Verläufe möglich sind. Fallback: `PanelColorSettings` mit `enableAlpha`.
+
+**Speichern / Callbacks (Editor):** `ColorGradientControl` ruft bei Farbwahl nacheinander `onColorChange(wert)` und `onGradientChange()` ohne Argument auf (internes Zwei-Slot-Modell von WordPress). Die Zuordnung auf **ein** Attribut pro Zeile behandelt diese Hilfsaufrufe über kurzlebige Flags, damit der Wert nicht sofort wieder geleert wird.
 
 **Frontend**
 
-- Der Wrapper rendert als `<div class="gfb-form-wrapper" data-gfb-appearance="auto|light|dark">`.
+- Der Wrapper rendert als `<div class="gfb-form-wrapper" data-gfb-appearance="theme|auto|light|dark">`.
 - Benutzerdefinierte Farben kommen als Inline-CSS-Variablen **`--gfb-light-*`** / **`--gfb-dark-*`**; `assets/form.css` mappt sie auf die genutzten **`--gfb-*`** (Labels, Text, Felder, Button) je nach Modus.
-- Die **Formular-Karte** (Padding, Rahmen, Verlaufshintergrund, Schatten) entspricht der Editor-Vorschau, damit Text und Felder nicht „auf der weißen Seite“ liegen, während nur die Inputs dunkel wirken.
-- **PHP:** `GFB_Plugin::sanitize_gfb_color()` akzeptiert neben 3/6-stelligem Hex auch 8-stelliges Hex, `rgb`/`rgba`/`hsl`/`hsla` und `var(--…)` (z. B. Theme-Presets), damit gespeicherte Editor-Farben nicht verworfen werden.
+- Die **Formular-Karte** (Padding, Rahmen, Hintergrund, Schatten) entspricht der Editor-Vorschau, damit Text und Felder nicht „auf der weißen Seite“ liegen, während nur die Inputs dunkel wirken.
+- **Hintergrund Formularbereich** (`colorFormShell` / `darkColorFormShell`): Einfarbig wird derselbe Wert für oben/unten in einen vertikalen Verlauf gelegt (`--gfb-shell-top` / `--gfb-shell-bottom` → `linear-gradient(180deg, …)`). Ist der Wert selbst ein **CSS-Verlauf**, wäre ein Verschachteln in diesem äußeren Verlauf **ungültig** (Browser verwirft die Deklaration → wirkt weiß). Lösung: PHP setzt bei erkanntem Verlauf die Klassen **`gfb-form-shell-gradient--light`** bzw. **`gfb-form-shell-gradient--dark`**; `form.css` setzt dann `background: var(--gfb-light-form-shell)` bzw. `var(--gfb-dark-form-shell)` direkt. Bei `appearanceMode=auto` und `prefers-color-scheme: dark` sorgt eine Zusatzregel dafür, dass ohne Dunkel-Verlauf-Klasse wieder der Standard-Shell-Verlauf genutzt wird.
+- **PHP:** `GFB_Plugin::sanitize_gfb_color()` akzeptiert u. a. 3/4/6/8-stelliges Hex, `transparent` / `currentColor`, `var(--…)` (optional mit einfachem Fallback), klassische und moderne `rgb`/`rgba`/`hsl`/`hsla`, CSS-Verläufe (`linear-gradient`, `radial-gradient`, `conic-gradient`, `repeating-*`) sowie `color-mix`, `oklch`, `oklab`, `hwb`, `lch`, `lab` — jeweils mit Klammer-Check, Längenlimit und Ausschluss von `url()`, `expression()` usw.
 
 **Editor**
 
-- Vorschau-Container: `data-gfb-appearance` + dieselben Variablen; `assets/gfb-editor.css` nur im Block-Canvas (`block.json` → `editorStyle`).
-- Feldblöcke beziehen Kontext über `usesContext` (u. a. `gfb/appearanceMode`, Hell-/Dunkel-Farben); Feld-Overrides im Inspector blenden sich in die aktive Palette ein (`resolveActivePalette` in `editor.js`).
+- Vorschau-Container: `data-gfb-appearance` + dieselben Variablen; `assets/gfb-editor.css` wird bei Bedarf per `editor.js` in den **Block-Canvas-Iframe** eingehängt (`gfbSyncEditorFormStylesheet`, Link-ID `gfb-editor-form-stylesheet`, URL aus `gfbEditorAssets.editorFormStylesUrl`), sobald mindestens ein Formularblock nicht `appearanceMode=theme` ist.
+- Feldblöcke beziehen Kontext über `usesContext` (u. a. `gfb/appearanceMode`, Hell-/Dunkel-Farben); Feld-Overrides im Inspector nutzen dieselbe Farb-/Verlauf-Logik wie das Formular (`renderGfbColorPanel`, `mapColorSettingsToGradientSettings` in `assets/editor.js`).
+
+**Hinweis CSS:** Eigenschaften wie `color:` oder `border-color:` erwarten **Farben**, keine Verläufe. Verläufe wirken sinnvoll z. B. bei **Feldhintergrund**, **Button-Hintergrund** und **Hintergrund Formularbereich** (`background`).
+
+Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-UND-VERLAUFE.md).
 
 ---
 
@@ -42,7 +50,8 @@ Am Block **Formular** (`gfb/form`) steuern:
    - `assets/admin-submissions.css` – nur Referenz; im Admin wird CSS **inline** aus der Datei gelesen (kein zuverlässiger `plugins_url()` auf manchen Local-Setups)
 4. **Bekannte technische Entscheidungen:**
    - **Einzigartige Feldnamen:** Defaults in `blocks/*/block.json` für `name` sind leer; `ensureFieldName` in `editor.js` vergibt eindeutige Namen. Sonst kollidieren POST-Keys.
-   - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb `editorStyle` im Formular-Block (und bei Bedarf Feld-Blöcke) auf `assets/gfb-editor.css` bzw. gemeinsame Basis.
+   - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb lädt `editor.js` bei nicht-Theme-Formularen `gfb-editor.css` in den Canvas (`gfbSyncEditorFormStylesheet`).
+   - **Formularbereich als Verlauf:** Klassen `gfb-form-shell-gradient--light` / `--dark` werden in `includes/class-gfb-plugin.php` gesetzt, wenn der jeweilige Shell-Wert ein CSS-Verlauf ist; Auswertung über `gfb_sanitized_attr_is_css_gradient()` (basiert auf `sanitize_gfb_color()`).
    - **Admin-Löschen:** Redirect nur in `load-toplevel_page_gfb-submissions`, nicht in `render_page`, sonst „headers already sent“.
 
 ---
@@ -72,14 +81,17 @@ Am Block **Formular** (`gfb/form`) steuern:
 gutenberg-formbuilder.php   # Bootstrap, Konstanten, Version
 includes/                   # PHP: Plugin, Submit, Admin
 assets/                     # editor.js, frontend.js, CSS
-blocks/*/block.json         # Block-Metadaten, editorStyle
+blocks/*/block.json         # Block-Metadaten
+docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 ```
 
 ## Entwicklung
 
 - Kein npm-Build: JS/CSS sind Quelldateien.
-- Nach Änderungen an JS/CSS Version in `gutenberg-formbuilder.php` erhöhen.
+- Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Editor-Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
+
+**Zuletzt dokumentiert (Auszug):** Farb-/Verlauf-Panels (`renderGfbColorPanel` / `mapColorSettingsToGradientSettings`), erweiterter Farb-Sanitizer, Shell-Gradient-Klassen für gültiges `background` bei benutzerdefinierten Verläufen, Radio-`optionsLayout` (Zeile/Spalte) an `gfb/field-radio`.
 
 ## MVP-Grenzen / Ideen für später
 

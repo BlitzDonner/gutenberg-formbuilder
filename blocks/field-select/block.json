@@ -4,9 +4,11 @@
   "name": "gfb/field-select",
   "version": "0.1.0",
   "title": "Auswahlfeld",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "list-view",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "list-view",
+    "foreground": "#1b2627"
+  },
   "description": "Dropdown-Auswahlfeld.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
@@ -28,7 +30,21 @@
     }
   },
   "supports": {
-    "html": false
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
   },
   "usesContext": [
     "gfb/formId",
@@ -48,7 +64,20 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Auswahl",
+      "name": "sb_select",
+      "options": "Option A\nOption B\nOption C",
+      "required": false
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

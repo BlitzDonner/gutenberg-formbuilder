@@ -14,6 +14,7 @@ class GFB_Plugin {
 	 * @return void
 	 */
 	public static function boot() {
+		add_filter( 'block_categories_all', array( __CLASS__, 'register_block_category' ), 999, 2 );
 		add_action( 'init', array( __CLASS__, 'register_assets' ) );
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_for_redirect_query' ), 5 );
@@ -21,6 +22,36 @@ class GFB_Plugin {
 		add_action( 'admin_post_gfb_submit', array( 'GFB_Submit_Handler', 'handle' ) );
 		add_action( 'admin_post_nopriv_gfb_submit', array( 'GFB_Submit_Handler', 'handle' ) );
 		GFB_Admin_Submissions::boot();
+	}
+
+	/**
+	 * Zwei Block-Kategorien: „Formular“ (Container) und „Formularfelder“ (alle Feld-Blöcke).
+	 *
+	 * @param array<int,array<string,mixed>> $categories Bestehende Kategorien.
+	 * @param mixed                            $context Editor-Kontext.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function register_block_category( $categories, $context = null ) {
+		$our_slugs = array( 'gfb', 'gfb-form', 'gfb-fields' );
+		$out       = array();
+		foreach ( $categories as $cat ) {
+			if ( isset( $cat['slug'] ) && in_array( $cat['slug'], $our_slugs, true ) ) {
+				continue;
+			}
+			$out[] = $cat;
+		}
+		$out[] = array(
+			'slug'  => 'gfb-form',
+			'title' => __( 'Formular', 'gutenberg-formbuilder' ),
+			'icon'  => null,
+		);
+		$out[] = array(
+			'slug'  => 'gfb-fields',
+			'title' => __( 'Formularfelder', 'gutenberg-formbuilder' ),
+			'icon'  => null,
+		);
+
+		return $out;
 	}
 
 	/**
@@ -35,6 +66,15 @@ class GFB_Plugin {
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-components', 'wp-block-editor', 'wp-data', 'wp-core-data' ),
 			GFB_PLUGIN_VERSION,
 			true
+		);
+
+		wp_localize_script(
+			'gfb-editor',
+			'gfbEditorAssets',
+			array(
+				'editorFormStylesUrl' => GFB_PLUGIN_URL . 'assets/gfb-editor.css',
+				'version'             => GFB_PLUGIN_VERSION,
+			)
 		);
 
 		wp_register_script(
@@ -72,12 +112,13 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Styles für die Block-Vorschau im Editor.
+	 * Früher: globales Editor-CSS. Formular-Styles (`gfb-editor.css`) werden nur bei Bedarf
+	 * per editor.js in den Canvas-Iframe eingefügt (wenn kein Formular „Theme (Standard)“ ist).
+	 * `gfb-editor` lädt weiterhin über block.json → editorScript.
 	 *
 	 * @return void
 	 */
 	public static function enqueue_editor_assets() {
-		wp_enqueue_style( 'gfb-form' );
 	}
 
 	/**
@@ -112,24 +153,88 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Erscheinungsmodus für Hell/Dunkel/Automatisch.
+	 * Erscheinungsmodus: Theme (Standard), Automatisch, Hell, Dunkel.
 	 *
 	 * @param mixed $value Raw attribute.
-	 * @return string auto|light|dark
+	 * @return string theme|auto|light|dark
 	 */
 	private static function sanitize_appearance_mode( $value ) {
-		$v = is_string( $value ) ? sanitize_key( $value ) : 'auto';
-		if ( in_array( $v, array( 'auto', 'light', 'dark' ), true ) ) {
+		$v = is_string( $value ) ? sanitize_key( $value ) : 'theme';
+		if ( in_array( $v, array( 'theme', 'auto', 'light', 'dark' ), true ) ) {
 			return $v;
 		}
-		return 'auto';
+		return 'theme';
 	}
 
 	/**
-	 * Farbwert für style="--var: …" (wie im Block-Editor, nicht nur 6-stelliges Hex).
+	 * Klammern in einem CSS-Wert prüfen (eine Ebene reicht für typische Farb-/Verlaufsfunktionen).
+	 *
+	 * @param string $s Wert.
+	 * @return bool
+	 */
+	private static function gfb_css_parentheses_balanced( $s ) {
+		$d   = 0;
+		$len = strlen( $s );
+		for ( $i = 0; $i < $len; $i++ ) {
+			$c = $s[ $i ];
+			if ( '(' === $c ) {
+				++$d;
+				if ( $d > 80 ) {
+					return false;
+				}
+			} elseif ( ')' === $c ) {
+				--$d;
+				if ( $d < 0 ) {
+					return false;
+				}
+			}
+		}
+		return 0 === $d;
+	}
+
+	/**
+	 * Gefährliche CSS-Fragmente ausschließen (kein url(), kein expression etc.).
+	 *
+	 * @param string $s Wert.
+	 * @return bool True wenn unsicher.
+	 */
+	private static function gfb_css_value_has_blocked_tokens( $s ) {
+		if ( preg_match( '/\burl\s*\(|expression\s*\(|@import|javascript\s*:/i', $s ) ) {
+			return true;
+		}
+		foreach ( array( '<', '>', '`', '\\' ) as $bad ) {
+			if ( false !== strpos( $s, $bad ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Erlaubt eine begrenzte Länge, ausgewogene Klammern und keine blockierten Token.
+	 *
+	 * @param string $value Wert.
+	 * @param int    $max_len Maximale Zeichenlänge.
+	 * @return string Bereinigter Wert oder leer.
+	 */
+	private static function gfb_sanitize_functional_css_color( $value, $max_len = 4096 ) {
+		if ( strlen( $value ) > $max_len ) {
+			return '';
+		}
+		if ( self::gfb_css_value_has_blocked_tokens( $value ) ) {
+			return '';
+		}
+		if ( ! self::gfb_css_parentheses_balanced( $value ) ) {
+			return '';
+		}
+		return $value;
+	}
+
+	/**
+	 * Farbwert / Verlauf für style="--var: …" (Block-Editor: Hex, Alpha, Verläufe, moderne Farbräume).
 	 *
 	 * @param mixed $value Raw attribute.
-	 * @return string Sicherer CSS-Farbwert oder leer.
+	 * @return string Sicherer CSS-Wert oder leer.
 	 */
 	private static function sanitize_gfb_color( $value ) {
 		if ( ! is_string( $value ) ) {
@@ -139,6 +244,13 @@ class GFB_Plugin {
 		if ( '' === $value ) {
 			return '';
 		}
+		$lower = strtolower( $value );
+		if ( 'transparent' === $lower ) {
+			return 'transparent';
+		}
+		if ( 'currentcolor' === $lower ) {
+			return 'currentColor';
+		}
 		$hex = sanitize_hex_color( $value );
 		if ( is_string( $hex ) && '' !== $hex ) {
 			return $hex;
@@ -147,26 +259,82 @@ class GFB_Plugin {
 		if ( preg_match( '/^#([A-Fa-f0-9]{8})$/', $value ) ) {
 			return $value;
 		}
-		// Theme-/Block-Presets: var(--wp--preset--color--…)
-		if ( preg_match( '/^var\(\s*(--[a-zA-Z0-9\-]+)\s*\)$/', $value ) ) {
+		// 4-stelliges Hex (#RGBA)
+		if ( preg_match( '/^#([A-Fa-f0-9]{4})$/', $value ) ) {
 			return $value;
 		}
-		// rgb() / rgba() (inkl. Prozent, z. B. rgb(100%, 0%, 0%))
+		// var(--name) oder var(--name, Fallback) — Fallback rekursiv prüfen.
+		if ( preg_match( '/^var\s*\(\s*(--[a-zA-Z0-9\-]+)\s*\)$/i', $value, $vm ) ) {
+			return 'var(' . $vm[1] . ')';
+		}
+		if ( preg_match( '/^var\s*\(\s*(--[a-zA-Z0-9\-]+)\s*,\s*(.+)\)$/is', $value, $vm2 ) ) {
+			$inner = self::sanitize_gfb_color( trim( $vm2[2] ) );
+			if ( '' === $inner ) {
+				return '';
+			}
+			return 'var(' . $vm2[1] . ', ' . $inner . ')';
+		}
+		// rgb() / rgba() — klassisch mit Komma oder modern mit Leerzeichen und / Alpha.
 		if ( preg_match( '/^rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+%?\s*)?\)$/i', $value ) ) {
 			return $value;
 		}
-		// hsl() / hsla()
+		if ( preg_match( '/^rgba?\(\s*[\d.]+%?(?:\s+[\d.]+%?){2}(?:\s*\/\s*[\d.]+%?)?\s*\)$/i', $value ) ) {
+			return $value;
+		}
+		// hsl() / hsla() — klassisch oder mit / Alpha.
 		if ( preg_match( '/^hsla?\(\s*[\d.]+\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*(,\s*[\d.]+\s*)?\)$/i', $value ) ) {
 			return $value;
 		}
+		if ( preg_match( '/^hsla?\(\s*[\d.]+\s+[\d.]+%\s+[\d.]+%(?:\s*\/\s*[\d.]+%?)?\s*\)$/i', $value ) ) {
+			return $value;
+		}
+		// Verläufe und Farbfunktionen mit geklammertem Inhalt (kein url()).
+		$prefixes = array(
+			'linear-gradient',
+			'radial-gradient',
+			'conic-gradient',
+			'repeating-linear-gradient',
+			'repeating-radial-gradient',
+			'repeating-conic-gradient',
+			'color-mix',
+			'oklch',
+			'oklab',
+			'hwb',
+			'lch',
+			'lab',
+		);
+		foreach ( $prefixes as $pfx ) {
+			$plen = strlen( $pfx ) + 1;
+			if ( strlen( $value ) > $plen && 0 === strcasecmp( substr( $value, 0, $plen ), $pfx . '(' ) ) {
+				$ok = self::gfb_sanitize_functional_css_color( $value );
+				return '' !== $ok ? $ok : '';
+			}
+		}
 		return '';
+	}
+
+	/**
+	 * Prüft, ob ein Attributwert nach Sanitization ein CSS-Bildverlauf ist (Shell-Hintergrund).
+	 *
+	 * @param mixed $raw Roher Attributwert.
+	 * @return bool
+	 */
+	private static function gfb_sanitized_attr_is_css_gradient( $raw ) {
+		$s = self::sanitize_gfb_color( is_string( $raw ) ? $raw : '' );
+		if ( '' === $s ) {
+			return false;
+		}
+		return (bool) preg_match(
+			'/^(?:linear|radial|conic|repeating-linear|repeating-radial|repeating-conic)-gradient\s*\(/i',
+			$s
+		);
 	}
 
 	/**
 	 * CSS-Variablen für das Formular-Wrapper-Element (Theme-Farben).
 	 *
 	 * @param array<string,mixed> $attributes Block-Attribute.
-	 * @return string Semikolon-getrennte Deklarationen ohne abschließendes Semikolon am Ende (für style="").
+	 * @return string Semikolon-getrennte Deklarationen ohne abschließendes Semikolon am Ende (für style=").
 	 */
 	private static function build_form_inline_color_style( $attributes ) {
 		$light_map = array(
@@ -178,6 +346,7 @@ class GFB_Plugin {
 			'colorFocus'       => '--gfb-light-border-focus',
 			'colorButtonBg'    => '--gfb-light-submit-bg',
 			'colorButtonText'  => '--gfb-light-submit-text',
+			'colorFormShell'   => '--gfb-light-form-shell',
 		);
 		$dark_map  = array(
 			'darkColorLabel'       => '--gfb-dark-label',
@@ -188,6 +357,7 @@ class GFB_Plugin {
 			'darkColorFocus'       => '--gfb-dark-border-focus',
 			'darkColorButtonBg'    => '--gfb-dark-submit-bg',
 			'darkColorButtonText'  => '--gfb-dark-submit-text',
+			'darkColorFormShell'   => '--gfb-dark-form-shell',
 		);
 		$parts     = array();
 		foreach ( $light_map as $attr => $var ) {
@@ -215,6 +385,22 @@ class GFB_Plugin {
 	 * @param array<string,mixed> $attributes Block-Attribute.
 	 * @return bool Ob mindestens eine Hell- oder Dunkelfarbe gesetzt ist.
 	 */
+	/**
+	 * Attribute aus dem gespeicherten Block mit denen aus dem Render-Callback zusammenführen
+	 * (manchmal fehlen Defaults bzw. einzelne Keys im dynamischen Render).
+	 *
+	 * @param array<string,mixed> $attributes Vom Renderer übergebene Attribute.
+	 * @param WP_Block|null       $block      Block-Instanz.
+	 * @return array<string,mixed>
+	 */
+	private static function merge_form_render_attributes( $attributes, $block ) {
+		$attrs = is_array( $attributes ) ? $attributes : array();
+		if ( $block instanceof WP_Block && ! empty( $block->parsed_block['attrs'] ) && is_array( $block->parsed_block['attrs'] ) ) {
+			return array_merge( $block->parsed_block['attrs'], $attrs );
+		}
+		return $attrs;
+	}
+
 	private static function form_has_any_custom_colors( $attributes ) {
 		$keys = array(
 			'colorLabel',
@@ -225,6 +411,7 @@ class GFB_Plugin {
 			'colorFocus',
 			'colorButtonBg',
 			'colorButtonText',
+			'colorFormShell',
 			'darkColorLabel',
 			'darkColorText',
 			'darkColorPlaceholder',
@@ -233,6 +420,7 @@ class GFB_Plugin {
 			'darkColorFocus',
 			'darkColorButtonBg',
 			'darkColorButtonText',
+			'darkColorFormShell',
 		);
 		foreach ( $keys as $k ) {
 			if ( ! empty( $attributes[ $k ] ) && '' !== self::sanitize_gfb_color( $attributes[ $k ] ) ) {
@@ -251,7 +439,8 @@ class GFB_Plugin {
 	 * @return string
 	 */
 	public static function render_form_block( $attributes, $content, $block ) {
-		$form_id = ! empty( $attributes['formId'] ) ? sanitize_key( $attributes['formId'] ) : '';
+		$attributes = self::merge_form_render_attributes( $attributes, $block );
+		$form_id    = ! empty( $attributes['formId'] ) ? sanitize_key( $attributes['formId'] ) : '';
 		if ( ! $form_id ) {
 			return '';
 		}
@@ -282,8 +471,12 @@ class GFB_Plugin {
 			$draft_ttl_days = 30;
 		}
 
+		$appearance = self::sanitize_appearance_mode( isset( $attributes['appearanceMode'] ) ? $attributes['appearanceMode'] : 'theme' );
+
 		wp_enqueue_script( 'gfb-frontend' );
-		wp_enqueue_style( 'gfb-form' );
+		if ( 'theme' !== $appearance ) {
+			wp_enqueue_style( 'gfb-form' );
+		}
 
 		$status      = isset( $_GET['gfb_status'] ) ? sanitize_key( wp_unslash( $_GET['gfb_status'] ) ) : '';
 		$status_form = isset( $_GET['gfb_form'] ) ? sanitize_key( wp_unslash( $_GET['gfb_form'] ) ) : '';
@@ -294,19 +487,30 @@ class GFB_Plugin {
 			$has_file_field = self::parsed_blocks_contain_block( $block->parsed_block['innerBlocks'], 'gfb/field-file' );
 		}
 
-		$appearance        = self::sanitize_appearance_mode( isset( $attributes['appearanceMode'] ) ? $attributes['appearanceMode'] : 'auto' );
 		$wrapper_classes   = array( 'gfb-form-wrapper' );
 		$form_color_style = self::build_form_inline_color_style( $attributes );
-		if ( self::form_has_any_custom_colors( $attributes ) ) {
+		if ( 'theme' !== $appearance && self::form_has_any_custom_colors( $attributes ) ) {
 			$wrapper_classes[] = 'gfb-form-colors-custom';
 		}
+		if ( 'theme' !== $appearance ) {
+			if ( self::gfb_sanitized_attr_is_css_gradient( $attributes['colorFormShell'] ?? '' ) ) {
+				$wrapper_classes[] = 'gfb-form-shell-gradient--light';
+			}
+			if ( self::gfb_sanitized_attr_is_css_gradient( $attributes['darkColorFormShell'] ?? '' ) ) {
+				$wrapper_classes[] = 'gfb-form-shell-gradient--dark';
+			}
+		}
+		$wrapper_attr_args = array(
+			'class'               => implode( ' ', $wrapper_classes ),
+			'data-gfb-appearance' => $appearance,
+		);
+		if ( '' !== $form_color_style ) {
+			$wrapper_attr_args['style'] = $form_color_style;
+		}
+		$wrapper_attrs = get_block_wrapper_attributes( $wrapper_attr_args );
 		ob_start();
 		?>
-		<div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" data-gfb-appearance="<?php echo esc_attr( $appearance ); ?>"<?php
-		if ( '' !== $form_color_style ) :
-			echo ' style="' . esc_attr( $form_color_style ) . '"';
-		endif;
-		?>>
+		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<?php if ( $status && $status_form === $form_id && $status_msg ) : ?>
 				<div class="gfb-notice gfb-notice-<?php echo esc_attr( $status ); ?>">
 					<?php echo esc_html( $status_msg ); ?>

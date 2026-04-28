@@ -36,8 +36,26 @@
 	--gfb-dark-submit-text: #ffffff;
 }
 
-.gfb-editor-form[data-gfb-appearance="light"],
-.gfb-editor-form:not([data-gfb-appearance]) {
+.gfb-editor-form[data-gfb-appearance="theme"] {
+	--gfb-label: inherit;
+	--gfb-text: inherit;
+	--gfb-placeholder: color-mix(in srgb, currentColor 42%, transparent);
+	--gfb-border: color-mix(in srgb, currentColor 20%, transparent);
+	--gfb-border-focus: LinkText;
+	--gfb-bg: Field;
+	--gfb-bg-subtle: color-mix(in srgb, Field 88%, CanvasText 12%);
+	--gfb-submit-bg: LinkText;
+	--gfb-submit-text: Canvas;
+	--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, LinkText 30%, transparent);
+	color: inherit;
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+	padding: 0;
+	max-width: none;
+}
+
+.gfb-editor-form[data-gfb-appearance="light"] {
 	--gfb-label: var(--gfb-light-label);
 	--gfb-text: var(--gfb-light-text);
 	--gfb-placeholder: var(--gfb-light-placeholder);
@@ -47,9 +65,9 @@
 	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
 	--gfb-submit-bg: var(--gfb-light-submit-bg);
 	--gfb-submit-text: var(--gfb-light-submit-text);
+	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
+	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
 	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
-	border-color: #d2d2d7;
-	background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
 }
 
 .gfb-editor-form[data-gfb-appearance="dark"] {
@@ -62,9 +80,9 @@
 	--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
 	--gfb-submit-bg: var(--gfb-dark-submit-bg);
 	--gfb-submit-text: var(--gfb-dark-submit-text);
+	--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
+	--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
 	--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
-	border-color: #424245;
-	background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
 }
 
 .gfb-editor-form[data-gfb-appearance="auto"] {
@@ -77,9 +95,9 @@
 	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
 	--gfb-submit-bg: var(--gfb-light-submit-bg);
 	--gfb-submit-text: var(--gfb-light-submit-text);
+	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
+	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
 	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
-	border-color: #d2d2d7;
-	background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -93,15 +111,14 @@
 		--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
 		--gfb-submit-bg: var(--gfb-dark-submit-bg);
 		--gfb-submit-text: var(--gfb-dark-submit-text);
+		--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
+		--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
 		--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
-		border-color: #424245;
-		background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
 	}
 }
 
 @supports (color: color-mix(in srgb, red, blue)) {
 	.gfb-editor-form[data-gfb-appearance="light"],
-	.gfb-editor-form:not([data-gfb-appearance]),
 	.gfb-editor-form[data-gfb-appearance="auto"] {
 		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
 	}
@@ -117,16 +134,46 @@
 	}
 }
 
+.gfb-editor-form[data-gfb-appearance="light"],
+.gfb-editor-form[data-gfb-appearance="dark"],
+.gfb-editor-form[data-gfb-appearance="auto"] {
+	padding: 1rem 1.125rem;
+	border-radius: var(--gfb-radius);
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--gfb-border);
+	background: linear-gradient(180deg, var(--gfb-shell-top) 0%, var(--gfb-shell-bottom) 100%);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Wie form.css: Verlauf für Formularbereich direkt als background, nicht verschachtelt. */
+.gfb-editor-form[data-gfb-appearance="light"].gfb-form-shell-gradient--light {
+	background: var(--gfb-light-form-shell);
+}
+
+.gfb-editor-form[data-gfb-appearance="auto"].gfb-form-shell-gradient--light {
+	background: var(--gfb-light-form-shell);
+}
+
+@media (prefers-color-scheme: dark) {
+	.gfb-editor-form[data-gfb-appearance="auto"]:not(.gfb-form-shell-gradient--dark) {
+		background: linear-gradient(180deg, var(--gfb-shell-top) 0%, var(--gfb-shell-bottom) 100%);
+	}
+
+	.gfb-editor-form[data-gfb-appearance="auto"].gfb-form-shell-gradient--dark {
+		background: var(--gfb-dark-form-shell);
+	}
+}
+
+.gfb-editor-form[data-gfb-appearance="dark"].gfb-form-shell-gradient--dark {
+	background: var(--gfb-dark-form-shell);
+}
+
 .gfb-editor-form {
 	font-family: var(--gfb-font);
 	color: var(--gfb-text);
 	max-width: 32rem;
 	margin-inline: 0;
-	padding: 1rem 1.125rem;
-	border-radius: var(--gfb-radius);
-	border-width: 1px;
-	border-style: solid;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .gfb-editor-form *,
@@ -256,6 +303,14 @@
 	margin-top: 0.25rem;
 }
 
+.gfb-editor-radio-options--row {
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: 0.85rem;
+	row-gap: 0.35rem;
+}
+
 .gfb-editor-radio-options label {
 	display: flex;
 	flex-direction: row;
@@ -282,4 +337,49 @@
 		color: var(--gfb-text);
 		-webkit-text-fill-color: var(--gfb-text);
 	}
+}
+
+/*
+ * Style Book / Inserter: Felder einzeln ohne .gfb-editor-form — aufgelöste Tokens,
+ * damit Vorschau lesbar ist und globale Styles (Typo, Farben) live am Block-Wrapper greifen.
+ */
+.block-editor-block-preview__content .gfb-editor-field,
+.block-editor-inserter__preview-content .gfb-editor-field {
+	--gfb-font: inherit;
+	--gfb-label-size: 0.8125rem;
+	--gfb-label-weight: 500;
+	--gfb-body-size: 1.0625rem;
+	--gfb-radius: 10px;
+	--gfb-radius-sm: 8px;
+	--gfb-field-gap: 0.5rem;
+	--gfb-stack-gap: 1.25rem;
+	--gfb-input-pad-y: 0.75rem;
+	--gfb-input-pad-x: 0.875rem;
+	--gfb-label: #6e6e73;
+	--gfb-text: #1d1d1f;
+	--gfb-placeholder: #aeaeb2;
+	--gfb-border: #d2d2d7;
+	--gfb-border-focus: #007aff;
+	--gfb-bg: #ffffff;
+	--gfb-bg-subtle: #f5f5f7;
+	--gfb-submit-bg: #007aff;
+	--gfb-submit-text: #ffffff;
+	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
+}
+
+/*
+ * GFB-Blöcke im Block-Inserter / Schnell+: Icons wirklich in #1b2627 (nicht nur Graustufen).
+ * Core setzt Dashicons oft auf currentColor; hier gezielt für alle gfb-*-Listeneinträge.
+ */
+.block-editor button[class*="editor-block-list-item-gfb-"] .block-editor-block-icon,
+.block-editor button[class*="editor-block-list-item-gfb-"] .block-editor-block-icon svg,
+.block-editor button[class*="editor-block-list-item-gfb-"] svg {
+	color: #1b2627 !important;
+	fill: #1b2627 !important;
+}
+
+.block-editor [class*="editor-block-list-item-gfb-"] .block-editor-block-icon.has-colors,
+.block-editor [class*="editor-block-list-item-gfb-"] .block-editor-block-icon.has-colors svg {
+	color: #1b2627 !important;
+	fill: #1b2627 !important;
 }

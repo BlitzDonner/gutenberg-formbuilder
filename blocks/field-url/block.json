@@ -4,18 +4,48 @@
   "name": "gfb/field-url",
   "version": "0.2.0",
   "title": "URL",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "admin-links",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "admin-links",
+    "foreground": "#1b2627"
+  },
   "description": "Webadresse (URL).",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
-    "label": { "type": "string", "default": "Website" },
-    "name": { "type": "string", "default": "" },
-    "placeholder": { "type": "string", "default": "https://" },
-    "required": { "type": "boolean", "default": false }
+    "label": {
+      "type": "string",
+      "default": "Website"
+    },
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "placeholder": {
+      "type": "string",
+      "default": "https://"
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    }
   },
-  "supports": { "html": false },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
+  },
   "usesContext": [
     "gfb/formId",
     "gfb/appearanceMode",
@@ -34,7 +64,20 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Website",
+      "name": "sb_url",
+      "placeholder": "https://",
+      "required": false
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

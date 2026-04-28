@@ -4,16 +4,40 @@
   "name": "gfb/field-hidden",
   "version": "0.2.0",
   "title": "Verstecktes Feld",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "editor-code",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "editor-code",
+    "foreground": "#1b2627"
+  },
   "description": "Technischer Wert (nicht sichtbar).",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
-    "name": { "type": "string", "default": "" },
-    "hiddenValue": { "type": "string", "default": "" }
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "hiddenValue": {
+      "type": "string",
+      "default": ""
+    }
   },
-  "supports": { "html": false },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
+  },
   "usesContext": [
     "gfb/formId",
     "gfb/appearanceMode",
@@ -32,7 +56,18 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "name": "sb_hidden",
+      "hiddenValue": "stylebook"
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

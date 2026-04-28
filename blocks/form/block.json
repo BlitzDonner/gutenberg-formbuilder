@@ -2,10 +2,13 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "gfb/form",
-  "version": "0.6.0",
+  "version": "0.7.11",
   "title": "Formular",
-  "category": "widgets",
-  "icon": "feedback",
+  "category": "gfb-form",
+  "icon": {
+    "src": "feedback",
+    "foreground": "#1b2627"
+  },
   "description": "Formular-Container für den seitenbasierten Formbuilder.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
@@ -37,7 +40,7 @@
     },
     "appearanceMode": {
       "type": "string",
-      "default": "auto"
+      "default": "theme"
     },
     "colorLabel": { "type": "string", "default": "" },
     "colorText": { "type": "string", "default": "" },
@@ -47,6 +50,7 @@
     "colorFocus": { "type": "string", "default": "" },
     "colorButtonBg": { "type": "string", "default": "" },
     "colorButtonText": { "type": "string", "default": "" },
+    "colorFormShell": { "type": "string", "default": "" },
     "darkColorLabel": { "type": "string", "default": "" },
     "darkColorText": { "type": "string", "default": "" },
     "darkColorPlaceholder": { "type": "string", "default": "" },
@@ -54,10 +58,25 @@
     "darkColorBorder": { "type": "string", "default": "" },
     "darkColorFocus": { "type": "string", "default": "" },
     "darkColorButtonBg": { "type": "string", "default": "" },
-    "darkColorButtonText": { "type": "string", "default": "" }
+    "darkColorButtonText": { "type": "string", "default": "" },
+    "darkColorFormShell": { "type": "string", "default": "" }
   },
   "supports": {
-    "html": false
+    "html": false,
+    "align": ["wide", "full"],
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "background": true,
+      "text": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true
+    },
+    "border": true
   },
   "providesContext": {
     "gfb/formId": "formId",
@@ -70,6 +89,7 @@
     "gfb/colorFocus": "colorFocus",
     "gfb/colorButtonBg": "colorButtonBg",
     "gfb/colorButtonText": "colorButtonText",
+    "gfb/colorFormShell": "colorFormShell",
     "gfb/darkColorLabel": "darkColorLabel",
     "gfb/darkColorText": "darkColorText",
     "gfb/darkColorPlaceholder": "darkColorPlaceholder",
@@ -77,8 +97,8 @@
     "gfb/darkColorBorder": "darkColorBorder",
     "gfb/darkColorFocus": "darkColorFocus",
     "gfb/darkColorButtonBg": "darkColorButtonBg",
-    "gfb/darkColorButtonText": "darkColorButtonText"
+    "gfb/darkColorButtonText": "darkColorButtonText",
+    "gfb/darkColorFormShell": "darkColorFormShell"
   },
-  "editorScript": "gfb-editor",
-  "editorStyle": "file:../../assets/gfb-editor.css"
+  "editorScript": "gfb-editor"
 }

@@ -4,9 +4,11 @@
   "name": "gfb/field-textarea",
   "version": "0.1.0",
   "title": "Textbereich",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "editor-paragraph",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "editor-paragraph",
+    "foreground": "#1b2627"
+  },
   "description": "Mehrzeiliges Texteingabefeld.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
@@ -28,7 +30,21 @@
     }
   },
   "supports": {
-    "html": false
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
   },
   "usesContext": [
     "gfb/formId",
@@ -48,7 +64,20 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Nachricht",
+      "name": "sb_msg",
+      "placeholder": "Ihre Nachricht …",
+      "required": false
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

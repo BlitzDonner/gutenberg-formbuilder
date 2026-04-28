@@ -4,9 +4,11 @@
   "name": "gfb/field-checkbox",
   "version": "0.1.0",
   "title": "Checkbox",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "yes-alt",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "yes-alt",
+    "foreground": "#1b2627"
+  },
   "description": "Checkbox-Feld.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
@@ -24,7 +26,21 @@
     }
   },
   "supports": {
-    "html": false
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
   },
   "usesContext": [
     "gfb/formId",
@@ -44,7 +60,19 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Ich stimme den Bedingungen zu",
+      "name": "sb_check",
+      "required": false
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }

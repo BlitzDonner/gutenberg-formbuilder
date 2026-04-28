@@ -4,19 +4,52 @@
   "name": "gfb/field-file",
   "version": "0.2.0",
   "title": "Datei-Upload",
-  "ancestor": ["gfb/form"],
-  "category": "widgets",
-  "icon": "upload",
+  "category": "gfb-fields",
+  "icon": {
+    "src": "upload",
+    "foreground": "#1b2627"
+  },
   "description": "Datei hochladen.",
   "textdomain": "gutenberg-formbuilder",
   "attributes": {
-    "label": { "type": "string", "default": "Datei" },
-    "name": { "type": "string", "default": "" },
-    "required": { "type": "boolean", "default": false },
-    "accept": { "type": "string", "default": "" },
-    "maxSizeMb": { "type": "number", "default": 8 }
+    "label": {
+      "type": "string",
+      "default": "Datei"
+    },
+    "name": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    },
+    "accept": {
+      "type": "string",
+      "default": ""
+    },
+    "maxSizeMb": {
+      "type": "number",
+      "default": 8
+    }
   },
-  "supports": { "html": false },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true
+    },
+    "border": true
+  },
   "usesContext": [
     "gfb/formId",
     "gfb/appearanceMode",
@@ -35,7 +68,21 @@
     "gfb/darkColorBorder",
     "gfb/darkColorFocus",
     "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText"
+    "gfb/darkColorButtonText",
+    "gfb/colorFormShell",
+    "gfb/darkColorFormShell"
   ],
-  "editorScript": "gfb-editor"
+  "editorScript": "gfb-editor",
+  "example": {
+    "attributes": {
+      "label": "Datei",
+      "name": "sb_file",
+      "required": false,
+      "accept": ".pdf,image/*",
+      "maxSizeMb": 8
+    }
+  },
+  "ancestor": [
+    "gfb/form"
+  ]
 }
