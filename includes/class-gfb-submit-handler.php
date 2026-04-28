@@ -113,6 +113,41 @@ class GFB_Submit_Handler {
 			self::redirect_with_state( $post_id, $form_id, 'error', implode( ' ', $errors ) );
 		}
 
+		/**
+		 * Extra validation hook for submit button flow.
+		 *
+		 * Return `WP_Error` or non-empty string to stop success handling and show an error message.
+		 *
+		 * @param null|string|WP_Error $error      Validation result from previous callbacks.
+		 * @param array<string,mixed>  $payload    Validated payload (without _gfb_labels at this point).
+		 * @param array<int,array>     $schema     Form schema used for validation.
+		 * @param array<string,mixed>  $form_attrs gfb/form block attributes.
+		 * @param int                  $post_id    Post ID.
+		 * @param string               $form_id    Form ID.
+		 */
+		$external_validation = apply_filters( 'gfb_submit_button_validation', null, $payload, $schema, $form_attrs, $post_id, $form_id );
+		if ( is_wp_error( $external_validation ) ) {
+			$message = $external_validation->get_error_message();
+			if ( '' === $message ) {
+				$message = __( 'Die Anfrage konnte nicht verarbeitet werden.', 'gutenberg-formbuilder' );
+			}
+			self::redirect_with_state( $post_id, $form_id, 'error', $message );
+		}
+		if ( is_string( $external_validation ) && '' !== trim( $external_validation ) ) {
+			self::redirect_with_state( $post_id, $form_id, 'error', sanitize_text_field( $external_validation ) );
+		}
+
+		/**
+		 * Fires after server-side validation has completed successfully.
+		 *
+		 * @param array<string,mixed> $payload    Validated payload (without _gfb_labels at this point).
+		 * @param array<int,array>    $schema     Form schema used for validation.
+		 * @param array<string,mixed> $form_attrs gfb/form block attributes.
+		 * @param int                 $post_id    Post ID.
+		 * @param string              $form_id    Form ID.
+		 */
+		do_action( 'gfb_after_server_validation', $payload, $schema, $form_attrs, $post_id, $form_id );
+
 		// Labels zum Zeitpunkt des Absendens (für Archiv/Backend, auch wenn sich das Formular später ändert).
 		$label_snapshot = array();
 		foreach ( $schema as $field ) {
@@ -139,6 +174,17 @@ class GFB_Submit_Handler {
 		if ( false === $inserted ) {
 			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Speichern fehlgeschlagen. Bitte versuche es erneut.', 'gutenberg-formbuilder' ) );
 		}
+
+		/**
+		 * Fires after submission values were stored in database.
+		 *
+		 * @param int                 $submission_id Inserted row ID in `{prefix}gfb_submissions`.
+		 * @param array<string,mixed> $payload       Stored payload (including _gfb_labels).
+		 * @param array<string,mixed> $form_attrs    gfb/form block attributes.
+		 * @param int                 $post_id       Post ID.
+		 * @param string              $form_id       Form ID.
+		 */
+		do_action( 'gfb_after_submission_insert', (int) $wpdb->insert_id, $payload, $form_attrs, $post_id, $form_id );
 
 		self::send_notification_mail( $post_id, $form_id, $payload );
 		self::redirect_with_state(

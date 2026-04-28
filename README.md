@@ -75,6 +75,15 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen)
 - Lokale Drafts (IndexedDB), optional Wiederherstellen / Draft löschen (inkl. Safari-Fixes)
 
+## Hooks (Submit)
+
+- `gfb_submit_button_validation` (Filter): läuft nach interner Server-Validierung und vor DB-Insert.  
+  Rückgabe:
+  - `null`/leerer String: kein zusätzlicher Fehler
+  - `WP_Error` oder nicht-leerer String: Abbruch mit Fehlermeldung (`gfb_status=error`) statt Erfolg/Folgeseite
+- `gfb_after_server_validation` (Action): läuft nach erfolgreicher Server-Validierung (vor DB-Insert)
+- `gfb_after_submission_insert` (Action): läuft nach erfolgreichem DB-Insert
+
 ## Repository-Layout
 
 ```
