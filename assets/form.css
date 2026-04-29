@@ -193,6 +193,10 @@
 	padding: 0;
 }
 
+.gfb-form {
+	width: 100% !important;
+}
+
 /* Statusmeldung */
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-notice {
 	font-size: var(--gfb-body-size);
