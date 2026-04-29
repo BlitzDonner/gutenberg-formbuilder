@@ -6,8 +6,7 @@
   "title": "URL",
   "category": "gfb-fields",
   "icon": {
-    "src": "admin-links",
-    "foreground": "#1b2627"
+    "src": "admin-links"
   },
   "description": "Webadresse (URL).",
   "textdomain": "gutenberg-formbuilder",

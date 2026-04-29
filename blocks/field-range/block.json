@@ -6,8 +6,7 @@
   "title": "Schieberegler",
   "category": "gfb-fields",
   "icon": {
-    "src": "image-flip-horizontal",
-    "foreground": "#1b2627"
+    "src": "image-flip-horizontal"
   },
   "description": "Bereich (Slider).",
   "textdomain": "gutenberg-formbuilder",

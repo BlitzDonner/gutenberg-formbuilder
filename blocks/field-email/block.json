@@ -6,8 +6,7 @@
   "title": "E-Mail-Feld",
   "category": "gfb-fields",
   "icon": {
-    "src": "email",
-    "foreground": "#1b2627"
+    "src": "email"
   },
   "description": "E-Mail-Eingabefeld.",
   "textdomain": "gutenberg-formbuilder",

@@ -6,8 +6,7 @@
   "title": "Absenden-Button",
   "category": "gfb-fields",
   "icon": {
-    "src": "button",
-    "foreground": "#1b2627"
+    "src": "button"
   },
   "description": "Button zum Absenden des Formulars.",
   "textdomain": "gutenberg-formbuilder",

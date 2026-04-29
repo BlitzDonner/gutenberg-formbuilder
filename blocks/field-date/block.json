@@ -6,8 +6,7 @@
   "title": "Datum",
   "category": "gfb-fields",
   "icon": {
-    "src": "calendar",
-    "foreground": "#1b2627"
+    "src": "calendar"
   },
   "description": "Datumsauswahl.",
   "textdomain": "gutenberg-formbuilder",

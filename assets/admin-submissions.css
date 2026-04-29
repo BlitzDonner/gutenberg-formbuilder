@@ -1,5 +1,5 @@
 /**
- * Formular-Einträge (wp-admin) – gleiche Design-Sprache wie form.css.
+ * Formular-Einträge (wp-admin) – Typo/Layout; Farben über Systemfarben (wie form.css).
  * Selektoren mit #wpbody-content .wrap… damit sie gegen Core-Admin-Styles gewinnen.
  */
 
@@ -8,18 +8,19 @@
 }
 
 #wpbody-content .wrap.gfb-admin {
-	--gfb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
-	--gfb-label: #6e6e73;
-	--gfb-text: #1d1d1f;
-	--gfb-muted: #86868b;
-	--gfb-border: #d2d2d7;
-	--gfb-border-focus: #007aff;
-	--gfb-bg: #ffffff;
-	--gfb-bg-subtle: #f5f5f7;
+	color-scheme: light dark;
+	--gfb-font: inherit;
+	--gfb-label: GrayText;
+	--gfb-text: CanvasText;
+	--gfb-muted: GrayText;
+	--gfb-border: color-mix(in srgb, CanvasText 18%, Canvas);
+	--gfb-border-focus: LinkText;
+	--gfb-bg: Canvas;
+	--gfb-bg-subtle: color-mix(in srgb, CanvasText 6%, Canvas);
 	--gfb-radius: 10px;
 	--gfb-radius-sm: 8px;
 	--gfb-stack: 1.25rem;
-	--gfb-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	--gfb-shadow: 0 1px 2px color-mix(in srgb, CanvasText 6%, transparent);
 	box-sizing: border-box;
 	font-family: var(--gfb-font) !important;
 	color: var(--gfb-text) !important;
@@ -197,15 +198,15 @@
 }
 
 #wpbody-content .wrap.gfb-admin .button.gfb-admin-btn-delete {
-	background: #fff;
-	border-color: #ff3b30;
-	color: #c41e16;
+	background: Canvas;
+	border-color: color-mix(in srgb, GrayText 35%, LinkText);
+	color: FieldText;
 }
 
 #wpbody-content .wrap.gfb-admin .button.gfb-admin-btn-delete:hover {
-	background: #fff5f5;
-	border-color: #e6352b;
-	color: #a01810;
+	background: color-mix(in srgb, GrayText 12%, Canvas);
+	border-color: LinkText;
+	color: FieldText;
 }
 
 /* Liste */
@@ -240,11 +241,11 @@
 	padding: 0.85rem 1rem;
 	font-size: 0.9375rem;
 	vertical-align: top;
-	border-top: 1px solid #e8e8ed;
+	border-top: 1px solid color-mix(in srgb, CanvasText 10%, Canvas);
 }
 
 #wpbody-content .wrap.gfb-admin table.gfb-admin-table tbody tr:hover td {
-	background: #fafafa;
+	background: color-mix(in srgb, CanvasText 4%, Canvas);
 }
 
 #wpbody-content .wrap.gfb-admin table.gfb-admin-table code {

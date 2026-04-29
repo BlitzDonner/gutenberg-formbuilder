@@ -6,8 +6,7 @@
   "title": "Datum und Uhrzeit",
   "category": "gfb-fields",
   "icon": {
-    "src": "calendar-alt",
-    "foreground": "#1b2627"
+    "src": "calendar-alt"
   },
   "description": "Datum und Uhrzeit (lokal).",
   "textdomain": "gutenberg-formbuilder",

@@ -72,8 +72,9 @@ class GFB_Plugin {
 			'gfb-editor',
 			'gfbEditorAssets',
 			array(
-				'editorFormStylesUrl' => GFB_PLUGIN_URL . 'assets/gfb-editor.css',
-				'version'             => GFB_PLUGIN_VERSION,
+				'editorCanvasFormStylesUrl' => GFB_PLUGIN_URL . 'assets/form.css',
+				'editorChromeStylesUrl'     => GFB_PLUGIN_URL . 'assets/gfb-editor.css',
+				'version'                   => GFB_PLUGIN_VERSION,
 			)
 		);
 
@@ -112,9 +113,8 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Früher: globales Editor-CSS. Formular-Styles (`gfb-editor.css`) werden nur bei Bedarf
-	 * per editor.js in den Canvas-Iframe eingefügt (wenn kein Formular „Theme (Standard)“ ist).
-	 * `gfb-editor` lädt weiterhin über block.json → editorScript.
+	 * Canvas-Styles: `form.css` + schmales `gfb-editor.css` per editor.js in den Block-Iframe.
+	 * `gfb-editor` lädt über block.json → editorScript.
 	 *
 	 * @return void
 	 */
@@ -572,7 +572,8 @@ class GFB_Plugin {
 
 		$wrapper_classes   = array( 'gfb-form-wrapper' );
 		$form_color_style = self::build_form_inline_color_style( $attributes );
-		if ( 'theme' !== $appearance && self::form_has_any_custom_colors( $attributes ) ) {
+		/* Theme + eigene Farben: form.css bindet --gfb-light-* / --gfb-dark-* an die Felder (siehe .gfb-form-colors-custom). */
+		if ( 'theme' === $appearance && self::form_has_any_custom_colors( $attributes ) ) {
 			$wrapper_classes[] = 'gfb-form-colors-custom';
 		}
 		if ( 'theme' !== $appearance ) {

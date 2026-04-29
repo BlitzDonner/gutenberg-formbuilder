@@ -6,8 +6,7 @@
   "title": "Zahl",
   "category": "gfb-fields",
   "icon": {
-    "src": "calculator",
-    "foreground": "#1b2627"
+    "src": "calculator"
   },
   "description": "Numerisches Eingabefeld.",
   "textdomain": "gutenberg-formbuilder",

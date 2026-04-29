@@ -6,8 +6,7 @@
   "title": "Datei-Upload",
   "category": "gfb-fields",
   "icon": {
-    "src": "upload",
-    "foreground": "#1b2627"
+    "src": "upload"
   },
   "description": "Datei hochladen.",
   "textdomain": "gutenberg-formbuilder",

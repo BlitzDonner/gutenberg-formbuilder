@@ -6,8 +6,7 @@
   "title": "Auswahlfeld",
   "category": "gfb-fields",
   "icon": {
-    "src": "list-view",
-    "foreground": "#1b2627"
+    "src": "list-view"
   },
   "description": "Dropdown-Auswahlfeld.",
   "textdomain": "gutenberg-formbuilder",

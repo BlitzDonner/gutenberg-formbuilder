@@ -6,8 +6,7 @@
   "title": "Checkbox",
   "category": "gfb-fields",
   "icon": {
-    "src": "yes-alt",
-    "foreground": "#1b2627"
+    "src": "yes-alt"
   },
   "description": "Checkbox-Feld.",
   "textdomain": "gutenberg-formbuilder",

@@ -1,360 +1,10 @@
 /**
- * Nur Block-Editor-Canvas (iframe): wird über block.json → editorStyle geladen.
- * enqueue_block_editor_assets erreicht den Canvas oft nicht.
+ * Nur Block-Editor: Inserter-Vorschau / Style Book (Felder ohne umgebendes Formular)
+ * sowie Block-Listen-Icons. Formular-Canvas nutzt dieselbe form.css wie das Frontend.
  */
 
-.gfb-editor-form {
-	--gfb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
-	--gfb-label-size: 0.8125rem;
-	--gfb-label-weight: 500;
-	--gfb-body-size: 1.0625rem;
-	--gfb-radius: 10px;
-	--gfb-radius-sm: 8px;
-	--gfb-field-gap: 0.5rem;
-	--gfb-stack-gap: 1.25rem;
-	--gfb-input-pad-y: 0.75rem;
-	--gfb-input-pad-x: 0.875rem;
-
-	--gfb-light-label: #6e6e73;
-	--gfb-light-text: #1d1d1f;
-	--gfb-light-placeholder: #aeaeb2;
-	--gfb-light-border: #d2d2d7;
-	--gfb-light-border-focus: #007aff;
-	--gfb-light-bg: #ffffff;
-	--gfb-light-bg-subtle: #f5f5f7;
-	--gfb-light-submit-bg: var(--gfb-light-border-focus);
-	--gfb-light-submit-text: #ffffff;
-
-	--gfb-dark-label: #98989d;
-	--gfb-dark-text: #f5f5f7;
-	--gfb-dark-placeholder: #636366;
-	--gfb-dark-border: #424245;
-	--gfb-dark-border-focus: #0a84ff;
-	--gfb-dark-bg: #1c1c1e;
-	--gfb-dark-bg-subtle: #2c2c2e;
-	--gfb-dark-submit-bg: var(--gfb-dark-border-focus);
-	--gfb-dark-submit-text: #ffffff;
-}
-
-.gfb-editor-form[data-gfb-appearance="theme"] {
-	--gfb-label: inherit;
-	--gfb-text: inherit;
-	--gfb-placeholder: color-mix(in srgb, currentColor 42%, transparent);
-	--gfb-border: color-mix(in srgb, currentColor 20%, transparent);
-	--gfb-border-focus: LinkText;
-	--gfb-bg: Field;
-	--gfb-bg-subtle: color-mix(in srgb, Field 88%, CanvasText 12%);
-	--gfb-submit-bg: LinkText;
-	--gfb-submit-text: Canvas;
-	--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, LinkText 30%, transparent);
-	color: inherit;
-	background: transparent;
-	border-color: transparent;
-	box-shadow: none;
-	padding: 0;
-	max-width: none;
-}
-
-.gfb-editor-form[data-gfb-appearance="light"] {
-	--gfb-label: var(--gfb-light-label);
-	--gfb-text: var(--gfb-light-text);
-	--gfb-placeholder: var(--gfb-light-placeholder);
-	--gfb-border: var(--gfb-light-border);
-	--gfb-border-focus: var(--gfb-light-border-focus);
-	--gfb-bg: var(--gfb-light-bg);
-	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
-	--gfb-submit-bg: var(--gfb-light-submit-bg);
-	--gfb-submit-text: var(--gfb-light-submit-text);
-	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
-	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
-	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
-}
-
-.gfb-editor-form[data-gfb-appearance="dark"] {
-	--gfb-label: var(--gfb-dark-label);
-	--gfb-text: var(--gfb-dark-text);
-	--gfb-placeholder: var(--gfb-dark-placeholder);
-	--gfb-border: var(--gfb-dark-border);
-	--gfb-border-focus: var(--gfb-dark-border-focus);
-	--gfb-bg: var(--gfb-dark-bg);
-	--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
-	--gfb-submit-bg: var(--gfb-dark-submit-bg);
-	--gfb-submit-text: var(--gfb-dark-submit-text);
-	--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
-	--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
-	--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
-}
-
-.gfb-editor-form[data-gfb-appearance="auto"] {
-	--gfb-label: var(--gfb-light-label);
-	--gfb-text: var(--gfb-light-text);
-	--gfb-placeholder: var(--gfb-light-placeholder);
-	--gfb-border: var(--gfb-light-border);
-	--gfb-border-focus: var(--gfb-light-border-focus);
-	--gfb-bg: var(--gfb-light-bg);
-	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
-	--gfb-submit-bg: var(--gfb-light-submit-bg);
-	--gfb-submit-text: var(--gfb-light-submit-text);
-	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
-	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
-	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
-}
-
-@media (prefers-color-scheme: dark) {
-	.gfb-editor-form[data-gfb-appearance="auto"] {
-		--gfb-label: var(--gfb-dark-label);
-		--gfb-text: var(--gfb-dark-text);
-		--gfb-placeholder: var(--gfb-dark-placeholder);
-		--gfb-border: var(--gfb-dark-border);
-		--gfb-border-focus: var(--gfb-dark-border-focus);
-		--gfb-bg: var(--gfb-dark-bg);
-		--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
-		--gfb-submit-bg: var(--gfb-dark-submit-bg);
-		--gfb-submit-text: var(--gfb-dark-submit-text);
-		--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
-		--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
-		--gfb-shadow-focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
-	}
-}
-
-@supports (color: color-mix(in srgb, red, blue)) {
-	.gfb-editor-form[data-gfb-appearance="light"],
-	.gfb-editor-form[data-gfb-appearance="auto"] {
-		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-	}
-
-	.gfb-editor-form[data-gfb-appearance="dark"] {
-		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.gfb-editor-form[data-gfb-appearance="auto"] {
-			--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-		}
-	}
-}
-
-.gfb-editor-form[data-gfb-appearance="light"],
-.gfb-editor-form[data-gfb-appearance="dark"],
-.gfb-editor-form[data-gfb-appearance="auto"] {
-	padding: 1rem 1.125rem;
-	border-radius: var(--gfb-radius);
-	border-width: 1px;
-	border-style: solid;
-	border-color: var(--gfb-border);
-	background: linear-gradient(180deg, var(--gfb-shell-top) 0%, var(--gfb-shell-bottom) 100%);
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-/* Wie form.css: Verlauf für Formularbereich direkt als background, nicht verschachtelt. */
-.gfb-editor-form[data-gfb-appearance="light"].gfb-form-shell-gradient--light {
-	background: var(--gfb-light-form-shell);
-}
-
-.gfb-editor-form[data-gfb-appearance="auto"].gfb-form-shell-gradient--light {
-	background: var(--gfb-light-form-shell);
-}
-
-@media (prefers-color-scheme: dark) {
-	.gfb-editor-form[data-gfb-appearance="auto"]:not(.gfb-form-shell-gradient--dark) {
-		background: linear-gradient(180deg, var(--gfb-shell-top) 0%, var(--gfb-shell-bottom) 100%);
-	}
-
-	.gfb-editor-form[data-gfb-appearance="auto"].gfb-form-shell-gradient--dark {
-		background: var(--gfb-dark-form-shell);
-	}
-}
-
-.gfb-editor-form[data-gfb-appearance="dark"].gfb-form-shell-gradient--dark {
-	background: var(--gfb-dark-form-shell);
-}
-
-.gfb-editor-form {
-	font-family: var(--gfb-font);
-	color: var(--gfb-text);
-	max-width: 32rem;
-	margin-inline: 0;
-}
-
-.gfb-editor-form *,
-.gfb-editor-form *::before,
-.gfb-editor-form *::after {
-	box-sizing: border-box;
-}
-
-.gfb-editor-field {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gfb-field-gap);
-	margin-bottom: var(--gfb-stack-gap);
-}
-
-.gfb-editor-field:last-child {
-	margin-bottom: 0;
-}
-
-.gfb-editor-field label,
-.gfb-radio-group-label {
-	font-size: var(--gfb-label-size);
-	font-weight: var(--gfb-label-weight);
-	color: var(--gfb-label) !important;
-	-webkit-text-fill-color: var(--gfb-label) !important;
-	letter-spacing: -0.01em;
-}
-
-.gfb-editor-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-.gfb-editor-field textarea,
-.gfb-editor-field select {
-	appearance: none;
-	-webkit-appearance: none;
-	width: 100%;
-	max-width: 100%;
-	margin: 0;
-	font-family: inherit;
-	font-size: var(--gfb-body-size);
-	line-height: 1.35;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	background: var(--gfb-bg);
-	border: 1px solid var(--gfb-border);
-	border-radius: var(--gfb-radius);
-	padding: var(--gfb-input-pad-y) var(--gfb-input-pad-x);
-	min-height: 2.75rem;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.gfb-editor-field input::placeholder,
-.gfb-editor-field textarea::placeholder {
-	color: var(--gfb-placeholder) !important;
-}
-
-/* Vorschaufelder sind oft disabled – nicht wie „totes“ Browser-Grau darstellen */
-.gfb-editor-field input:disabled,
-.gfb-editor-field textarea:disabled,
-.gfb-editor-field select:disabled {
-	opacity: 1;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	background-color: var(--gfb-bg);
-	cursor: default;
-}
-
-.gfb-editor-field textarea {
-	min-height: 5rem;
-	resize: vertical;
-}
-
-.gfb-editor-field select {
-	cursor: default;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236e6e73' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
-	background-repeat: no-repeat;
-	background-position: right 0.875rem center;
-	padding-right: 2.25rem;
-}
-
-.gfb-editor-field .gfb-range-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 0.75rem;
-	width: 100%;
-}
-
-.gfb-editor-field .gfb-range-row input[type="range"] {
-	flex: 1;
-	min-width: 0;
-	min-height: 2rem;
-	padding: 0.5rem 0;
-	accent-color: var(--gfb-border-focus);
-}
-
-.gfb-editor-field .gfb-range-value {
-	min-width: 2.75rem;
-	padding: 0.35rem 0.55rem;
-	font-size: var(--gfb-body-size);
-	font-weight: 600;
-	font-variant-numeric: tabular-nums;
-	text-align: right;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	background: var(--gfb-bg-subtle);
-	border-radius: var(--gfb-radius-sm);
-	border: 1px solid var(--gfb-border);
-}
-
-.gfb-editor-field input[type="checkbox"] {
-	width: 1.25rem;
-	height: 1.25rem;
-	min-width: 1.25rem;
-	accent-color: var(--gfb-border-focus);
-}
-
-.gfb-editor-field button[type="button"] {
-	width: 100%;
-	font-family: inherit;
-	font-size: 1.0625rem;
-	font-weight: 600;
-	color: var(--gfb-submit-text, #ffffff) !important;
-	-webkit-text-fill-color: var(--gfb-submit-text, #ffffff) !important;
-	background: var(--gfb-submit-bg, var(--gfb-border-focus));
-	border: none;
-	border-radius: var(--gfb-radius);
-	padding: 0.875rem 1.25rem;
-	min-height: 3rem;
-	cursor: default;
-	opacity: 1;
-}
-
-.gfb-editor-radio-options {
-	display: flex;
-	flex-direction: column;
-	gap: 0.35rem;
-	margin-top: 0.25rem;
-}
-
-.gfb-editor-radio-options--row {
-	flex-direction: row;
-	flex-wrap: wrap;
-	align-items: center;
-	column-gap: 0.85rem;
-	row-gap: 0.35rem;
-}
-
-.gfb-editor-radio-options label {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: var(--gfb-body-size);
-	font-weight: 400;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-}
-
-.gfb-editor-form[data-gfb-appearance="dark"] .gfb-editor-field input:disabled,
-.gfb-editor-form[data-gfb-appearance="dark"] .gfb-editor-field textarea:disabled,
-.gfb-editor-form[data-gfb-appearance="dark"] .gfb-editor-field select:disabled {
-	background-color: var(--gfb-bg);
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-	.gfb-editor-form[data-gfb-appearance="auto"] .gfb-editor-field input:disabled,
-	.gfb-editor-form[data-gfb-appearance="auto"] .gfb-editor-field textarea:disabled,
-	.gfb-editor-form[data-gfb-appearance="auto"] .gfb-editor-field select:disabled {
-		background-color: var(--gfb-bg);
-		color: var(--gfb-text) !important;
-		-webkit-text-fill-color: var(--gfb-text) !important;
-	}
-}
-
-/*
- * Style Book / Inserter: Felder einzeln ohne .gfb-editor-form — aufgelöste Tokens,
- * damit Vorschau lesbar ist und globale Styles (Typo, Farben) live am Block-Wrapper greifen.
- */
-.block-editor-block-preview__content .gfb-editor-field,
-.block-editor-inserter__preview-content .gfb-editor-field {
+.block-editor-block-preview__content .gfb-field,
+.block-editor-inserter__preview-content .gfb-field {
 	--gfb-font: inherit;
 	--gfb-label-size: 0.8125rem;
 	--gfb-label-weight: 500;
@@ -365,31 +15,39 @@
 	--gfb-stack-gap: 1.25rem;
 	--gfb-input-pad-y: 0.75rem;
 	--gfb-input-pad-x: 0.875rem;
-	--gfb-label: #6e6e73;
-	--gfb-text: #1d1d1f;
-	--gfb-placeholder: #aeaeb2;
-	--gfb-border: #d2d2d7;
-	--gfb-border-focus: #007aff;
-	--gfb-bg: #ffffff;
-	--gfb-bg-subtle: #f5f5f7;
-	--gfb-submit-bg: #007aff;
-	--gfb-submit-text: #ffffff;
-	--gfb-shadow-focus: 0 0 0 3px rgba(0, 122, 255, 0.28);
+	color-scheme: light dark;
+	--gfb-label: GrayText;
+	--gfb-text: FieldText;
+	--gfb-placeholder: color-mix(in srgb, FieldText 44%, transparent);
+	--gfb-border: color-mix(in srgb, FieldText 22%, Field);
+	--gfb-border-focus: LinkText;
+	--gfb-bg: Field;
+	--gfb-bg-subtle: color-mix(in srgb, Field 86%, FieldText 14%);
+	--gfb-submit-bg: LinkText;
+	--gfb-submit-text: Canvas;
+	--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, LinkText 32%, transparent);
+}
+
+/* Editor-Hinweis bei verstecktem Feld (kein Frontend-Äquivalent). */
+.gfb-editor-hidden-field-hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: GrayText;
 }
 
 /*
- * GFB-Blöcke im Block-Inserter / Schnell+: Icons wirklich in #1b2627 (nicht nur Graustufen).
- * Core setzt Dashicons oft auf currentColor; hier gezielt für alle gfb-*-Listeneinträge.
+ * GFB-Blöcke im Block-Inserter / Schnell+: Iconfarbe folgt der Editor-Oberfläche.
  */
 .block-editor button[class*="editor-block-list-item-gfb-"] .block-editor-block-icon,
 .block-editor button[class*="editor-block-list-item-gfb-"] .block-editor-block-icon svg,
 .block-editor button[class*="editor-block-list-item-gfb-"] svg {
-	color: #1b2627 !important;
-	fill: #1b2627 !important;
+	color: currentColor !important;
+	fill: currentColor !important;
 }
 
 .block-editor [class*="editor-block-list-item-gfb-"] .block-editor-block-icon.has-colors,
 .block-editor [class*="editor-block-list-item-gfb-"] .block-editor-block-icon.has-colors svg {
-	color: #1b2627 !important;
-	fill: #1b2627 !important;
+	color: currentColor !important;
+	fill: currentColor !important;
 }

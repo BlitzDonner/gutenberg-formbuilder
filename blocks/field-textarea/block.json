@@ -6,8 +6,7 @@
   "title": "Textbereich",
   "category": "gfb-fields",
   "icon": {
-    "src": "editor-paragraph",
-    "foreground": "#1b2627"
+    "src": "editor-paragraph"
   },
   "description": "Mehrzeiliges Texteingabefeld.",
   "textdomain": "gutenberg-formbuilder",

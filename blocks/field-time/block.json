@@ -6,8 +6,7 @@
   "title": "Uhrzeit",
   "category": "gfb-fields",
   "icon": {
-    "src": "clock",
-    "foreground": "#1b2627"
+    "src": "clock"
   },
   "description": "Uhrzeit.",
   "textdomain": "gutenberg-formbuilder",

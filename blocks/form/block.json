@@ -6,8 +6,7 @@
   "title": "Formular",
   "category": "gfb-form",
   "icon": {
-    "src": "feedback",
-    "foreground": "#1b2627"
+    "src": "feedback"
   },
   "description": "Formular-Container für den seitenbasierten Formbuilder.",
   "textdomain": "gutenberg-formbuilder",

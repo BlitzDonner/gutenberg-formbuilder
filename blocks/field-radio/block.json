@@ -6,8 +6,7 @@
   "title": "Radio-Auswahl",
   "category": "gfb-fields",
   "icon": {
-    "src": "marker",
-    "foreground": "#1b2627"
+    "src": "marker"
   },
   "description": "Eine Option aus mehreren wählen.",
   "textdomain": "gutenberg-formbuilder",

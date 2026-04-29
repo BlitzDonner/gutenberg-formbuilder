@@ -6,8 +6,7 @@
   "title": "Telefon",
   "category": "gfb-fields",
   "icon": {
-    "src": "phone",
-    "foreground": "#1b2627"
+    "src": "phone"
   },
   "description": "Telefonnummer.",
   "textdomain": "gutenberg-formbuilder",

@@ -6,8 +6,7 @@
   "title": "Textfeld",
   "category": "gfb-fields",
   "icon": {
-    "src": "editor-textcolor",
-    "foreground": "#1b2627"
+    "src": "editor-textcolor"
   },
   "description": "Einzeiliges Textfeld.",
   "textdomain": "gutenberg-formbuilder",

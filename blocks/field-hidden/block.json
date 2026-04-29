@@ -6,8 +6,7 @@
   "title": "Verstecktes Feld",
   "category": "gfb-fields",
   "icon": {
-    "src": "editor-code",
-    "foreground": "#1b2627"
+    "src": "editor-code"
   },
   "description": "Technischer Wert (nicht sichtbar).",
   "textdomain": "gutenberg-formbuilder",
