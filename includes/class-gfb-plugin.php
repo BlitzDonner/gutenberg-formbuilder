@@ -401,6 +401,90 @@ class GFB_Plugin {
 		return $attrs;
 	}
 
+	/**
+	 * Klassen + Layout-CSS für den InnerBlocks-Bereich (vertikaler Block-Abstand / blockGap).
+	 *
+	 * @param array<string,mixed> $attributes Gemergte Block-Attribute.
+	 * @param WP_Block|null       $block      Block-Instanz.
+	 * @return array{classes:array<int,string>,style_css:string}
+	 */
+	private static function build_form_inner_fields_layout( $attributes, $block ) {
+		$classes = array( 'gfb-form-fields' );
+		if ( function_exists( 'wp_unique_prefixed_id' ) ) {
+			$classes[] = wp_unique_prefixed_id( 'gfb-form-fields-' );
+		} else {
+			$classes[] = 'gfb-form-fields-' . wp_generate_password( 8, false, false );
+		}
+		$unique_class = end( $classes );
+
+		$used_layout = array(
+			'type'         => 'flex',
+			'orientation' => 'vertical',
+		);
+		if ( ! empty( $attributes['layout'] ) && is_array( $attributes['layout'] ) ) {
+			$used_layout = array_merge( $used_layout, $attributes['layout'] );
+		}
+		if ( empty( $used_layout['type'] ) ) {
+			$used_layout['type'] = 'flex';
+		}
+
+		$gap_value = null;
+		if ( ! empty( $attributes['style']['spacing']['blockGap'] ) ) {
+			$gap_value = $attributes['style']['spacing']['blockGap'];
+		}
+		if ( is_array( $gap_value ) ) {
+			foreach ( $gap_value as $gk => $gv ) {
+				if ( $gv && preg_match( '%[\\\\(&=}]|/\\*%', (string) $gv ) ) {
+					$gap_value[ $gk ] = null;
+				}
+			}
+		} elseif ( $gap_value && preg_match( '%[\\\\(&=}]|/\\*%', (string) $gap_value ) ) {
+			$gap_value = null;
+		}
+
+		$global_settings = function_exists( 'wp_get_global_settings' ) ? wp_get_global_settings() : array();
+		$theme_block_gap = isset( $global_settings['spacing']['blockGap'] ) ? $global_settings['spacing']['blockGap'] : null;
+		$has_block_gap   = isset( $theme_block_gap ) || ( null !== $gap_value );
+
+		$block_type = null;
+		if ( $block instanceof WP_Block && $block->block_type instanceof WP_Block_Type ) {
+			$block_type = $block->block_type;
+		} else {
+			$block_type = WP_Block_Type_Registry::get_instance()->get_registered( 'gfb/form' );
+		}
+		$should_skip_gap = $block_type
+			? wp_should_skip_block_supports_serialization( $block_type, 'spacing', 'blockGap' )
+			: false;
+
+		$fallback_gap = '0.5em';
+		if ( $block_type && isset( $block_type->supports['spacing']['blockGap']['__experimentalDefault'] ) ) {
+			$fallback_gap = (string) $block_type->supports['spacing']['blockGap']['__experimentalDefault'];
+		}
+
+		$block_spacing = null;
+		if ( ! empty( $attributes['style']['spacing'] ) && is_array( $attributes['style']['spacing'] ) ) {
+			$block_spacing = $attributes['style']['spacing'];
+		}
+
+		$style_css = '';
+		if ( function_exists( 'wp_get_layout_style' ) ) {
+			$style_css = wp_get_layout_style(
+				'.' . $unique_class,
+				$used_layout,
+				$has_block_gap,
+				$gap_value,
+				$should_skip_gap,
+				$fallback_gap,
+				$block_spacing
+			);
+		}
+
+		return array(
+			'classes'   => $classes,
+			'style_css' => is_string( $style_css ) ? $style_css : '',
+		);
+	}
+
 	private static function form_has_any_custom_colors( $attributes ) {
 		$keys = array(
 			'colorLabel',
@@ -506,7 +590,10 @@ class GFB_Plugin {
 		if ( '' !== $form_color_style ) {
 			$wrapper_attr_args['style'] = $form_color_style;
 		}
-		$wrapper_attrs = get_block_wrapper_attributes( $wrapper_attr_args );
+		$wrapper_attrs = get_block_wrapper_attributes( $wrapper_attr_args, $block );
+
+		$inner_fields = self::build_form_inner_fields_layout( $attributes, $block );
+		$inner_class = implode( ' ', $inner_fields['classes'] );
 		ob_start();
 		?>
 		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
@@ -531,7 +618,12 @@ class GFB_Plugin {
 						<button type="button" class="gfb-draft-reset-button"><?php esc_html_e( 'Draft löschen', 'gutenberg-formbuilder' ); ?></button>
 					</p>
 				<?php endif; ?>
-				<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php if ( ! empty( $inner_fields['style_css'] ) ) : ?>
+					<style><?php echo $inner_fields['style_css']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS aus wp_get_layout_style() ?></style>
+				<?php endif; ?>
+				<div class="<?php echo esc_attr( $inner_class ); ?>">
+					<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
 			</form>
 		</div>
 		<?php

@@ -64,9 +64,18 @@
   "supports": {
     "html": false,
     "align": ["wide", "full"],
+    "layout": {
+      "allowEditing": false,
+      "allowInheriting": false,
+      "default": {
+        "type": "flex",
+        "orientation": "vertical"
+      }
+    },
     "spacing": {
       "margin": true,
-      "padding": true
+      "padding": true,
+      "blockGap": true
     },
     "color": {
       "background": true,

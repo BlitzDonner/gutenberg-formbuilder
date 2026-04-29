@@ -7,6 +7,7 @@
 	var useSelect = wp.data.useSelect;
 	var InspectorControls = wp.blockEditor.InspectorControls;
 	var InnerBlocks = wp.blockEditor.InnerBlocks;
+	var useInnerBlocksProps = wp.blockEditor.useInnerBlocksProps;
 	var useBlockProps = wp.blockEditor.useBlockProps;
 	var useBlockPropsSave = useBlockProps.save;
 	var PanelBody = wp.components.PanelBody;
@@ -583,6 +584,21 @@
 	}
 
 	/**
+	 * Save-Markup: <label for> nur wenn nicht leer (nach trim).
+	 *
+	 * @param {string} forId
+	 * @param {unknown} labelAttr
+	 * @return {*|null}
+	 */
+	function gfbSaveLabelIfAny( forId, labelAttr ) {
+		var t = gfbTrimmedFieldLabel( labelAttr );
+		if ( ! t ) {
+			return null;
+		}
+		return el( 'label', { for: forId }, t );
+	}
+
+	/**
 	 * @param {Array<{ name?: string, attributes?: Record<string, unknown>, innerBlocks?: unknown[] }>|undefined} blocks
 	 * @return {boolean}
 	 */
@@ -932,6 +948,21 @@
 
 			syncFormInstance( attributes, setAttributes, props.clientId );
 
+			var innerBlocksProps = useInnerBlocksProps(
+				{
+					className: 'gfb-form-fields',
+				},
+				{
+					allowedBlocks: allowedInnerBlocks,
+					template: [
+						[ 'gfb/field-text' ],
+						[ 'gfb/field-email' ],
+						[ 'gfb/field-submit' ],
+					],
+					templateLock: false,
+				}
+			);
+
 			return el(
 				'div',
 				formBlockProps,
@@ -1071,15 +1102,7 @@
 					)
 					)
 				),
-				el( InnerBlocks, {
-					allowedBlocks: allowedInnerBlocks,
-					template: [
-						[ 'gfb/field-text' ],
-						[ 'gfb/field-email' ],
-						[ 'gfb/field-submit' ],
-					],
-					templateLock: false,
-				} )
+				el( 'div', innerBlocksProps )
 			);
 		},
 		save: function () {
@@ -1138,7 +1161,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'text',
 					name: a.name,
@@ -1185,7 +1208,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'email',
 					name: a.name,
@@ -1232,7 +1255,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'textarea', {
 					name: a.name,
 					id: a.name,
@@ -1305,7 +1328,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el(
 					'select',
 					{
@@ -1345,11 +1368,11 @@
 				),
 				( function () {
 					var lab = gfbTrimmedFieldLabel( attributes.label );
-					var chk = [ el( 'input', { type: 'checkbox', disabled: true } ) ];
+					var input = el( 'input', { type: 'checkbox', disabled: true } );
 					if ( lab ) {
-						chk.push( ' ', lab );
+						return el( 'label', null, input, ' ', lab );
 					}
-					return el.apply( null, [ 'label', null ].concat( chk ) );
+					return input;
 				}() )
 			);
 		},
@@ -1359,16 +1382,18 @@
 				className: 'gfb-field gfb-field-checkbox',
 				style: buildFieldColorOverrideStyle( a ),
 			} );
+			var lab = gfbTrimmedFieldLabel( a.label );
+			var input = el( 'input', {
+				type: 'checkbox',
+				name: a.name,
+				id: a.name,
+				value: '1',
+				required: !! a.required,
+			} );
 			return el(
 				'div',
 				saveProps,
-				el(
-					'label',
-					{ for: a.name },
-					el( 'input', { type: 'checkbox', name: a.name, id: a.name, value: '1', required: !! a.required } ),
-					' ',
-					a.label
-				)
+				lab ? el( 'label', { for: a.name }, input, ' ', lab ) : input
 			);
 		},
 	} );
@@ -1453,7 +1478,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'number',
 					name: a.name,
@@ -1503,7 +1528,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'tel',
 					name: a.name,
@@ -1551,7 +1576,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'url',
 					name: a.name,
@@ -1599,7 +1624,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'date',
 					name: a.name,
@@ -1647,7 +1672,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', { type: 'time', name: a.name, id: a.name, required: !! a.required } )
 			);
 		},
@@ -1688,7 +1713,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'datetime-local',
 					name: a.name,
@@ -1786,10 +1811,11 @@
 				className: 'gfb-field gfb-field-radio',
 				style: buildFieldColorOverrideStyle( a ),
 			} );
+			var groupLab = gfbTrimmedFieldLabel( a.label );
 			return el(
 				'fieldset',
 				saveProps,
-				el( 'legend', null, a.label ),
+				groupLab ? el( 'legend', null, groupLab ) : null,
 				el(
 					'div',
 					{ className: optionsWrapClass },
@@ -1959,7 +1985,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el(
 					'div',
 					{ className: 'gfb-range-row' },
@@ -2036,7 +2062,7 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'label', { for: a.name }, a.label ),
+				gfbSaveLabelIfAny( a.name, a.label ),
 				el( 'input', {
 					type: 'file',
 					name: a.name,
