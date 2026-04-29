@@ -26,7 +26,7 @@ Am Block **Formular** (`gfb/form`) steuern:
 
 **Editor**
 
-- Vorschau-Container: `data-gfb-appearance` + dieselben Variablen; `assets/gfb-editor.css` wird bei Bedarf per `editor.js` in den **Block-Canvas-Iframe** eingehängt (`gfbSyncEditorFormStylesheet`, Link-ID `gfb-editor-form-stylesheet`, URL aus `gfbEditorAssets.editorFormStylesUrl`), sobald mindestens ein Formularblock nicht `appearanceMode=theme` ist.
+- Vorschau-Container: `data-gfb-appearance` + dieselben Variablen; `assets/gfb-editor.css` wird per `editor.js` in den **Block-Canvas-Iframe** eingehängt (`gfbSyncEditorFormStylesheet`, Link-ID `gfb-editor-form-stylesheet`, URL aus `gfbEditorAssets.editorFormStylesUrl`), sobald **mindestens ein** `gfb/form`-Block im Dokument existiert (inkl. `appearanceMode=theme`, damit Theme-Vorschau wie Frontend aussieht).
 - Feldblöcke beziehen Kontext über `usesContext` (u. a. `gfb/appearanceMode`, Hell-/Dunkel-Farben); Feld-Overrides im Inspector nutzen dieselbe Farb-/Verlauf-Logik wie das Formular (`renderGfbColorPanel`, `mapColorSettingsToGradientSettings` in `assets/editor.js`).
 
 **Hinweis CSS:** Eigenschaften wie `color:` oder `border-color:` erwarten **Farben**, keine Verläufe. Verläufe wirken sinnvoll z. B. bei **Feldhintergrund**, **Button-Hintergrund** und **Hintergrund Formularbereich** (`background`).
@@ -50,7 +50,7 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
    - `assets/admin-submissions.css` – nur Referenz; im Admin wird CSS **inline** aus der Datei gelesen (kein zuverlässiger `plugins_url()` auf manchen Local-Setups)
 4. **Bekannte technische Entscheidungen:**
    - **Einzigartige Feldnamen:** Defaults in `blocks/*/block.json` für `name` sind leer; `ensureFieldName` in `editor.js` vergibt eindeutige Namen. Sonst kollidieren POST-Keys.
-   - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb lädt `editor.js` bei nicht-Theme-Formularen `gfb-editor.css` in den Canvas (`gfbSyncEditorFormStylesheet`).
+   - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb lädt `editor.js` bei vorhandenem `gfb/form`-Block `gfb-editor.css` in den Canvas (`gfbSyncEditorFormStylesheet`).
    - **Formularbereich als Verlauf:** Klassen `gfb-form-shell-gradient--light` / `--dark` werden in `includes/class-gfb-plugin.php` gesetzt, wenn der jeweilige Shell-Wert ein CSS-Verlauf ist; Auswertung über `gfb_sanitized_attr_is_css_gradient()` (basiert auf `sanitize_gfb_color()`).
    - **Admin-Löschen:** Redirect nur in `load-toplevel_page_gfb-submissions`, nicht in `render_page`, sonst „headers already sent“.
 

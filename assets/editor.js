@@ -548,40 +548,28 @@
 	}
 
 	/**
-	 * @param {Record<string, unknown>|undefined} ctx Block-Editor-Kontext vom Formular.
-	 * @return {boolean} true = Theme (Standard) → kein Plugin-CSS für Vorschau.
-	 */
-	function gfbThemeFormContext( ctx ) {
-		ctx = ctx || {};
-		var m = ctx[ 'gfb/appearanceMode' ];
-		return ! m || m === 'theme';
-	}
-
-	/**
 	 * @param {Record<string, unknown>|undefined} ctx
 	 * @return {string|undefined}
 	 */
 	function gfbEditorFieldClassName( ctx ) {
-		return gfbThemeFormContext( ctx ) ? undefined : 'gfb-editor-field';
+		return 'gfb-editor-field';
 	}
 
 	/**
 	 * @param {Array<{ name?: string, attributes?: Record<string, unknown>, innerBlocks?: unknown[] }>|undefined} blocks
 	 * @return {boolean}
 	 */
-	function gfbEditorBlockTreeHasNonThemeForm( blocks ) {
+	/** Irgendein gfb/form-Block → Editor-Stylesheet für Theme-Vorschau nötig. */
+	function gfbEditorBlockTreeHasAnyGfbForm( blocks ) {
 		if ( ! blocks || ! blocks.length ) {
 			return false;
 		}
 		for ( var i = 0; i < blocks.length; i++ ) {
 			var b = blocks[ i ];
 			if ( b.name === 'gfb/form' ) {
-				var ap = b.attributes && b.attributes.appearanceMode ? String( b.attributes.appearanceMode ) : 'theme';
-				if ( ap !== 'theme' ) {
-					return true;
-				}
+				return true;
 			}
-			if ( b.innerBlocks && b.innerBlocks.length && gfbEditorBlockTreeHasNonThemeForm( b.innerBlocks ) ) {
+			if ( b.innerBlocks && b.innerBlocks.length && gfbEditorBlockTreeHasAnyGfbForm( b.innerBlocks ) ) {
 				return true;
 			}
 		}
@@ -627,7 +615,7 @@
 		try {
 			var sel = wp.data.select( 'core/block-editor' );
 			if ( sel && typeof sel.getBlocks === 'function' ) {
-				needs = gfbEditorBlockTreeHasNonThemeForm( sel.getBlocks() );
+				needs = gfbEditorBlockTreeHasAnyGfbForm( sel.getBlocks() );
 			}
 		} catch ( e0 ) {
 			needs = false;
@@ -847,11 +835,10 @@
 				}
 			}
 			var formClassName =
-				appearance === 'theme'
+				'gfb-editor-form' +
+				( appearance === 'theme'
 					? ''
-					: 'gfb-editor-form' +
-							( formHasCustomColors( attributes ) ? ' gfb-form-colors-custom' : '' ) +
-							formShellGradClass;
+					: ( formHasCustomColors( attributes ) ? ' gfb-form-colors-custom' : '' ) + formShellGradClass );
 			var formColorStyle = formWrapperColorStyleObject( attributes );
 			var formBlockProps = useBlockProps( {
 				className: formClassName || undefined,
@@ -1046,8 +1033,7 @@
 						onChange: function ( value ) {
 							setAttributes( { appearanceMode: value || 'theme' } );
 						},
-					} )
-					),
+					} ),
 					renderGfbColorPanel(
 						__( 'Formularfarben (Hell)', 'gutenberg-formbuilder' ),
 						createFormColorSettings( attributes, setAttributes )
@@ -1055,6 +1041,7 @@
 					renderGfbColorPanel(
 						__( 'Formularfarben (Dunkel)', 'gutenberg-formbuilder' ),
 						createDarkFormColorSettings( attributes, setAttributes )
+					)
 					)
 				),
 				el( InnerBlocks, {
@@ -1736,14 +1723,12 @@
 				),
 				el(
 					'div',
-					gfbThemeFormContext( props.context || {} )
-						? {}
-						: { className: 'gfb-radio-group-label' },
+					{ className: 'gfb-radio-group-label' },
 					attributes.label || __( 'Auswahl', 'gutenberg-formbuilder' )
 				),
 				el(
 					'div',
-					gfbThemeFormContext( props.context || {} ) ? {} : { className: radioOptsClass },
+					{ className: radioOptsClass },
 					options.map( function ( opt ) {
 						return el(
 							'label',
