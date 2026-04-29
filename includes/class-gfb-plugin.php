@@ -666,7 +666,7 @@ class GFB_Plugin {
 		}
 
 		$label = isset( $attrs['label'] ) ? sanitize_text_field( (string) $attrs['label'] ) : $key;
-		if ( 'hidden' === $type ) {
+		if ( 'hidden' === $type && '' === $label ) {
 			$label = $key;
 		}
 

@@ -1833,6 +1833,17 @@
 						PanelBody,
 						{ title: __( 'Verstecktes Feld', 'gutenberg-formbuilder' ), initialOpen: true },
 						el( TextControl, {
+							label: __( 'Label (Hinweis)', 'gutenberg-formbuilder' ),
+							value: attributes.label || '',
+							onChange: function ( value ) {
+								setAttributes( { label: value } );
+							},
+							help: __(
+								'Nur im Editor und in der Eintrags-Übersicht sichtbar; erscheint nicht im Formular.',
+								'gutenberg-formbuilder'
+							),
+						} ),
+						el( TextControl, {
 							label: __( 'Feldname (technisch)', 'gutenberg-formbuilder' ),
 							value: attributes.name || '',
 							onChange: function ( value ) {
@@ -1849,7 +1860,12 @@
 						} )
 					)
 				),
-				el( 'p', null, __( 'Verstecktes Feld (nur technischer Wert)', 'gutenberg-formbuilder' ) )
+				el(
+					'p',
+					{ className: 'gfb-editor-hidden-field-hint' },
+					gfbTrimmedFieldLabel( attributes.label ) ||
+						__( 'Verstecktes Feld (nur technischer Wert)', 'gutenberg-formbuilder' )
+				)
 			);
 		},
 		save: function ( props ) {
