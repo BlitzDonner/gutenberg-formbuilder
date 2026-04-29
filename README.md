@@ -46,12 +46,13 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
    - `includes/class-gfb-admin-submissions.php` – Admin-Seite „Formular-Einträge“, Löschen (Redirect im `load-*`-Hook!)
    - `assets/editor.js` – alle Block-`edit`/`save`-Definitionen
    - `assets/frontend.js` – IndexedDB-Drafts, Debounce, Safari-Hacks
-   - `assets/form.css` – **Frontend**-Styles (`wp_enqueue_style( 'gfb-form' )`); keine Einbindung von `gfb-editor.css` (die lädt nur der Editor über `editorStyle`)
+   - `assets/form.css` – **Frontend**-Styles (`wp_enqueue_style( 'gfb-form' )` bei jedem gerenderten Formular, inkl. `appearanceMode=theme`); keine Einbindung von `gfb-editor.css` (die lädt nur der Editor über `editorStyle`)
    - `assets/gfb-editor.css` – **nur** Editor-Canvas (wird zusätzlich per `block.json` → `editorStyle` im iframe geladen)
    - `assets/admin-submissions.css` – nur Referenz; im Admin wird CSS **inline** aus der Datei gelesen (kein zuverlässiger `plugins_url()` auf manchen Local-Setups)
 4. **Bekannte technische Entscheidungen:**
    - **Einzigartige Feldnamen:** Defaults in `blocks/*/block.json` für `name` sind leer; `ensureFieldName` in `editor.js` vergibt eindeutige Namen. Sonst kollidieren POST-Keys.
    - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb lädt `editor.js` bei vorhandenem `gfb/form`-Block `gfb-editor.css` in den Canvas (`gfbSyncEditorFormStylesheet`).
+   - **Eingabetext vs. Theme:** In `form.css` / `gfb-editor.css` nutzen sichtbare Feld-Texte `color` und `-webkit-text-fill-color` mit `!important`, damit Block-Themes die Plugin-Farben (`--gfb-text` / Hell-Dunkel-Variablen) nicht überschreiben. Bei **Theme + eigene Farben** greifen zusätzliche Regeln auf `.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom`.
    - **Formularbereich als Verlauf:** Klassen `gfb-form-shell-gradient--light` / `--dark` werden in `includes/class-gfb-plugin.php` gesetzt, wenn der jeweilige Shell-Wert ein CSS-Verlauf ist; Auswertung über `gfb_sanitized_attr_is_css_gradient()` (basiert auf `sanitize_gfb_color()`).
    - **Admin-Löschen:** Redirect nur in `load-toplevel_page_gfb-submissions`, nicht in `render_page`, sonst „headers already sent“.
 

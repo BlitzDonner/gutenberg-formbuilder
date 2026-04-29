@@ -197,7 +197,8 @@
 .gfb-radio-group-label {
 	font-size: var(--gfb-label-size);
 	font-weight: var(--gfb-label-weight);
-	color: var(--gfb-label);
+	color: var(--gfb-label) !important;
+	-webkit-text-fill-color: var(--gfb-label) !important;
 	letter-spacing: -0.01em;
 }
 
@@ -212,7 +213,8 @@
 	font-family: inherit;
 	font-size: var(--gfb-body-size);
 	line-height: 1.35;
-	color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	background: var(--gfb-bg);
 	border: 1px solid var(--gfb-border);
 	border-radius: var(--gfb-radius);
@@ -221,13 +223,18 @@
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.gfb-editor-field input::placeholder,
+.gfb-editor-field textarea::placeholder {
+	color: var(--gfb-placeholder) !important;
+}
+
 /* Vorschaufelder sind oft disabled – nicht wie „totes“ Browser-Grau darstellen */
 .gfb-editor-field input:disabled,
 .gfb-editor-field textarea:disabled,
 .gfb-editor-field select:disabled {
 	opacity: 1;
-	color: var(--gfb-text);
-	-webkit-text-fill-color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	background-color: var(--gfb-bg);
 	cursor: default;
 }
@@ -268,7 +275,8 @@
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	text-align: right;
-	color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	background: var(--gfb-bg-subtle);
 	border-radius: var(--gfb-radius-sm);
 	border: 1px solid var(--gfb-border);
@@ -286,7 +294,8 @@
 	font-family: inherit;
 	font-size: 1.0625rem;
 	font-weight: 600;
-	color: var(--gfb-submit-text, #ffffff);
+	color: var(--gfb-submit-text, #ffffff) !important;
+	-webkit-text-fill-color: var(--gfb-submit-text, #ffffff) !important;
 	background: var(--gfb-submit-bg, var(--gfb-border-focus));
 	border: none;
 	border-radius: var(--gfb-radius);
@@ -318,15 +327,16 @@
 	gap: 0.5rem;
 	font-size: var(--gfb-body-size);
 	font-weight: 400;
-	color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 }
 
 .gfb-editor-form[data-gfb-appearance="dark"] .gfb-editor-field input:disabled,
 .gfb-editor-form[data-gfb-appearance="dark"] .gfb-editor-field textarea:disabled,
 .gfb-editor-form[data-gfb-appearance="dark"] .gfb-editor-field select:disabled {
 	background-color: var(--gfb-bg);
-	color: var(--gfb-text);
-	-webkit-text-fill-color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -334,8 +344,8 @@
 	.gfb-editor-form[data-gfb-appearance="auto"] .gfb-editor-field textarea:disabled,
 	.gfb-editor-form[data-gfb-appearance="auto"] .gfb-editor-field select:disabled {
 		background-color: var(--gfb-bg);
-		color: var(--gfb-text);
-		-webkit-text-fill-color: var(--gfb-text);
+		color: var(--gfb-text) !important;
+		-webkit-text-fill-color: var(--gfb-text) !important;
 	}
 }
 

@@ -4,9 +4,9 @@
  */
 
 /*
- * Plugin-Variablen und Layout gelten nur für Hell/Dunkel/Automatisch.
- * „Theme (Standard)“: keine dieser Regeln → kein --gfb-* aus form.css (auch wenn die Datei
- * wegen eines anderen Formulars auf derselben Seite geladen wird).
+ * Plugin-Variablen und Layout: Standard Hell/Dunkel/Automatisch.
+ * „Theme (Standard)“: keine Karten-/Token-Regeln außer bei .gfb-form-colors-custom (eigene Farben).
+ * form.css wird immer mit dem Formular geladen; Eingabetext nutzt bei Hell/Dunkel/Auto !important gegen Theme-Overrides.
  */
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) {
 	--gfb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
@@ -260,7 +260,8 @@
 	font-size: var(--gfb-label-size);
 	font-weight: var(--gfb-label-weight);
 	line-height: 1.3;
-	color: var(--gfb-label);
+	color: var(--gfb-label) !important;
+	-webkit-text-fill-color: var(--gfb-label) !important;
 	letter-spacing: -0.01em;
 }
 
@@ -298,7 +299,9 @@
 	font-family: inherit;
 	font-size: var(--gfb-body-size);
 	line-height: 1.35;
-	color: var(--gfb-text);
+	/* Themes (Block/Classic) setzen oft input{color} mit hoher Spezifität — Eingabetext muss zuverlässig aus --gfb-text kommen. */
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	background: var(--gfb-bg);
 	border: 1px solid var(--gfb-border);
 	border-radius: var(--gfb-radius);
@@ -380,7 +383,8 @@
 	font-size: var(--gfb-body-size);
 	font-weight: 400;
 	line-height: 1.45;
-	color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	cursor: pointer;
 	min-height: 2.75rem;
 	padding-top: 0.125rem;
@@ -409,7 +413,8 @@
 	width: 100%;
 	font-size: var(--gfb-label-size);
 	font-weight: var(--gfb-label-weight);
-	color: var(--gfb-label);
+	color: var(--gfb-label) !important;
+	-webkit-text-fill-color: var(--gfb-label) !important;
 	padding: 0;
 	margin: 0 0 0.375rem;
 	letter-spacing: -0.01em;
@@ -461,7 +466,8 @@
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row label {
 	font-size: var(--gfb-body-size);
 	line-height: 1.4;
-	color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	cursor: pointer;
 	margin: 0;
 	font-weight: 400;
@@ -494,7 +500,8 @@
 	font-variant-numeric: tabular-nums;
 	line-height: 1.2;
 	text-align: right;
-	color: var(--gfb-text);
+	color: var(--gfb-text) !important;
+	-webkit-text-fill-color: var(--gfb-text) !important;
 	background: var(--gfb-bg-subtle);
 	border-radius: var(--gfb-radius-sm);
 	border: 1px solid var(--gfb-border);
@@ -513,7 +520,8 @@
 	font-size: 1.0625rem;
 	font-weight: 600;
 	line-height: 1.2;
-	color: var(--gfb-submit-text, #ffffff);
+	color: var(--gfb-submit-text, #ffffff) !important;
+	-webkit-text-fill-color: var(--gfb-submit-text, #ffffff) !important;
 	background: var(--gfb-submit-bg, var(--gfb-border-focus));
 	border: none;
 	border-radius: var(--gfb-radius);
@@ -609,5 +617,111 @@
 @media (prefers-color-scheme: dark) {
 	.gfb-form-wrapper[data-gfb-appearance="auto"] .gfb-field-submit button[type="submit"]:hover {
 		filter: brightness(1.08);
+	}
+}
+
+/*
+ * Theme (Standard) + eigene Farben: Inline-Variablen (--gfb-light-* / --gfb-dark-*) stehen am Wrapper;
+ * ohne diese Regeln greifen Themes weiterhin (form.css wurde früher im Theme-Modus nicht geladen).
+ */
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field > label {
+	color: var(--gfb-light-label, CanvasText) !important;
+	-webkit-text-fill-color: var(--gfb-light-label, CanvasText) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-radio legend {
+	color: var(--gfb-light-label, CanvasText) !important;
+	-webkit-text-fill-color: var(--gfb-light-label, CanvasText) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea,
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field select {
+	color: var(--gfb-light-text, CanvasText) !important;
+	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
+	background-color: var(--gfb-light-bg, Field) !important;
+	border-color: var(--gfb-light-border, ButtonBorder) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field select {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236e6e73' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 0.875rem center;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input::placeholder,
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea::placeholder {
+	color: var(--gfb-light-placeholder, GrayText) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-checkbox > label {
+	color: var(--gfb-light-text, CanvasText) !important;
+	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-radio-row label {
+	color: var(--gfb-light-text, CanvasText) !important;
+	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-range .gfb-range-value {
+	color: var(--gfb-light-text, CanvasText) !important;
+	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
+	background-color: var(--gfb-light-bg-subtle, Field) !important;
+	border-color: var(--gfb-light-border, ButtonBorder) !important;
+}
+
+.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-submit button[type="submit"] {
+	color: var(--gfb-light-submit-text, Canvas) !important;
+	-webkit-text-fill-color: var(--gfb-light-submit-text, Canvas) !important;
+	background-color: var(--gfb-light-submit-bg, LinkText) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field > label {
+		color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-radio legend {
+		color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea,
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field select {
+		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+		background-color: var(--gfb-dark-bg, var(--gfb-light-bg, Field)) !important;
+		border-color: var(--gfb-dark-border, var(--gfb-light-border, ButtonBorder)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input::placeholder,
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea::placeholder {
+		color: var(--gfb-dark-placeholder, var(--gfb-light-placeholder, GrayText)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-checkbox > label {
+		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-radio-row label {
+		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-range .gfb-range-value {
+		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
+		background-color: var(--gfb-dark-bg-subtle, var(--gfb-light-bg-subtle, Field)) !important;
+		border-color: var(--gfb-dark-border, var(--gfb-light-border, ButtonBorder)) !important;
+	}
+
+	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-submit button[type="submit"] {
+		color: var(--gfb-dark-submit-text, var(--gfb-light-submit-text, Canvas)) !important;
+		-webkit-text-fill-color: var(--gfb-dark-submit-text, var(--gfb-light-submit-text, Canvas)) !important;
+		background-color: var(--gfb-dark-submit-bg, var(--gfb-light-submit-bg, LinkText)) !important;
 	}
 }

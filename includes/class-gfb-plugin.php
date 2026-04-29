@@ -474,9 +474,8 @@ class GFB_Plugin {
 		$appearance = self::sanitize_appearance_mode( isset( $attributes['appearanceMode'] ) ? $attributes['appearanceMode'] : 'theme' );
 
 		wp_enqueue_script( 'gfb-frontend' );
-		if ( 'theme' !== $appearance ) {
-			wp_enqueue_style( 'gfb-form' );
-		}
+		/* Immer laden: bei „Theme + eigene Farben“ verbinden die Regeln Inline-Variablen mit den Feldern; bei Hell/Dunkel/Auto schützen !important-Deklarationen Eingabetext vor Theme-Overrides. */
+		wp_enqueue_style( 'gfb-form' );
 
 		$status      = isset( $_GET['gfb_status'] ) ? sanitize_key( wp_unslash( $_GET['gfb_status'] ) ) : '';
 		$status_form = isset( $_GET['gfb_form'] ) ? sanitize_key( wp_unslash( $_GET['gfb_form'] ) ) : '';
