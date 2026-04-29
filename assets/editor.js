@@ -556,6 +556,33 @@
 	}
 
 	/**
+	 * @param {unknown} label
+	 * @return {string}
+	 */
+	function gfbTrimmedFieldLabel( label ) {
+		if ( label == null ) {
+			return '';
+		}
+		return String( label ).trim();
+	}
+
+	/**
+	 * Editor-Vorschau: kein Platzhalter-Label — nur rendern, wenn Text gesetzt.
+	 *
+	 * @param {string} tag
+	 * @param {Record<string, unknown>|null|undefined} props
+	 * @param {unknown} labelAttr
+	 * @return {*|null}
+	 */
+	function gfbEditorLabelIfAny( tag, props, labelAttr ) {
+		var t = gfbTrimmedFieldLabel( labelAttr );
+		if ( ! t ) {
+			return null;
+		}
+		return el( tag, props || null, t );
+	}
+
+	/**
 	 * @param {Array<{ name?: string, attributes?: Record<string, unknown>, innerBlocks?: unknown[] }>|undefined} blocks
 	 * @return {boolean}
 	 */
@@ -1098,7 +1125,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Textfeld', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'text', disabled: true, placeholder: attributes.placeholder || '' } )
 			);
 		},
@@ -1145,7 +1172,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'E-Mail', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'email', disabled: true, placeholder: attributes.placeholder || '' } )
 			);
 		},
@@ -1192,7 +1219,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Nachricht', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'textarea', { disabled: true, placeholder: attributes.placeholder || '' } )
 			);
 		},
@@ -1252,7 +1279,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Auswahl', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el(
 					'select',
 					{ disabled: true },
@@ -1316,13 +1343,14 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el(
-					'label',
-					null,
-					el( 'input', { type: 'checkbox', disabled: true } ),
-					' ',
-					attributes.label || __( 'Ich stimme zu', 'gutenberg-formbuilder' )
-				)
+				( function () {
+					var lab = gfbTrimmedFieldLabel( attributes.label );
+					var chk = [ el( 'input', { type: 'checkbox', disabled: true } ) ];
+					if ( lab ) {
+						chk.push( ' ', lab );
+					}
+					return el.apply( null, [ 'label', null ].concat( chk ) );
+				}() )
 			);
 		},
 		save: function ( props ) {
@@ -1412,7 +1440,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Zahl', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'number', disabled: true, placeholder: attributes.placeholder || '' } )
 			);
 		},
@@ -1462,7 +1490,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Telefon', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'tel', disabled: true, placeholder: attributes.placeholder || '' } )
 			);
 		},
@@ -1510,7 +1538,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Website', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'url', disabled: true, placeholder: attributes.placeholder || '' } )
 			);
 		},
@@ -1558,7 +1586,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Datum', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'date', disabled: true } )
 			);
 		},
@@ -1606,7 +1634,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Uhrzeit', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'time', disabled: true } )
 			);
 		},
@@ -1647,7 +1675,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Termin', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'datetime-local', disabled: true } )
 			);
 		},
@@ -1690,9 +1718,8 @@
 			var radioOptsClass =
 				'gfb-editor-radio-options' +
 				( radioLayout === 'row' ? ' gfb-editor-radio-options--row' : '' );
-			return el(
-				'div',
-				blockProps,
+			var radioGroupLabelText = gfbTrimmedFieldLabel( attributes.label );
+			var radioPreviewBody = [
 				el(
 					InspectorControls,
 					null,
@@ -1721,11 +1748,13 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el(
-					'div',
-					{ className: 'gfb-radio-group-label' },
-					attributes.label || __( 'Auswahl', 'gutenberg-formbuilder' )
-				),
+			];
+			if ( radioGroupLabelText ) {
+				radioPreviewBody.push(
+					el( 'div', { className: 'gfb-radio-group-label' }, radioGroupLabelText )
+				);
+			}
+			radioPreviewBody.push(
 				el(
 					'div',
 					{ className: radioOptsClass },
@@ -1740,6 +1769,7 @@
 					} )
 				)
 			);
+			return el( 'div', blockProps, radioPreviewBody );
 		},
 		save: function ( props ) {
 			var a = props.attributes;
@@ -1884,7 +1914,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', { for: 'gfb-range-preview-' + props.clientId }, attributes.label || __( 'Wert', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', { for: 'gfb-range-preview-' + props.clientId }, attributes.label ),
 				el(
 					'div',
 					{ className: 'gfb-range-row' },
@@ -1977,7 +2007,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'label', null, attributes.label || __( 'Datei', 'gutenberg-formbuilder' ) ),
+				gfbEditorLabelIfAny( 'label', null, attributes.label ),
 				el( 'input', { type: 'file', disabled: true } )
 			);
 		},

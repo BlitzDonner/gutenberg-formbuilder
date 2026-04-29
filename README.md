@@ -28,6 +28,7 @@ Am Block **Formular** (`gfb/form`) steuern:
 
 - Vorschau-Container: `data-gfb-appearance` + dieselben Variablen; `assets/gfb-editor.css` wird per `editor.js` in den **Block-Canvas-Iframe** eingehängt (`gfbSyncEditorFormStylesheet`, Link-ID `gfb-editor-form-stylesheet`, URL aus `gfbEditorAssets.editorFormStylesUrl`), sobald **mindestens ein** `gfb/form`-Block im Dokument existiert (inkl. `appearanceMode=theme`, damit Theme-Vorschau wie Frontend aussieht).
 - Feldblöcke beziehen Kontext über `usesContext` (u. a. `gfb/appearanceMode`, Hell-/Dunkel-Farben); Feld-Overrides im Inspector nutzen dieselbe Farb-/Verlauf-Logik wie das Formular (`renderGfbColorPanel`, `mapColorSettingsToGradientSettings` in `assets/editor.js`).
+- **Feld-Label in der Canvas-Vorschau:** Ist das Attribut `label` leer oder nur Leerzeichen, wird **kein** sichtbares Label gerendert (keine Platzhalter wie „Textfeld“ mehr). Checkbox zeigt dann nur die Box; Radio-Gruppe ohne Gruppenüberschrift, wenn das Label leer ist. Der Block **Absenden** behält bei leerem Button-Text weiterhin den übersetzten Standard-Text in der Vorschau. Details: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-UND-VERLAUFE.md#feld-labels-canvas-vorschau).
 
 **Hinweis CSS:** Eigenschaften wie `color:` oder `border-color:` erwarten **Farben**, keine Verläufe. Verläufe wirken sinnvoll z. B. bei **Feldhintergrund**, **Button-Hintergrund** und **Hintergrund Formularbereich** (`background`).
 
@@ -75,15 +76,6 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen)
 - Lokale Drafts (IndexedDB), optional Wiederherstellen / Draft löschen (inkl. Safari-Fixes)
 
-## Hooks (Submit)
-
-- `gfb_submit_button_validation` (Filter): läuft nach interner Server-Validierung und vor DB-Insert.  
-  Rückgabe:
-  - `null`/leerer String: kein zusätzlicher Fehler
-  - `WP_Error` oder nicht-leerer String: Abbruch mit Fehlermeldung (`gfb_status=error`) statt Erfolg/Folgeseite
-- `gfb_after_server_validation` (Action): läuft nach erfolgreicher Server-Validierung (vor DB-Insert)
-- `gfb_after_submission_insert` (Action): läuft nach erfolgreichem DB-Insert
-
 ## Repository-Layout
 
 ```
@@ -100,7 +92,7 @@ docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 - Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Editor-Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
 
-**Zuletzt dokumentiert (Auszug):** Farb-/Verlauf-Panels (`renderGfbColorPanel` / `mapColorSettingsToGradientSettings`), erweiterter Farb-Sanitizer, Shell-Gradient-Klassen für gültiges `background` bei benutzerdefinierten Verläufen, Radio-`optionsLayout` (Zeile/Spalte) an `gfb/field-radio`.
+**Zuletzt dokumentiert (Auszug):** Farb-/Verlauf-Panels (`renderGfbColorPanel` / `mapColorSettingsToGradientSettings`), erweiterter Farb-Sanitizer, Shell-Gradient-Klassen für gültiges `background` bei benutzerdefinierten Verläufen, Radio-`optionsLayout` (Zeile/Spalte) an `gfb/field-radio`, leeres Feld-`label` ohne Platzhalter in der Editor-Vorschau (`gfbEditorLabelIfAny` / `gfbTrimmedFieldLabel` in `assets/editor.js`).
 
 ## MVP-Grenzen / Ideen für später
 
