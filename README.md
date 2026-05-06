@@ -53,6 +53,7 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
    - **Einzigartige Feldnamen:** Defaults in `blocks/*/block.json` für `name` sind leer; `ensureFieldName` in `editor.js` vergibt eindeutige Namen. Sonst kollidieren POST-Keys.
    - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb lädt `editor.js` bei vorhandenem `gfb/form`-Block `gfb-editor.css` in den Canvas (`gfbSyncEditorFormStylesheet`).
    - **Eingabetext vs. Theme:** In `form.css` / `gfb-editor.css` nutzen sichtbare Feld-Texte `color` und `-webkit-text-fill-color` mit `!important`, damit Block-Themes die Plugin-Farben (`--gfb-text` / Hell-Dunkel-Variablen) nicht überschreiben. Bei **Theme + eigene Farben** greifen zusätzliche Regeln auf `.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom`.
+   - **Submit / Schema:** Die Server-Validierung sucht den `gfb/form`-Block per `GFB_Plugin::locate_form_block_for_post()` in Beitragsinhalt, **Bibliotheks-/Musterblöcken** (`core/block` → `wp_block`), **Template-Parts** (`core/template-part`) und typischen **FSE-Templates** (`wp_template`). Fehlermeldung „Formularschema nicht gefunden“ entsteht, wenn der Block dort nicht vorkommt (früher nur `post_content`); zusätzliche Markup-Quellen per Filter `gfb_form_schema_markup_sources`.
    - **Formularbereich als Verlauf:** Klassen `gfb-form-shell-gradient--light` / `--dark` werden in `includes/class-gfb-plugin.php` gesetzt, wenn der jeweilige Shell-Wert ein CSS-Verlauf ist; Auswertung über `gfb_sanitized_attr_is_css_gradient()` (basiert auf `sanitize_gfb_color()`).
    - **Admin-Löschen:** Redirect nur in `load-toplevel_page_gfb-submissions`, nicht in `render_page`, sonst „headers already sent“.
 
@@ -93,7 +94,20 @@ docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 - Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Editor-Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
 
-**Zuletzt dokumentiert (Auszug):** Farb-/Verlauf-Panels (`renderGfbColorPanel` / `mapColorSettingsToGradientSettings`), erweiterter Farb-Sanitizer, Shell-Gradient-Klassen für gültiges `background` bei benutzerdefinierten Verläufen, Radio-`optionsLayout` (Zeile/Spalte) an `gfb/field-radio`, leeres Feld-`label` ohne Platzhalter in der Editor-Vorschau (`gfbEditorLabelIfAny` / `gfbTrimmedFieldLabel` in `assets/editor.js`).
+**Zuletzt dokumentiert (Auszug):** Farb-/Verlauf-Panels (`renderGfbColorPanel` / `mapColorSettingsToGradientSettings`), erweiterter Farb-Sanitizer, Shell-Gradient-Klassen für gültiges `background` bei benutzerdefinierten Verläufen, Radio-`optionsLayout` (Zeile/Spalte) an `gfb/field-radio`, leeres Feld-`label` ohne Platzhalter in der Editor-Vorschau (`gfbEditorLabelIfAny` / `gfbTrimmedFieldLabel` in `assets/editor.js`), Schema-Suche beim Submit (`locate_form_block_for_post`, FSE/Muster/Template-Part).
+
+## Submit-Fehler: „Formularschema nicht gefunden“
+
+Nach dem Absenden leitet WordPress u. a. auf `?gfb_status=error&gfb_msg=Formularschema%20nicht%20gefunden.` um, wenn die **serverseitige** Suche keinen `gfb/form`-Block mit der gesendeten `formId` findet (Validierung in `includes/class-gfb-submit-handler.php`).
+
+**Ab 1.0.0-beta.3** durchsucht `GFB_Plugin::locate_form_block_for_post()` u. a.:
+
+1. `post_content` der Seite/ des Beitrags (`gfb_post_id` aus dem Formular),
+2. eingebettete **Bibliotheks-/Musterblöcke** (`core/block` → `wp_block`),
+3. **Template-Parts** (`core/template-part`),
+4. typische **FSE-Block-Templates** (`wp_template`, z. B. `page-{slug}`, `page`, `single`, `singular`, `index`).
+
+**Wenn der Fehler bleibt:** Formular liegt vermutlich in einem anderen Template (z. B. eigenes `archive-…`) oder außerhalb von WordPress-Blöcken. Dann per PHP den Filter **`gfb_form_schema_markup_sources`** nutzen und zusätzliche Block-Markup-Strings an `$sources` anhängen (siehe Docblock in `includes/class-gfb-plugin.php`).
 
 ## MVP-Grenzen / Ideen für später
 

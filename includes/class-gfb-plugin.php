@@ -639,13 +639,7 @@ class GFB_Plugin {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function get_form_schema_from_post( $post_id, $form_id ) {
-		$content = get_post_field( 'post_content', $post_id );
-		if ( ! $content ) {
-			return array();
-		}
-
-		$blocks     = parse_blocks( $content );
-		$form_block = self::find_form_block_recursive( $blocks, $form_id );
+		$form_block = self::locate_form_block_for_post( $post_id, $form_id );
 		if ( null === $form_block ) {
 			return array();
 		}
@@ -661,12 +655,7 @@ class GFB_Plugin {
 	 * @return array<string,mixed>
 	 */
 	public static function get_form_block_attributes_from_post( $post_id, $form_id ) {
-		$content = get_post_field( 'post_content', $post_id );
-		if ( ! $content ) {
-			return array();
-		}
-		$blocks     = parse_blocks( $content );
-		$form_block = self::find_form_block_recursive( $blocks, $form_id );
+		$form_block = self::locate_form_block_for_post( $post_id, $form_id );
 		if ( null === $form_block ) {
 			return array();
 		}
@@ -674,13 +663,125 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Sucht ein gfb/form mit passender formId auch in verschachtelten Blöcken (Gruppe, Spalten …).
+	 * Findet den gfb/form-Block in Beitragsinhalt, synchronisierten Blöcken, Template-Parts und FSE-Templates.
 	 *
-	 * @param array<int,array<string,mixed>> $blocks Geparste Blöcke.
+	 * @param int    $post_id Post-ID (wie beim Rendern / gfb_post_id).
+	 * @param string $form_id Formular-ID (sanitize_key).
+	 * @return array<string,mixed>|null Geparster Block oder null.
+	 */
+	public static function locate_form_block_for_post( $post_id, $form_id ) {
+		$post_id = absint( $post_id );
+		$form_id = sanitize_key( (string) $form_id );
+		if ( ! $post_id || '' === $form_id ) {
+			return null;
+		}
+
+		$visited = array();
+		$sources = array();
+
+		$content = get_post_field( 'post_content', $post_id );
+		if ( is_string( $content ) && '' !== $content ) {
+			$sources[] = $content;
+		}
+
+		foreach ( self::gfb_fse_template_markup_candidates_for_post( $post_id ) as $markup ) {
+			if ( is_string( $markup ) && '' !== $markup ) {
+				$sources[] = $markup;
+			}
+		}
+
+		/**
+		 * Zusätzliche Roh-Markup-Quellen (z. B. Custom-Layouts), filterbar.
+		 *
+		 * @param array<int,string> $sources   Kandidaten (Block-Markup).
+		 * @param int               $post_id   Post-ID.
+		 * @param string            $form_id   Formular-ID.
+		 */
+		$sources = apply_filters( 'gfb_form_schema_markup_sources', $sources, $post_id, $form_id );
+
+		foreach ( $sources as $source ) {
+			$blocks     = parse_blocks( $source );
+			$form_block = self::find_form_block_recursive( $blocks, $form_id, $visited );
+			if ( null !== $form_block ) {
+				return $form_block;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Block-Templates (FSE), in denen ein Formular typischerweise liegt, wenn nicht im Beitragsinhalt.
+	 *
+	 * @param int $post_id Post-ID.
+	 * @return array<int,string> HTML/Block-Markup (Reihenfolge: spezifischer zuerst).
+	 */
+	private static function gfb_fse_template_markup_candidates_for_post( $post_id ) {
+		$out = array();
+		if ( ! $post_id || ! function_exists( 'get_block_template' ) || ! current_theme_supports( 'block-templates' ) ) {
+			return $out;
+		}
+
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return $out;
+		}
+
+		$ptype = $post->post_type;
+		$slug  = isset( $post->post_name ) ? (string) $post->post_name : '';
+		$slug  = sanitize_title( $slug );
+
+		$hierarchy = array();
+		if ( 'page' === $ptype ) {
+			if ( $slug ) {
+				$hierarchy[] = 'page-' . $slug;
+			}
+			$hierarchy[] = 'page';
+		} elseif ( 'post' === $ptype ) {
+			if ( $slug ) {
+				$hierarchy[] = 'single-' . $slug;
+			}
+			$hierarchy[] = 'single';
+		} else {
+			if ( $slug ) {
+				$hierarchy[] = 'single-' . $ptype . '-' . $slug;
+			}
+			$hierarchy[] = 'single-' . $ptype;
+		}
+		$hierarchy[] = 'singular';
+		$hierarchy[] = 'index';
+
+		$theme_slugs = array_unique(
+			array_filter(
+				array(
+					get_stylesheet(),
+					get_template() !== get_stylesheet() ? get_template() : '',
+				)
+			)
+		);
+
+		foreach ( $hierarchy as $tpl_slug ) {
+			foreach ( $theme_slugs as $theme_slug ) {
+				$tpl = get_block_template( $theme_slug . '//' . $tpl_slug, 'wp_template' );
+				if ( $tpl && ! empty( $tpl->content ) ) {
+					$out[] = $tpl->content;
+					break;
+				}
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Sucht ein gfb/form mit passender formId (verschachtelt, Synopsis, Template-Part).
+	 *
+	 * @param array<int,array<string,mixed>> $blocks  Geparste Blöcke.
 	 * @param string                         $form_id Formular-ID.
+	 * @param array<string,bool>             $visited Schutz vor Zyklen (Refs/Template-Parts).
 	 * @return array<string,mixed>|null Block-Array oder null.
 	 */
-	private static function find_form_block_recursive( $blocks, $form_id ) {
+	private static function find_form_block_recursive( $blocks, $form_id, array &$visited ) {
 		foreach ( $blocks as $block ) {
 			if ( 'gfb/form' === ( $block['blockName'] ?? '' ) ) {
 				$attrs = isset( $block['attrs'] ) ? $block['attrs'] : array();
@@ -689,8 +790,51 @@ class GFB_Plugin {
 					return $block;
 				}
 			}
+
+			// Synchronisierter Muster-/Bibliotheks-Block: Inhalt liegt im wp_block-Beitrag (ref).
+			if ( 'core/block' === ( $block['blockName'] ?? '' ) ) {
+				$ref = isset( $block['attrs']['ref'] ) ? absint( $block['attrs']['ref'] ) : 0;
+				if ( $ref && empty( $visited[ 'core_block:' . $ref ] ) ) {
+					$visited[ 'core_block:' . $ref ] = true;
+					$ref_post                        = get_post( $ref );
+					if ( $ref_post && 'wp_block' === $ref_post->post_type && 'publish' === $ref_post->post_status ) {
+						$inner = parse_blocks( (string) $ref_post->post_content );
+						$found = self::find_form_block_recursive( $inner, $form_id, $visited );
+						if ( null !== $found ) {
+							return $found;
+						}
+					}
+				}
+			}
+
+			// Template-Part (FSE): Inhalt aus Theme/DB auflösen.
+			if ( 'core/template-part' === ( $block['blockName'] ?? '' ) ) {
+				$slug  = isset( $block['attrs']['slug'] ) ? sanitize_text_field( (string) $block['attrs']['slug'] ) : '';
+				$theme = isset( $block['attrs']['theme'] ) ? sanitize_text_field( (string) $block['attrs']['theme'] ) : '';
+				if ( $slug && function_exists( 'get_block_template' ) ) {
+					if ( '' === $theme ) {
+						$theme = get_stylesheet();
+					}
+					$tp_key = 'template_part:' . $theme . ':' . $slug;
+					if ( empty( $visited[ $tp_key ] ) ) {
+						$visited[ $tp_key ] = true;
+						$tp                 = get_block_template( $theme . '//' . $slug, 'wp_template_part' );
+						if ( ! $tp && get_template() !== get_stylesheet() ) {
+							$tp = get_block_template( get_template() . '//' . $slug, 'wp_template_part' );
+						}
+						if ( $tp && ! empty( $tp->content ) ) {
+							$inner = parse_blocks( $tp->content );
+							$found = self::find_form_block_recursive( $inner, $form_id, $visited );
+							if ( null !== $found ) {
+								return $found;
+							}
+						}
+					}
+				}
+			}
+
 			if ( ! empty( $block['innerBlocks'] ) ) {
-				$found = self::find_form_block_recursive( $block['innerBlocks'], $form_id );
+				$found = self::find_form_block_recursive( $block['innerBlocks'], $form_id, $visited );
 				if ( null !== $found ) {
 					return $found;
 				}
