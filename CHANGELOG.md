@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [1.1.0] – 2026-05-06
+
+### Geändert
+
+- **Feldnamen sind jetzt vollautomatisch.** Das Inspector-Feld „Feldname (technisch)“ entfällt für alle Feldblöcke (inkl. `gfb/field-hidden`); der Editor verwaltet Namen ohne UI.
+- **Eindeutigkeit beim Kopieren:** Wird ein einzelnes Feld dupliziert, prüft der Editor Geschwister im selben `gfb/form` und vergibt bei Konflikt automatisch einen frischen Namen aus der eigenen `clientId`.
+- **Eindeutigkeit beim Form-Duplikat:** Wird ein ganzes `gfb/form` dupliziert, erkennt der Editor die kollidierende `formId` und erzeugt für die Kopie eine neue `formId` + `blockInstanceId`. Die Kinderfelder bekommen über die Geschwister-Prüfung automatisch frische Namen.
+- **Bestehende Formulare unverändert:** Solange kein Konflikt vorliegt, bleiben gepflegte Feldnamen und damit `_gfb_labels`-Zuordnungen sowie Mail-Templates stabil – kein Massen-Rename, keine DB-Migration.
+
+### Bleibt
+
+- Server-Validierung im Submit-Handler lehnt doppelte technische Feldnamen weiterhin ab und dient als Sicherheitsnetz für Markup, das ohne Editor-Roundtrip live ging.
+
 ## [1.0.0] – 2026-05-06
 
 **Erster stabiler Release** (GitHub: reguläres Release, kein Pre-release). Funktionsumfang entspricht **1.0.0-beta.3**; die Beta-Releases dienten der Erprobung.
@@ -35,6 +48,7 @@ Erster öffentlicher **Beta**-Release (GitHub: Pre-release). Für Tests und Feed
 - ZIP aus dem GitHub-Release laden, entpacken und den Ordner `gutenberg-formbuilder` nach `wp-content/plugins/` legen (oder per ZIP im WordPress-Admin **Plugins → Installieren** hochladen).
 - Plugin aktivieren (legt die Tabelle `wp_gfb_submissions` an).
 
+[1.1.0]: https://github.com/BlitzDonner/gutenberg-formbuilder/releases/tag/v1.1.0
 [1.0.0]: https://github.com/BlitzDonner/gutenberg-formbuilder/releases/tag/v1.0.0
 [1.0.0-beta.3]: https://github.com/BlitzDonner/gutenberg-formbuilder/releases/tag/v1.0.0-beta.3
 [1.0.0-beta.2]: https://github.com/BlitzDonner/gutenberg-formbuilder/releases/tag/v1.0.0-beta.2
