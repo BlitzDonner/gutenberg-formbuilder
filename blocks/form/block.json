@@ -2,11 +2,12 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "gfb/form",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0",
   "title": "Formular",
   "category": "gfb-form",
   "icon": {
-    "src": "feedback"
+    "src": "feedback",
+    "foreground": "#1b2627"
   },
   "description": "Formular-Container für den seitenbasierten Formbuilder.",
   "textdomain": "gutenberg-formbuilder",
@@ -63,18 +64,9 @@
   "supports": {
     "html": false,
     "align": ["wide", "full"],
-    "layout": {
-      "allowEditing": false,
-      "allowInheriting": false,
-      "default": {
-        "type": "flex",
-        "orientation": "vertical"
-      }
-    },
     "spacing": {
       "margin": true,
-      "padding": true,
-      "blockGap": true
+      "padding": true
     },
     "color": {
       "background": true,

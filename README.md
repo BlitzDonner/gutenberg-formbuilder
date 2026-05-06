@@ -2,7 +2,7 @@
 
 WordPress-Plugin: Formular-Builder **nur mit Gutenberg-Blöcken**, serverseitige Speicherung der Einsendungen, lokale Drafts im Browser (IndexedDB).
 
-**Aktuelle Version:** in `gutenberg-formbuilder.php` → `GFB_PLUGIN_VERSION` / Header `Version:` (bei Releases immer **beide** Stellen sowie `blocks/form/block.json` → `version` anheben, damit Browser-Caches für `editor.js` / `frontend.js` / CSS greifen). **GitHub-Releases:** [Releases](https://github.com/BlitzDonner/gutenberg-formbuilder/releases) inkl. Beta-ZIP; Änderungsliste: [`CHANGELOG.md`](CHANGELOG.md).
+**Aktuelle Version:** in `gutenberg-formbuilder.php` → `GFB_PLUGIN_VERSION` / Header `Version:` (bei Releases immer **beide** Stellen sowie `blocks/form/block.json` → `version` anheben, damit Browser-Caches für `editor.js` / `frontend.js` / CSS greifen). **GitHub-Releases:** [Releases](https://github.com/BlitzDonner/gutenberg-formbuilder/releases) inkl. Installations-ZIP; Änderungsliste: [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -100,7 +100,7 @@ docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 
 Nach dem Absenden leitet WordPress u. a. auf `?gfb_status=error&gfb_msg=Formularschema%20nicht%20gefunden.` um, wenn die **serverseitige** Suche keinen `gfb/form`-Block mit der gesendeten `formId` findet (Validierung in `includes/class-gfb-submit-handler.php`).
 
-**Ab 1.0.0-beta.3** durchsucht `GFB_Plugin::locate_form_block_for_post()` u. a.:
+**Seit 1.0.0** durchsucht `GFB_Plugin::locate_form_block_for_post()` u. a.:
 
 1. `post_content` der Seite/ des Beitrags (`gfb_post_id` aus dem Formular),
 2. eingebettete **Bibliotheks-/Musterblöcke** (`core/block` → `wp_block`),
