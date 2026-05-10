@@ -182,6 +182,26 @@ Das aktuelle Plugin liefert die Server-Seite (Storage, Rohablage als Ciphertext)
 
 ---
 
-## 8. Reporting
+## 8. Erfolgsbereich (`gfb/form-success`) und clientseitige Platzhalter
+
+**Abgrenzung zur DB:** Die öffentliche Erfolgsansicht (gleiche Seite, ohne Folgeseite) rendert **nur** den im Beitrag gespeicherten Block-Inhalt (nach `wp_kses` mit der Post-Whitelist, ohne `script`/`style`, plus Entfernen von `on*`-Attributen). **Es werden keine Submissions aus `wp_gfb_submissions` gelesen oder ausgegeben.** Die Platzhalter `{{feldname}}` / `{{label_feldname}}` werden im Browser aus einem **`sessionStorage`-Snapshot** des zuletzt abgesendeten Formulars ersetzt (`assets/frontend.js`, Textknoten → `nodeValue`, **kein** `innerHTML`).
+
+**Submit-Pfad unverändert:** `GFB_Submit_Handler` nutzt weiterhin Schema (ohne `gfb/form-success`-InnerBlocks), Nonce, Token, Rate-Limit, Feldvalidierung, **Verschlüsselung sensibler Felder und Dateien vor dem Schreiben in DB/Storage**. Der Erfolgsbereich erweitert die Menge der akzeptierten POST-Felder nicht.
+
+**Admin-Ansicht:** Einträge werden wie bisher aus der DB geladen und mit `esc_html` / kontrolliertem Entschlüsseln angezeigt (`class-gfb-admin-submissions.php`) — ohne Bezug zum Erfolgsblock.
+
+### Akzeptierte Restrisiken (kein „100 %“ in jedem Bedrohungsmodell)
+
+| Thema | Bewertung |
+|--------|------------|
+| **Klartext im `sessionStorage`** | Snapshot enthält dieselben Werte wie das sichtbare Formular kurz vor dem Absenden (inkl. als «sensitive» markierter Felder **vor** serverseitiger Verschlüsselung). Risiko: XSS auf **derselben Origin** könnte Storage lesen; geteiltes Gerät; längeres Verbleiben bis zur Ersetzung/Löschung. Mitigation im Plugin: Eintrag nach Ersetzung entfernen; kein Echo von DB in den öffentlichen Erfolgstext. |
+| **Breitere KSES-Whitelist** | Erfolgs-HTML nutzt `wp_kses_allowed_html('post')` (minus `script`/`style`) statt der strengeren Feld-Whitelist — bewusst für typische Gutenberg-Inhalte. Vertrauensgrenze entspricht **gespeichertem Beitragsinhalt** (wie bei normalen Seiten). Mit Filter `gfb_success_inner_blocks_allowed_html` kann die Site die Liste verschärfen. |
+| **Folgeseite** | Bei Redirect auf eine andere Seite greifen weder Snapshot noch Erfolgsblock dort; kein Durchreichen von Werten über die DB in dieses Feature. |
+
+**Fazit:** Die serverseitigen Schutzmassnahmen für **Speichern und Admin-Lesezugriff** werden durch das Feature **nicht umgangen**. Zusätzlich entsteht eine **browserlokale** Fläche (`sessionStorage`), die **nicht** dieselben Garantien wie verschlüsselte-at-rest-Daten hat — vergleichbar mit dem Risiko, dass jemand die Eingaben im Formular sieht.
+
+---
+
+## 9. Reporting
 
 Sicherheitslücken bitte vertraulich melden: **Platzhalter** `security@example.com` (und `SECURITY.txt`) durch die echte Kontaktadresse / Responsible-Disclosure-Policy deines Projekts ersetzen. Für interne Pentests ist `bin/security-selftest.sh` als Smoke-Test gedacht und kann eigene Tests ergänzen.
