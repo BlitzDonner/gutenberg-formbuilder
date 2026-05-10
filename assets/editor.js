@@ -17,6 +17,7 @@
 	var SelectControl = wp.components.SelectControl;
 	var __experimentalNumberControl = wp.components.__experimentalNumberControl;
 	var Notice = wp.components.Notice;
+	var createBlock = wp.blocks.createBlock;
 	var PanelColorSettings = wp.blockEditor.PanelColorSettings;
 	var PanelColorGradientSettings =
 		wp.blockEditor.PanelColorGradientSettings ||
@@ -245,6 +246,75 @@
 	var GFB_LEGACY_NAMES_FILE = [ 'datei' ];
 
 	/** Reihenfolge im Formular-Inserter: Felder zuerst (Core nutzt die Reihenfolge von allowedBlocks). */
+	/**
+	 * Felder unter gfb/form für Platzhalter-Hilfe (ohne Erfolgsbereich, ohne Absenden).
+	 *
+	 * @param {Array} blocks
+	 * @return {Array<{name:string,label:string}>}
+	 */
+	function gfbCollectFormFieldTokenRows( blocks ) {
+		var rows = [];
+		if ( ! blocks || ! blocks.length ) {
+			return rows;
+		}
+		blocks.forEach( function ( b ) {
+			if ( ! b || ! b.name ) {
+				return;
+			}
+			if ( b.name === 'gfb/form-success' ) {
+				return;
+			}
+			if ( b.name.indexOf( 'gfb/field-' ) === 0 && b.name !== 'gfb/field-submit' ) {
+				var attrs = b.attributes || {};
+				var nm = attrs.name != null ? String( attrs.name ).trim() : '';
+				if ( nm ) {
+					rows.push( {
+						name: nm,
+						label: attrs.label != null ? String( attrs.label ) : '',
+					} );
+				}
+				return;
+			}
+			if ( b.innerBlocks && b.innerBlocks.length ) {
+				rows = rows.concat( gfbCollectFormFieldTokenRows( b.innerBlocks ) );
+			}
+		} );
+		return rows;
+	}
+
+	/**
+	 * @param {*} select
+	 * @param {string} clientId
+	 * @return {Array<{name:string,label:string}>}
+	 */
+	function gfbTokenRowsFromAncestorForm( select, clientId ) {
+		var sel = select( 'core/block-editor' );
+		if ( ! sel || ! clientId ) {
+			return [];
+		}
+		var parents = sel.getBlockParents( clientId, true );
+		if ( ! parents || ! parents.length ) {
+			return [];
+		}
+		for ( var i = 0; i < parents.length; i++ ) {
+			var block = sel.getBlock( parents[ i ] );
+			if ( block && block.name === 'gfb/form' ) {
+				var raw = gfbCollectFormFieldTokenRows( block.innerBlocks || [] );
+				var seen = {};
+				var out = [];
+				raw.forEach( function ( r ) {
+					if ( seen[ r.name ] ) {
+						return;
+					}
+					seen[ r.name ] = true;
+					out.push( r );
+				} );
+				return out;
+			}
+		}
+		return [];
+	}
+
 	var GFB_FIELD_BLOCKS_ORDERED = [
 		'gfb/field-text',
 		'gfb/field-email',
@@ -497,6 +567,22 @@
 				},
 			} ),
 		];
+	}
+
+	/**
+	 * @param {Record<string, unknown>} attributes
+	 * @param {function(Record<string, unknown>):void} setAttributes
+	 * @param {string} help
+	 */
+	function buildOptionalDefaultValueControl( attributes, setAttributes, help ) {
+		return el( TextControl, {
+			label: __( 'Voreingestellter Wert (optional)', 'gutenberg-formbuilder' ),
+			help: help,
+			value: attributes.defaultValue != null ? String( attributes.defaultValue ) : '',
+			onChange: function ( v ) {
+				setAttributes( { defaultValue: v != null ? String( v ) : '' } );
+			},
+		} );
 	}
 
 	function formHasCustomColors( attrs ) {
@@ -1098,10 +1184,10 @@
 					} );
 					var rest = names
 						.filter( function ( n ) {
-							return ! fieldSet[ n ];
+							return ! fieldSet[ n ] && n !== 'gfb/form-success';
 						} )
 						.sort();
-					return fieldsFirst.concat( rest );
+					return fieldsFirst.concat( [ 'gfb/form-success' ] ).concat( rest );
 				} catch ( err ) {
 					return true;
 				}
@@ -1245,6 +1331,10 @@
 							},
 							disabled: attributes.draftEnabled === false,
 						} ),
+						el( Notice, {
+							status: 'info',
+							isDismissible: false,
+						}, __( 'Optional den Block „Erfolgsbereich“ einfügen: Bei Erfolg ohne Folgeseite erscheint sein Inhalt statt des Formulars. Platzhalter im Text: {{feldname}} (technischer Feldname).', 'gutenberg-formbuilder' ) ),
 						el( SelectControl, {
 							label: __( 'Folgeseite nach erfolgreichem Absenden', 'gutenberg-formbuilder' ),
 							help: __( 'Öffentlich sichtbare Seite. Ohne Auswahl bleibt die Besucherin auf der Formularseite (Hinweis oben).', 'gutenberg-formbuilder' ),
@@ -1317,6 +1407,133 @@
 				},
 			},
 		],
+	} );
+
+	registerBlockType( 'gfb/form-success', {
+		supports: {
+			innerBlocks: true,
+		},
+		edit: function () {
+			var blockProps = useBlockProps( {
+				className: 'gfb-form-success-editor',
+			} );
+			var allowedSuccessInner = useSelect( function ( select ) {
+				try {
+					var types = select( 'core/blocks' ).getBlockTypes();
+					if ( ! types || ! types.length ) {
+						return true;
+					}
+					var names = types
+						.map( function ( t ) {
+							return t.name;
+						} )
+						.filter( function ( name ) {
+							return (
+								name !== 'gfb/form' &&
+								name !== 'gfb/form-success' &&
+								name.indexOf( 'gfb/field-' ) !== 0
+							);
+						} );
+					return [ 'gfb/token' ].concat(
+						names.filter( function ( n ) {
+							return n !== 'gfb/token';
+						} )
+					);
+				} catch ( err ) {
+					return true;
+				}
+			}, [] );
+			var innerBlocksProps = useInnerBlocksProps(
+				{ className: 'gfb-form-success-editor__inner' },
+				{
+					allowedBlocks: allowedSuccessInner,
+					templateLock: false,
+				}
+			);
+			return el(
+				'div',
+				blockProps,
+				el(
+					InspectorControls,
+					null,
+					el(
+						PanelBody,
+						{
+							title: __( 'Erfolgsbereich', 'gutenberg-formbuilder' ),
+							initialOpen: true,
+						},
+						el( Notice, { status: 'info', isDismissible: false }, __( 'Dieser Inhalt ersetzt nach erfolgreichem Absenden das Formular, sofern keine Folgeseite gewählt ist. Platzhalter: {{feldname}}; optional {{label_feldname}} (z. B. {{label_email}}).', 'gutenberg-formbuilder' ) )
+					)
+				),
+				el( 'div', innerBlocksProps )
+			);
+		},
+		save: function () {
+			return el( InnerBlocks.Content );
+		},
+	} );
+
+	registerBlockType( 'gfb/token', {
+		edit: function ( props ) {
+			var clientId = props.clientId;
+			var replaceBlocks = wp.data.useDispatch( 'core/block-editor' ).replaceBlocks;
+			var rows = useSelect(
+				function ( select ) {
+					return gfbTokenRowsFromAncestorForm( select, clientId );
+				},
+				[ clientId ]
+			);
+			var blockProps = useBlockProps( {
+				className: 'gfb-token-hint-editor',
+			} );
+			var selectOptions = [
+				{
+					label: __( 'Feldname wählen …', 'gutenberg-formbuilder' ),
+					value: '',
+				},
+			].concat(
+				rows.map( function ( row ) {
+					var valueTok = '{{' + row.name + '}}';
+					return { label: row.name, value: valueTok };
+				} )
+			);
+			return el(
+				'div',
+				blockProps,
+				el(
+					'p',
+					{ className: 'gfb-token-hint-editor__intro' },
+					__(
+						'Liste der technischen Feldnamen (POST-Name). Nach der Auswahl wird der Wert-Platzhalter {{feldname}} an dieser Stelle als Absatz eingefügt.',
+						'gutenberg-formbuilder'
+					)
+				),
+				! rows.length
+					? el(
+							Notice,
+							{ status: 'warning', isDismissible: false },
+							__(
+								'Keine Felder gefunden. Lege zuerst Felder im Formular ausserhalb dieses Erfolgsbereichs an.',
+								'gutenberg-formbuilder'
+							)
+					  )
+					: el( SelectControl, {
+							label: __( 'Feld → Wert-Platzhalter einfügen', 'gutenberg-formbuilder' ),
+							value: '',
+							options: selectOptions,
+							onChange: function ( chosen ) {
+								if ( ! chosen ) {
+									return;
+								}
+								var para = createBlock( 'core/paragraph', { content: chosen } );
+								replaceBlocks( [ clientId ], [ para ] );
+							},
+					  } )
+			);
+		},
+		save: function () {
+			return null;
+		},
 	} );
 
 	registerBlockType( 'gfb/field-text', {
@@ -1851,7 +2068,15 @@
 						PanelBody,
 						{ title: __( 'Datum', 'gutenberg-formbuilder' ), initialOpen: true },
 						buildFieldControls( attributes, setAttributes, false ),
-						buildDateMinMaxInspector( attributes, setAttributes )
+						buildDateMinMaxInspector( attributes, setAttributes ),
+						buildOptionalDefaultValueControl(
+							attributes,
+							setAttributes,
+							__(
+								'Leer lassen für keinen Startwert. Format: JJJJ-MM-TT, z. B. 2026-05-10.',
+								'gutenberg-formbuilder'
+							)
+						)
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
@@ -1863,6 +2088,7 @@
 					name: attributes.name || undefined,
 					min: attributes.min || undefined,
 					max: attributes.max || undefined,
+					defaultValue: attributes.defaultValue || undefined,
 				} )
 			);
 		},
@@ -1882,6 +2108,7 @@
 					id: a.name,
 					min: a.min || undefined,
 					max: a.max || undefined,
+					value: a.defaultValue || undefined,
 					required: !! a.required,
 				} )
 			);
@@ -1906,7 +2133,15 @@
 					el(
 						PanelBody,
 						{ title: __( 'Uhrzeit', 'gutenberg-formbuilder' ), initialOpen: true },
-						buildFieldControls( attributes, setAttributes, false )
+						buildFieldControls( attributes, setAttributes, false ),
+						buildOptionalDefaultValueControl(
+							attributes,
+							setAttributes,
+							__(
+								'Leer lassen für keinen Startwert. Format: HH:MM (24 Stunden), z. B. 09:30.',
+								'gutenberg-formbuilder'
+							)
+						)
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
@@ -1916,6 +2151,7 @@
 					disabled: true,
 					id: attributes.name || undefined,
 					name: attributes.name || undefined,
+					defaultValue: attributes.defaultValue || undefined,
 				} )
 			);
 		},
@@ -1929,7 +2165,13 @@
 				'div',
 				saveProps,
 				gfbSaveLabelIfAny( a.name, a.label ),
-				el( 'input', { type: 'time', name: a.name, id: a.name, required: !! a.required } )
+				el( 'input', {
+					type: 'time',
+					name: a.name,
+					id: a.name,
+					value: a.defaultValue || undefined,
+					required: !! a.required,
+				} )
 			);
 		},
 	} );
@@ -1952,7 +2194,15 @@
 					el(
 						PanelBody,
 						{ title: __( 'Datum und Uhrzeit', 'gutenberg-formbuilder' ), initialOpen: true },
-						buildFieldControls( attributes, setAttributes, false )
+						buildFieldControls( attributes, setAttributes, false ),
+						buildOptionalDefaultValueControl(
+							attributes,
+							setAttributes,
+							__(
+								'Leer lassen für keinen Startwert. Format: JJJJ-MM-TTTHH:MM (lokal), z. B. 2026-05-10T14:00.',
+								'gutenberg-formbuilder'
+							)
+						)
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
@@ -1962,6 +2212,7 @@
 					disabled: true,
 					id: attributes.name || undefined,
 					name: attributes.name || undefined,
+					defaultValue: attributes.defaultValue || undefined,
 				} )
 			);
 		},
@@ -1979,6 +2230,7 @@
 					type: 'datetime-local',
 					name: a.name,
 					id: a.name,
+					value: a.defaultValue || undefined,
 					required: !! a.required,
 				} )
 			);

@@ -134,6 +134,22 @@ class GFB_Plugin {
 			)
 		);
 
+		register_block_type(
+			GFB_PLUGIN_DIR . 'blocks/form-success',
+			array(
+				'render_callback' => array( __CLASS__, 'render_form_success_block' ),
+			)
+		);
+
+		register_block_type(
+			GFB_PLUGIN_DIR . 'blocks/token',
+			array(
+				'render_callback' => static function () {
+					return '';
+				},
+			)
+		);
+
 		// Alle Field-Blöcke werden serverseitig gerendert (K3 Variante A).
 		// HTML-Output kommt aus GFB_Field_Renderer; das im Editor `save()`
 		// erzeugte Markup wird nur für deprecated-Validierung ungültiger
@@ -598,10 +614,18 @@ class GFB_Plugin {
 			$status = '';
 		}
 
-		$has_file_field = false;
-		if ( $block instanceof WP_Block && ! empty( $block->parsed_block['innerBlocks'] ) ) {
-			$has_file_field = self::parsed_blocks_contain_block( $block->parsed_block['innerBlocks'], 'gfb/field-file' );
+		$inner_blocks_parsed = array();
+		if ( $block instanceof WP_Block && ! empty( $block->parsed_block['innerBlocks'] ) && is_array( $block->parsed_block['innerBlocks'] ) ) {
+			$inner_blocks_parsed = $block->parsed_block['innerBlocks'];
 		}
+		$split_inner         = self::split_form_inner_blocks( $inner_blocks_parsed );
+		$field_only_blocks   = $split_inner['fields'];
+		$success_only_blocks = $split_inner['success'];
+		$thank_you_page_id   = isset( $attributes['thankYouPageId'] ) ? absint( $attributes['thankYouPageId'] ) : 0;
+		$is_same_page_success = ( 'success' === $status && $status_form === $form_id && $thank_you_page_id < 1 );
+		$show_success_panels  = $is_same_page_success && ! empty( $success_only_blocks );
+
+		$has_file_field = self::parsed_blocks_contain_block( $field_only_blocks, 'gfb/field-file' );
 
 		$wrapper_classes   = array( 'gfb-form-wrapper' );
 		$form_color_style = self::build_form_inline_color_style( $attributes );
@@ -620,7 +644,24 @@ class GFB_Plugin {
 		$wrapper_attr_args = array(
 			'class'               => implode( ' ', $wrapper_classes ),
 			'data-gfb-appearance' => $appearance,
+			'data-gfb-form-id'    => $form_id,
+			'data-gfb-key'        => $key,
 		);
+		if ( $show_success_panels ) {
+			$wrapper_attr_args['data-gfb-await-tokens'] = '1';
+			$labels_for_map = array();
+			foreach ( self::get_form_schema_from_post( $post_id, $form_id ) as $row ) {
+				if ( ! empty( $row['name'] ) ) {
+					$labels_for_map[ (string) $row['name'] ] = isset( $row['label'] ) ? wp_strip_all_tags( (string) $row['label'] ) : '';
+				}
+			}
+			if ( ! empty( $labels_for_map ) ) {
+				$wrapper_attr_args['data-gfb-label-map'] = wp_json_encode(
+					$labels_for_map,
+					JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+				);
+			}
+		}
 		if ( '' !== $form_color_style ) {
 			$wrapper_attr_args['style'] = $form_color_style;
 		}
@@ -635,17 +676,45 @@ class GFB_Plugin {
 
 		// K3: Inner-Block-Markup vor Ausgabe streng filtern, damit selbst manipulierte
 		// Block-Comments keine Skripte/Attribute einschleusen können.
-		$safe_content = self::ksesed_inner_blocks_html( (string) $content );
+		$fields_serialized = '';
+		foreach ( $field_only_blocks as $fb ) {
+			$fields_serialized .= serialize_block( $fb );
+		}
+		$fields_html = '' !== $fields_serialized ? do_blocks( $fields_serialized ) : '';
+		$safe_content = self::ksesed_inner_blocks_html( $fields_html );
+		if ( '' === trim( $safe_content ) && '' !== trim( (string) $content ) && empty( $inner_blocks_parsed ) ) {
+			$safe_content = self::ksesed_inner_blocks_html( (string) $content );
+		}
+
+		$success_serialized = '';
+		foreach ( $success_only_blocks as $sb ) {
+			$success_serialized .= serialize_block( $sb );
+		}
+		$safe_success = '';
+		if ( '' !== $success_serialized ) {
+			$safe_success = self::ksesed_success_inner_html( do_blocks( $success_serialized ) );
+		}
+
+		$show_notice = ( $status && $status_msg && ! $show_success_panels );
 
 		ob_start();
-		?>
+		if ( $show_success_panels ) :
+			?>
 		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<?php if ( $status && $status_msg ) : ?>
+			<div class="gfb-form-success-output" data-gfb-success-root="1">
+				<?php echo $safe_success; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_kses (Erfolgs-Whitelist) ?>
+			</div>
+		</div>
+			<?php
+		else :
+			?>
+		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+			<?php if ( $show_notice ) : ?>
 				<div class="gfb-notice gfb-notice-<?php echo esc_attr( $status ); ?>">
 					<?php echo esc_html( $status_msg ); ?>
 				</div>
 			<?php endif; ?>
-			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
+			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" lang="<?php echo esc_attr( determine_locale() ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
 				<input type="hidden" name="gfb_token" value="<?php echo esc_attr( $gfb_token ); ?>" />
 				<input type="hidden" name="gfb_instance_id" value="<?php echo esc_attr( $instance_id ); ?>" />
 				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
@@ -670,7 +739,8 @@ class GFB_Plugin {
 				</div>
 			</form>
 		</div>
-		<?php
+			<?php
+		endif;
 		return ob_get_clean();
 	}
 
@@ -764,6 +834,67 @@ class GFB_Plugin {
 		$kses = preg_replace( '/\s+on[a-z]+\s*=\s*\'[^\']*\'/i', '', (string) $kses );
 
 		return (string) $kses;
+	}
+
+	/**
+	 * Erfolgsbereich: KSES wie typischer Beitragsinhalt (ohne Skripte), plus Sicherheitsnetz gegen on*-Handler.
+	 *
+	 * @param string $html HTML aus do_blocks() der Erfolgs-InnerBlocks.
+	 * @return string
+	 */
+	private static function ksesed_success_inner_html( $html ) {
+		$allowed = wp_kses_allowed_html( 'post' );
+		unset( $allowed['script'], $allowed['style'] );
+		/**
+		 * Erlaubte Tags für den Erfolgsbereich (Core-Blöcke o. ä.).
+		 *
+		 * @param array<string,array<string,bool>> $allowed
+		 */
+		$allowed = apply_filters( 'gfb_success_inner_blocks_allowed_html', $allowed );
+		$kses    = wp_kses( (string) $html, $allowed, array( 'http', 'https', 'mailto', 'tel' ) );
+		$kses    = preg_replace( '/\s+on[a-z]+\s*=\s*"[^"]*"/i', '', (string) $kses );
+		$kses    = preg_replace( '/\s+on[a-z]+\s*=\s*\'[^\']*\'/i', '', (string) $kses );
+		return (string) $kses;
+	}
+
+	/**
+	 * Innere Blöcke des Formulars in Felder vs. Erfolgsbereiche splitten.
+	 *
+	 * @param array<int,array<string,mixed>> $inner_blocks Geparste innerBlocks des gfb/form-Blocks.
+	 * @return array{fields:array<int,array<string,mixed>>,success:array<int,array<string,mixed>>}
+	 */
+	private static function split_form_inner_blocks( $inner_blocks ) {
+		$fields  = array();
+		$success = array();
+		foreach ( $inner_blocks as $b ) {
+			if ( ! is_array( $b ) ) {
+				continue;
+			}
+			if ( 'gfb/form-success' === ( $b['blockName'] ?? '' ) ) {
+				$success[] = $b;
+			} else {
+				$fields[] = $b;
+			}
+		}
+		return array(
+			'fields'  => $fields,
+			'success' => $success,
+		);
+	}
+
+	/**
+	 * Frontend: ein Erfolgs-Panel (InnerBlocks als HTML, KSES in render_form_success_block).
+	 *
+	 * @param array<string,mixed> $attributes Block-Attribute.
+	 * @param string                $content    Gerenderte InnerBlocks.
+	 * @param WP_Block              $block      Block-Instanz.
+	 * @return string
+	 */
+	public static function render_form_success_block( $attributes, $content, $block ) {
+		unset( $attributes, $block );
+		$html = is_string( $content ) ? $content : '';
+		$safe  = self::ksesed_success_inner_html( $html );
+		return '<section class="gfb-form-success-panel" data-gfb-success-panel="1">' . $safe . '</section>';
 	}
 
 	/**
@@ -988,6 +1119,9 @@ class GFB_Plugin {
 		$fields = array();
 		foreach ( $inner_blocks as $block ) {
 			$name  = $block['blockName'] ?? '';
+			if ( 'gfb/form-success' === $name ) {
+				continue;
+			}
 			$attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
 
 			$row = self::block_to_field_row( $name, $attrs );

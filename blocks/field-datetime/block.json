@@ -2,7 +2,7 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "gfb/field-datetime",
-    "version": "2.0.0",
+    "version": "2.0.7",
     "title": "Datum und Uhrzeit",
     "category": "gfb-fields",
     "icon": {
@@ -22,6 +22,10 @@
         "required": {
             "type": "boolean",
             "default": false
+        },
+        "defaultValue": {
+            "type": "string",
+            "default": ""
         },
         "sensitive": {
             "type": "boolean",

@@ -386,11 +386,13 @@
 	cursor: not-allowed;
 }
 
-/* Datums-/Zeit-Picker: native Controls etwas luftiger */
+/* Datums-/Zeit-Picker: native Controls etwas luftiger; WebKit-Fallback = gleiche Zeilenhöhe */
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="date"],
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="time"],
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="datetime-local"] {
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="datetime-local"],
+.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input.gfb-input--webkit-fallback {
 	min-height: 2.75rem;
+	font-variant-numeric: tabular-nums;
 }
 
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"] {
@@ -709,4 +711,41 @@
 		-webkit-text-fill-color: var(--gfb-dark-submit-text, var(--gfb-light-submit-text, Canvas)) !important;
 		background-color: var(--gfb-dark-submit-bg, var(--gfb-light-submit-bg, LinkText)) !important;
 	}
+}
+
+/* Erfolgsbereich (Frontend nach erfolgreichem Absenden ohne Folgeseite) */
+.gfb-form-success-output {
+	max-width: 100%;
+}
+
+.gfb-form-success-panel {
+	margin-block: 0 1.25rem;
+}
+
+.gfb-form-success-panel:last-child {
+	margin-bottom: 0;
+}
+
+/* Editor: Erfolgsbereich-Block */
+.block-editor-block-list__block .gfb-form-success-editor {
+	border: 1px dashed color-mix(in srgb, CanvasText 28%, transparent);
+	border-radius: var(--gfb-radius, 10px);
+	padding: 0.75rem 1rem;
+}
+
+.gfb-form-success-editor__inner > .block-list-appender {
+	margin-top: 0.5rem;
+}
+
+/* Editor: Platzhalter-Hilfe (gfb/token) im Erfolgsbereich */
+.gfb-token-hint-editor {
+	padding: 0.35rem 0;
+	max-width: 28rem;
+}
+
+.gfb-token-hint-editor__intro {
+	margin: 0 0 0.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 82%, transparent);
 }

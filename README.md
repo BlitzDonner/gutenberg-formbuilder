@@ -74,7 +74,8 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
 
 ## Funktionsumfang (Kurz)
 
-- Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular)
+- Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`)
+- **Erfolgsbereich** (`gfb/form-success`, nur innerhalb von `gfb/form`): beliebige InnerBlocks, die nach erfolgreichem Absenden **anstelle des Formulars** erscheinen, wenn **keine** Folgeseite gewählt ist. Im Text stehen Platzhalter `{{feldname}}` (technischer Name) und optional `{{label_feldname}}`; die Werte setzt `assets/frontend.js` per `sessionStorage`-Snapshot beim Absenden (Datei-Felder: `[Datei]`). Mit gewählter Folgeseite bleibt das bisherige Verhalten (Hinweiszeile / Redirect-Zielseite). Im Erfolgsbereich kann der Block **Platzhalter-Hilfe** (`gfb/token`) die **technischen Feldnamen** in einem Auswahlfeld anbieten; nach der Wahl wird `{{feldname}}` (übermittelter Wert) an dieser Stelle als Absatz eingefügt (nur Editor). Optional weiterhin `{{label_feldname}}` manuell für die Anzeige-Bezeichnung.
 - Submit über `admin_post` / `admin_post_nopriv` mit Nonce, Honeypot, Timing, Rate-Limit
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen)
@@ -94,10 +95,32 @@ docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 ## Entwicklung
 
 - Kein npm-Build: JS/CSS sind Quelldateien.
-- Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Editor-Styles).
+- Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` sowie in `blocks/form-success/block.json` und `blocks/token/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Skripte/Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
 
-**Zuletzt dokumentiert (Auszug):** mitgelieferte Locale-Dateien `languages/gutenberg-formbuilder-{en_US,fr_FR,it_IT}.mo`, Entwurfs-**Wiederherstellung** Standard `auto` (`blocks/form/block.json`, verstecktes Feld `gfb_draft_mode` in `class-gfb-plugin.php`), Submit-**Detailnotices** (`gfb_detail` für `err_validation`, `err_file`, `err_external`, `err_crypto`), automatische technische Feldnamen (`syncAutoFieldName`), Formular-`formId` bei Duplikat (`syncFormInstance`), Farb-/Verlauf-Panels (`renderGfbColorPanel`), Canvas-Styling (`gfbSyncEditorFormStylesheet`), Schema-Suche (`locate_form_block_for_post`), Redirect `gfb_status` / `gfb_code` / `gfb_detail`.
+**Zuletzt dokumentiert (Auszug):** **Erfolgsbereich** (`gfb/form-success`), **Platzhalter-Hilfe** (`gfb/token`), **sessionStorage**-Snapshot und Platzhalter-Ersetzung in `assets/frontend.js`, WebKit-Datums-/Zeit-**Text-Fallback**, Locale-Dateien `languages/…`, Entwurfs-**Wiederherstellung** `auto`/`prompt`, Submit-**Detailnotices** (`gfb_detail`), `defaultValue` für Datum/Uhrzeit/Termin, Schema-Suche (`locate_form_block_for_post`), Redirect `gfb_status` / `gfb_code` / `gfb_detail`.
+
+## Zeitfeld: „Ungültiger Wert“ (Browser)
+
+Die Meldung **„Ungültiger Wert“** bei `<input type="time">` kommt von der **HTML5-Validierung im Browser**, nicht von der Plugin-PHP-Logik (die erwartet weiterhin normales **`HH:MM`** im 24-Stunden-Format).
+
+Typische Ursache: **System/Browser mit 12-Stunden-UI** — im Stunden-Segment sind oft nur **1–12** erlaubt; eine Eingabe wie **18** für die Stunde wirkt dort ungültig, obwohl **18:30** in einem reinen 24h-Modell korrekt wäre.
+
+Das gerenderte `<form class="gfb-form">` trägt das Attribut **`lang="…"`** (WordPress-Locale via `determine_locale()`), damit Steuerelemente stärker an die **Sprache der Website** gekoppelt sind — in manchen Browser/OS-Kombinationen reduziert das 12h-/24h-Reibungen. Trotzdem kann das Verhalten browser- und systemabhängig bleiben; bei hartnäckigen Fällen helfen **24-Stunden-Anzeige** in den Systemeinstellungen oder ein anderer Browser zum Test.
+
+**Safari / WebKit (ohne Blink):** `assets/frontend.js` ersetzt `date` / `time` / `datetime-local` durch **formatierte Textfelder** (`pattern`, festes `placeholder`, `maxLength`), damit dieselben POST-Strings wie unter Chrome/Firefox entstehen. Blink-/Gecko-Browser (inkl. Chrome, Edge, Firefox, Chrome auf iOS) bleiben bei den nativen Pickern.
+
+**Hinweis nach Absenden:** Die Erfolgs-/Fehlerzeile kommt aus der Redirect-URL (`gfb_status`, …). Nach dem Laden entfernt `frontend.js` diese Parameter mit **`history.replaceState`**, damit ein **Reload** das Formular ohne feststeckenden Hinweis zeigt. **Entwurf löschen** blendet die Notice zusätzlich aus und bereinigt die URL.
+
+## Erfolgsbereich: Nachricht und Platzhalter
+
+Gilt nur, wenn im Block **Formular** **keine** Folgeseite gewählt ist und mindestens ein Block **Erfolgsbereich** (`gfb/form-success`) eingefügt wurde.
+
+- **Darstellung:** Nach erfolgreichem Absenden rendert PHP **kein** `<form>` mehr, sondern nur noch den Inhalt der Erfolgsbereiche (InnerBlocks wie Absätze, Überschriften, …). Die Standard-Erfolgsnotice entfällt in diesem Fall.
+- **Platzhalter:** Im Text stehen `{{feldname}}` für den **übermittelten Wert** (technischer POST-Name des Feldes) und optional `{{label_feldname}}` für die **Bezeichnung** aus dem Block-Schema (sichtbares Label zum Zeitpunkt der Speicherung).
+- **Datenquelle:** Beim Absenden schreibt `assets/frontend.js` einen Snapshot der Feldwerte in **`sessionStorage`** (Schlüssel `gfb_submit_snapshot:` + derselbe Wert wie `data-gfb-key` am Formular). Nach dem Redirect ersetzt das Skript die Platzhalter in den **Textknoten** des Erfolgsbereichs. **Datei-Felder** liefern im Snapshot nur den Platzhaltertext **`[Datei]`** (kein Dateiinhalt).
+- **Platzhalter-Hilfe** (`gfb/token`, nur im Erfolgsbereich): Auswahlliste der **technischen Feldnamen**; nach der Wahl wird ein **Absatz** mit `{{feldname}}` eingefügt (der Hilfsblock wird dabei entfernt). Für Fliesstext im gleichen Absatz den Token nachträglich anpassen oder manuell setzen.
+- **Grenzen:** Platzhalter funktionieren **nicht** bei Weiterleitung auf eine **andere** Folgeseite (dort liegt der Formularblock nicht). Ohne `sessionStorage` (blockiert, privates Fenster ohne derselben Navigation) bleiben Platzhalter sichtbar, werden aber nicht ersetzt.
 
 ## Submit-Fehler: „Formularschema nicht gefunden“
 

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/form-success",
+  "version": "2.1.4",
+  "title": "Erfolgsbereich",
+  "category": "gfb-form",
+  "ancestor": ["gfb/form"],
+  "icon": {
+    "src": "yes-alt",
+    "foreground": "#1b2627"
+  },
+  "description": "Inhalt, der nach erfolgreichem Absenden ohne Folgeseite statt des Formulars erscheint. Platzhalter: {{feldname}}, optional {{label_feldname}}.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "innerBlocks": true,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true
+    },
+    "border": true
+  },
+  "editorScript": "gfb-editor"
+}

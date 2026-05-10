@@ -1,7 +1,7 @@
 # Italian (Italy) translation for Gutenberg Formbuilder
 msgid ""
 msgstr ""
-"Project-Id-Version: Gutenberg Formbuilder 2.0.4\n"
+"Project-Id-Version: Gutenberg Formbuilder 2.0.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-10 12:00+0000\n"
 "PO-Revision-Date: 2026-05-10 12:00+0000\n"
@@ -189,3 +189,15 @@ msgstr "Si è verificato un errore durante l’invio del modulo."
 
 msgid "Entwurf löschen"
 msgstr "Elimina bozza"
+
+msgid "Voreingestellter Wert (optional)"
+msgstr "Valore predefinito (facoltativo)"
+
+msgid "Leer lassen für keinen Startwert. Format: JJJJ-MM-TT, z. B. 2026-05-10."
+msgstr "Lascia vuoto per nessun valore iniziale. Formato: AAAA-MM-GG, es. 2026-05-10."
+
+msgid "Leer lassen für keinen Startwert. Format: HH:MM (24 Stunden), z. B. 09:30."
+msgstr "Lascia vuoto per nessun valore iniziale. Formato: HH:MM (24 ore), es. 09:30."
+
+msgid "Leer lassen für keinen Startwert. Format: JJJJ-MM-TTTHH:MM (lokal), z. B. 2026-05-10T14:00."
+msgstr "Lascia vuoto per nessun valore iniziale. Formato: AAAA-MM-GGTHH:MM (locale), es. 2026-05-10T14:00."

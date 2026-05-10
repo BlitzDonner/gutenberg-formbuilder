@@ -2,7 +2,7 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "gfb/field-date",
-    "version": "2.0.0",
+    "version": "2.0.7",
     "title": "Datum",
     "category": "gfb-fields",
     "icon": {
@@ -28,6 +28,10 @@
             "default": ""
         },
         "max": {
+            "type": "string",
+            "default": ""
+        },
+        "defaultValue": {
             "type": "string",
             "default": ""
         },

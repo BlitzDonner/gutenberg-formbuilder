@@ -5,6 +5,86 @@
 	var STORE_NAME = 'drafts';
 	var DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+	/**
+	 * Safari / reines WebKit: natives date/time/datetime-local ist oft fehleranfällig (12h-Segmente,
+	 * Validierung). Blink- und Gecko-Browser bleiben bei nativen Pickern.
+	 *
+	 * @return {boolean}
+	 */
+	function gfbWebKitNeedsPlainDateTimeInputs() {
+		var ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+		if ( ! ua ) {
+			return false;
+		}
+		if ( /Firefox\//i.test( ua ) ) {
+			return false;
+		}
+		if ( /Chrome|Chromium|Edg|OPR|CriOS/i.test( ua ) ) {
+			return false;
+		}
+		return /AppleWebKit/i.test( ua );
+	}
+
+	/**
+	 * Ersetzt native Datums-/Zeit-Inputs durch formatierte Textfelder (nur WebKit-Pfad).
+	 *
+	 * @param {HTMLFormElement} form
+	 * @return {void}
+	 */
+	function gfbUpgradeWebKitDateTimeInputs( form ) {
+		if ( ! gfbWebKitNeedsPlainDateTimeInputs() || ! form ) {
+			return;
+		}
+		var sel = 'input[type="date"], input[type="time"], input[type="datetime-local"]';
+		form.querySelectorAll( sel ).forEach( function ( el ) {
+			var neo = document.createElement( 'input' );
+			neo.type = 'text';
+			neo.setAttribute( 'data-gfb-wk-fallback', '1' );
+			neo.className = ( el.className ? el.className + ' ' : '' ) + 'gfb-input--webkit-fallback';
+			neo.name = el.name;
+			neo.id = el.id;
+			if ( el.required ) {
+				neo.required = true;
+			}
+			neo.setAttribute( 'autocomplete', 'off' );
+			neo.setAttribute( 'spellcheck', 'false' );
+			var t = el.type;
+			if ( t === 'date' ) {
+				neo.setAttribute( 'data-gfb-datetime-kind', 'date' );
+				neo.pattern = '\\d{4}-\\d{2}-\\d{2}';
+				neo.placeholder = 'YYYY-MM-DD';
+				neo.maxLength = 10;
+				neo.inputMode = 'numeric';
+				var dmin = el.getAttribute( 'min' );
+				var dmax = el.getAttribute( 'max' );
+				if ( dmin ) {
+					neo.setAttribute( 'data-gfb-min', dmin );
+				}
+				if ( dmax ) {
+					neo.setAttribute( 'data-gfb-max', dmax );
+				}
+			} else if ( t === 'time' ) {
+				neo.setAttribute( 'data-gfb-datetime-kind', 'time' );
+				neo.pattern = '([01]\\d|2[0-3]):[0-5]\\d';
+				neo.placeholder = 'HH:MM';
+				neo.maxLength = 5;
+				neo.inputMode = 'numeric';
+			} else {
+				neo.setAttribute( 'data-gfb-datetime-kind', 'datetime' );
+				neo.pattern = '\\d{4}-\\d{2}-\\d{2}T([01]\\d|2[0-3]):[0-5]\\d';
+				neo.placeholder = 'YYYY-MM-DDTHH:MM';
+				neo.maxLength = 16;
+				neo.inputMode = 'text';
+			}
+			if ( neo.placeholder ) {
+				neo.title = neo.placeholder;
+			}
+			neo.defaultValue = typeof el.defaultValue === 'string' ? el.defaultValue : '';
+			neo.value = el.value || neo.defaultValue || '';
+			el.parentNode.replaceChild( neo, el );
+		} );
+	}
+
 	function openDb() {
 		return new Promise( function ( resolve, reject ) {
 			if ( ! window.indexedDB ) {
@@ -79,6 +159,10 @@
 		var fields = form.querySelectorAll( 'input[name], textarea[name], select[name]' );
 		fields.forEach( function ( field ) {
 			if ( field.type === 'password' || field.name === 'gfb_nonce' || field.name.indexOf( 'gfb_' ) === 0 ) {
+				return;
+			}
+			if ( field.type === 'file' ) {
+				values[ field.name ] = '[Datei]';
 				return;
 			}
 			if ( field.type === 'checkbox' ) {
@@ -164,6 +248,7 @@
 		if ( ! key ) {
 			return;
 		}
+		gfbUpgradeWebKitDateTimeInputs( form );
 		/** Nach manuellem Löschen kurz kein erneutes Speichern (sonst z. B. Safari: Alert → visibilitychange → Entwurf ist sofort wieder da). */
 		var persistAllowed = true;
 		/** Nach reset()/Löschen: Events vom Browser blockieren, die sonst sofort wieder speichern. */
@@ -193,7 +278,20 @@
 				removeDraft( db, key )
 					.then( function () {
 						form.reset();
+						/* reset() stellt HTML-Defaults wieder her; Datums-/Zeitfelder sollen wirklich leer sein (ohne versteckten Browser-/Entwurfswert). */
+						form
+							.querySelectorAll(
+								'input[type="date"], input[type="time"], input[type="datetime-local"], input[data-gfb-wk-fallback="1"]'
+							)
+							.forEach( function ( el ) {
+								el.value = '';
+								if ( el.defaultValue !== undefined ) {
+									el.defaultValue = '';
+								}
+							} );
 						initRangeValueDisplays( form );
+						gfbStripSubmitStateFromUrlIfPresent();
+						gfbDismissSubmitNoticeForForm( form );
 						window.alert( 'Lokaler Entwurf wurde gelöscht.' );
 					} )
 					.catch( function () {
@@ -278,12 +376,208 @@
 		window.addEventListener( 'pagehide', flushDraft );
 		window.addEventListener( 'beforeunload', flushDraft );
 
-		form.addEventListener( 'submit', function () {
-			// Lokaler Entwurf wird nach erfolgreichem Submit über URL-Parameter endgültig gelöscht.
+		/* Capture-Phase: vor anderen Handlern und zuverlässig vor der Navigation. */
+		form.addEventListener(
+			'submit',
+			function () {
+				try {
+					var sk = form.getAttribute( 'data-gfb-key' );
+					if ( sk && window.sessionStorage ) {
+						window.sessionStorage.setItem(
+							'gfb_submit_snapshot:' + sk,
+							JSON.stringify( collectValues( form ) )
+						);
+					}
+				} catch ( snapErr ) {
+					/* sessionStorage kann blockiert sein */
+				}
+			},
+			true
+		);
+	}
+
+	/**
+	 * Entfernt Submit-/Redirect-Parameter aus der Adresszeile, damit ein Reload die Hinweiszeile nicht erneut anzeigt.
+	 *
+	 * @return {boolean} true wenn die URL geändert wurde.
+	 */
+	/**
+	 * Platzhalter {{feldname}} bzw. {{label_feldname}} im Erfolgsbereich (nur Textknoten).
+	 *
+	 * @param {string} s
+	 * @param {Record<string,string>} values
+	 * @param {Record<string,string>} labels
+	 * @return {string}
+	 */
+	/**
+	 * Objekt-Schlüssel auf Kleinbuchstaben normalisieren (HTML name / URL / JSON).
+	 *
+	 * @param {Record<string,string>} raw
+	 * @return {Record<string,string>}
+	 */
+	function gfbNormalizeKeyMap( raw ) {
+		var out = {};
+		if ( ! raw || typeof raw !== 'object' || Array.isArray( raw ) ) {
+			return out;
+		}
+		Object.keys( raw ).forEach( function ( k ) {
+			out[ String( k ).toLowerCase() ] = raw[ k ];
+		} );
+		return out;
+	}
+
+	function gfbReplaceTokenPlaceholders( s, values, labels ) {
+		return String( s ).replace(
+			/\{\{label_([a-z0-9_-]+)\}\}|\{\{([a-z0-9_-]+)\}\}/gi,
+			function ( _full, labelKey, plainKey ) {
+				if ( labelKey ) {
+					var lk = String( labelKey ).toLowerCase();
+					return Object.prototype.hasOwnProperty.call( labels, lk )
+						? String( labels[ lk ] != null ? labels[ lk ] : '' )
+						: '';
+				}
+				if ( plainKey ) {
+					var pk = String( plainKey ).toLowerCase();
+					if ( Object.prototype.hasOwnProperty.call( values, pk ) ) {
+						return String( values[ pk ] != null ? values[ pk ] : '' );
+					}
+				}
+				return '';
+			}
+		);
+	}
+
+	/**
+	 * @param {Element} root
+	 * @param {Record<string,string>} values
+	 * @param {Record<string,string>} labels
+	 */
+	function gfbApplyTokensToTextNodes( root, values, labels ) {
+		var walker = document.createTreeWalker( root, NodeFilter.SHOW_TEXT, null );
+		var list = [];
+		var node;
+		while ( ( node = walker.nextNode() ) ) {
+			if ( ! node.nodeValue || node.nodeValue.indexOf( '{{' ) === -1 ) {
+				continue;
+			}
+			var par = node.parentNode;
+			if ( ! par || par.nodeName === 'SCRIPT' || par.nodeName === 'STYLE' ) {
+				continue;
+			}
+			list.push( node );
+		}
+		list.forEach( function ( textNode ) {
+			var next = gfbReplaceTokenPlaceholders( textNode.nodeValue, values, labels );
+			if ( next !== textNode.nodeValue ) {
+				textNode.nodeValue = next;
+			}
 		} );
 	}
 
-	document.addEventListener( 'DOMContentLoaded', function () {
+	/**
+	 * Nach Redirect: Werte aus sessionStorage in Erfolgs-HTML einsetzen (gleiche Seite, ohne Folgeseite).
+	 *
+	 * @return {void}
+	 */
+	function gfbApplySubmitSnapshotTokens() {
+		var sp = new URLSearchParams( window.location.search );
+		if ( sp.get( 'gfb_status' ) !== 'success' ) {
+			return;
+		}
+		var formId = sp.get( 'gfb_form' );
+		if ( ! formId ) {
+			return;
+		}
+		var roots = document.querySelectorAll( '.gfb-form-wrapper[data-gfb-await-tokens]' );
+		if ( ! roots.length ) {
+			return;
+		}
+		var formIdLc = String( formId ).toLowerCase();
+		Array.prototype.forEach.call( roots, function ( wrap ) {
+			var wrapFormId = wrap.getAttribute( 'data-gfb-form-id' );
+			if ( String( wrapFormId || '' ).toLowerCase() !== formIdLc ) {
+				return;
+			}
+			var labels = {};
+			var lm = wrap.getAttribute( 'data-gfb-label-map' );
+			if ( lm ) {
+				try {
+					var parsed = JSON.parse( lm );
+					if ( parsed && typeof parsed === 'object' && ! Array.isArray( parsed ) ) {
+						labels = gfbNormalizeKeyMap( parsed );
+					}
+				} catch ( parseErr ) {
+					labels = {};
+				}
+			}
+			var key = wrap.getAttribute( 'data-gfb-key' );
+			if ( ! key || ! window.sessionStorage ) {
+				return;
+			}
+			var raw = window.sessionStorage.getItem( 'gfb_submit_snapshot:' + key );
+			var values = {};
+			if ( raw ) {
+				try {
+					var vobj = JSON.parse( raw );
+					if ( vobj && typeof vobj === 'object' && ! Array.isArray( vobj ) ) {
+						values = gfbNormalizeKeyMap( vobj );
+					}
+				} catch ( jsonErr ) {
+					values = {};
+				}
+			}
+			gfbApplyTokensToTextNodes( wrap, values, labels );
+			try {
+				window.sessionStorage.removeItem( 'gfb_submit_snapshot:' + key );
+			} catch ( rmErr ) {
+				/* ignorieren */
+			}
+		} );
+	}
+
+	function gfbStripSubmitStateFromUrlIfPresent() {
+		var params = new URLSearchParams( window.location.search );
+		var keys = [ 'gfb_status', 'gfb_code', 'gfb_form', 'gfb_detail', 'gfb_draft_key' ];
+		var changed = false;
+		keys.forEach( function ( k ) {
+			if ( params.has( k ) ) {
+				params.delete( k );
+				changed = true;
+			}
+		} );
+		if ( ! changed ) {
+			return false;
+		}
+		var qs = params.toString();
+		var next = window.location.pathname + ( qs ? '?' + qs : '' ) + window.location.hash;
+		var cur = window.location.pathname + window.location.search + window.location.hash;
+		if ( next !== cur ) {
+			window.history.replaceState( {}, document.title, next );
+		}
+		return true;
+	}
+
+	/**
+	 * Entfernt die Erfolgs-/Fehler-Notice oberhalb des Formulars (z. B. nach „Entwurf löschen“).
+	 *
+	 * @param {HTMLFormElement} form
+	 * @return {void}
+	 */
+	function gfbDismissSubmitNoticeForForm( form ) {
+		var wrap = form.closest( '.gfb-form-wrapper' );
+		if ( ! wrap ) {
+			return;
+		}
+		var note = wrap.querySelector( '.gfb-notice' );
+		if ( note && note.parentNode ) {
+			note.parentNode.removeChild( note );
+		}
+	}
+
+	function gfbInitFrontend() {
+		/* Platzhalter zuerst: `gfb_status`/`gfb_form` stehen noch in der URL; kein Warten auf IndexedDB. */
+		gfbApplySubmitSnapshotTokens();
+
 		var sp = new URLSearchParams( window.location.search );
 		if ( sp.get( 'gfb_status' ) === 'success' && sp.get( 'gfb_draft_key' ) ) {
 			var dk = sp.get( 'gfb_draft_key' );
@@ -307,6 +601,16 @@
 					initForm( db, form );
 				} );
 			} )
-			.catch( function () {} );
-	} );
+			.catch( function () {} )
+			.finally( function () {
+				/* Nach erstem Anzeigen: URL bereinigen, damit Reload / neuer Tab keinen festgefahrenen Hinweis erzeugt. */
+				gfbStripSubmitStateFromUrlIfPresent();
+			} );
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', gfbInitFrontend );
+	} else {
+		gfbInitFrontend();
+	}
 } )();

@@ -129,10 +129,35 @@ class GFB_Field_Renderer {
 	}
 
 	/**
-	 * @param array<string,mixed> $attrs
-	 * @param string              $type  HTML5 input type.
-	 * @param string              $field_class
-	 * @return string
+	 * Nur für date/time/datetime-local: gültiger HTML-Default oder leer.
+	 *
+	 * @param string $type date|time|datetime-local
+	 * @param mixed  $raw  Block-Attribut defaultValue.
+	 * @return string Escapbare Roh-Zeichenkette oder ''.
+	 */
+	private static function sanitize_html_datetime_default( $type, $raw ) {
+		$s = trim( (string) $raw );
+		if ( '' === $s ) {
+			return '';
+		}
+		if ( 'date' === $type ) {
+			return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $s ) ? $s : '';
+		}
+		if ( 'time' === $type ) {
+			return preg_match( '/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $s ) ? $s : '';
+		}
+		if ( 'datetime-local' === $type ) {
+			$s = preg_replace( '/\s+/', 'T', $s, 1 );
+			return preg_match( '/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $s ) ? $s : '';
+		}
+		return '';
+	}
+
+	/**
+	 * @param array<string,mixed> $attrs Block-Attribute.
+	 * @param string              $type  HTML-input-type (date, email, …).
+	 * @param string              $field_class CSS-Klasse für das Wrapper-DIV.
+	 * @return string HTML.
 	 */
 	private static function render_text_like( array $attrs, $type, $field_class ) {
 		$c     = self::common( $attrs );
@@ -144,6 +169,23 @@ class GFB_Field_Renderer {
 		$attr .= ' id="' . esc_attr( $c['name'] ) . '"';
 		if ( '' !== $c['placeholder'] ) {
 			$attr .= ' placeholder="' . esc_attr( $c['placeholder'] ) . '"';
+		}
+		if ( in_array( $type, array( 'date', 'time', 'datetime-local' ), true ) ) {
+			$dv = self::sanitize_html_datetime_default( $type, $attrs['defaultValue'] ?? '' );
+			if ( '' !== $dv ) {
+				$attr .= ' value="' . esc_attr( $dv ) . '"';
+			}
+		}
+		if ( 'date' === $type ) {
+			foreach ( array( 'min', 'max' ) as $dk ) {
+				if ( empty( $attrs[ $dk ] ) ) {
+					continue;
+				}
+				$mv = sanitize_text_field( (string) $attrs[ $dk ] );
+				if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $mv ) ) {
+					$attr .= ' ' . esc_attr( $dk ) . '="' . esc_attr( $mv ) . '"';
+				}
+			}
 		}
 		if ( $c['required'] ) {
 			$attr .= ' required';

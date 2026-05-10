@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/token",
+  "version": "2.1.4",
+  "title": "Platzhalter-Hilfe",
+  "category": "gfb-form",
+  "ancestor": ["gfb/form-success"],
+  "icon": {
+    "src": "editor-code",
+    "foreground": "#1b2627"
+  },
+  "description": "Liste der technischen Feldnamen: Auswahl fügt den Wert-Platzhalter {{feldname}} an dieser Stelle ein (nur Editor).",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "multiple": true,
+    "spacing": {
+      "margin": true
+    }
+  },
+  "editorScript": "gfb-editor"
+}

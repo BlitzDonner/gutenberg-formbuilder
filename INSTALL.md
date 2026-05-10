@@ -144,3 +144,12 @@ Beim Aktivieren der 2.0-Version:
 - Die Locale richtet sich in der Regel nach **Einstellungen → Allgemein → Sprache der Website**. Mehrsprachige Plugins (Polylang, WPML, …) können den Filter `locale` setzen — dann greifen dieselben Dateien, sobald die Locale passt.
 - **Hinweis:** `admin-post.php` kann bei **eingeloggten** Benutzern die **Profil-Sprache** statt nur der Seitensprache verwenden (WordPress-Standard).
 - `.mo` aus `.po` erzeugen (lokal, falls `gettext` installiert): `msgfmt -c -o languages/gutenberg-formbuilder-en_GB.mo languages/gutenberg-formbuilder-en_GB.po`
+
+## 11. Erfolgsbereich und Platzhalter (Redaktion)
+
+Keine Server-Konfiguration nötig; Kurzüberblick für Inhalte nach erfolgreichem Absenden:
+
+- **Erfolgsbereich** (`gfb/form-success`) nur **innerhalb** des Blocks **Formular** einfügen. Wenn **keine** Folgeseite im Formularblock gewählt ist, erscheint nach erfolgreichem Senden **dieser Inhalt statt des Formulars** (sonst wie bisher Hinweiszeile bzw. Redirect).
+- **Platzhalter:** `{{feldname}}` = übermittelter Wert (technischer Name des Feldes, siehe Block-Inspector unter den Feldern). Optional `{{label_feldname}}` = Bezeichnung aus dem Schema. Datei-Felder im Erfolgstext: Wert erscheint als **`[Datei]`** (kein Dateiname aus dem Snapshot).
+- **Technik:** Werte kommen aus einem **sessionStorage**-Snapshot beim Absenden (gleicher Browser-Tab). Nach einem Reload ohne erneutes Absenden sind die Platzhalter nicht befüllbar.
+- **Platzhalter-Hilfe** (`gfb/token`): Dropdown der **Feldnamen** fügt per Klick einen Absatz mit `{{feldname}}` ein (nur Editor, kein Frontend-Markup).

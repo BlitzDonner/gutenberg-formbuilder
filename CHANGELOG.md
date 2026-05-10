@@ -2,6 +2,69 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.1.4] – 2026-05-10
+
+### Geändert
+
+- **Platzhalter-Hilfe** (`gfb/token`): Auswahlliste zeigt die **technischen Feldnamen** (POST-`name`); die Auswahl fügt den **Wert-Platzhalter** `{{feldname}}` ein, nicht mehr `{{label_…}}`.
+
+## [2.1.3] – 2026-05-10
+
+### Behoben
+
+- **Erfolgs-Platzhalter:** `assets/frontend.js` initialisiert zuverlässig auch bei **defer**/spätem Skript-Laden (`DOMContentLoaded` bereits vorbei). Platzhalter-Ersetzung läuft **vor** IndexedDB und **vor** dem URL-Strip; Submit-Snapshot in der **Capture-Phase**; etwas robustere Zuordnung (`data-gfb-await-tokens` ohne striktes `=1`, Kleinbuchstaben für Form-ID und Snapshot-Keys).
+
+## [2.1.2] – 2026-05-10
+
+### Geändert
+
+- **Platzhalter-Hilfe** (`gfb/token`): nur noch ein **Auswahlfeld** mit den Feldbezeichnungen; nach der Wahl wird der passende Platzhalter `{{label_feldname}}` an dieser Stelle als **Absatz** eingefügt (der Hilfsblock entfällt).
+
+## [2.1.1] – 2026-05-10
+
+### Hinzugefügt
+
+- Block **Platzhalter-Hilfe** (`gfb/token`), nur im **Erfolgsbereich**: listet alle Formularfelder (ohne Absenden) mit kopierbaren Platzhaltern `{{feldname}}` und `{{label_feldname}}` aus der aktuellen Gutenberg-Struktur des Formulars. Im Frontend wird nichts ausgegeben.
+
+## [2.1.0] – 2026-05-10
+
+### Hinzugefügt
+
+- Block **Erfolgsbereich** (`gfb/form-success`) nur innerhalb von `gfb/form`: freier InnerBlocks-Inhalt, der nach erfolgreichem Absenden **ohne gewählte Folgeseite** anstelle des Formulars gerendert wird. Platzhalter im Text: `{{feldname}}` (POST-Name), optional `{{label_feldname}}` (Feldbezeichnung). Werte kommen aus einem **sessionStorage**-Snapshot beim Absenden (`assets/frontend.js`); Datei-Felder liefern den Platzhalter `[Datei]`. Schema/Validierung ignoriert den Erfolgsbereich.
+
+### Geändert
+
+- `gfb/form`-Frontend: KSES für den Erfolgsbereich orientiert sich an typischem Beitrags-HTML (`wp_kses_allowed_html('post')` minus `script`/`style`).
+
+## [2.0.9] – 2026-05-10
+
+### Geändert
+
+- Nach Submit bleiben `gfb_status` / `gfb_form` / … nicht mehr dauerhaft in der URL: `assets/frontend.js` entfernt diese Parameter per `history.replaceState` nach der Formular-Initialisierung (Reload = leeres Formular ohne Hinweis). **Entwurf löschen** entfernt zusätzlich die Notice im Wrapper und bereinigt die URL.
+
+## [2.0.8] – 2026-05-10
+
+### Geändert
+
+- **Safari / WebKit (ohne Blink):** `assets/frontend.js` ersetzt `date` / `time` / `datetime-local` durch formatierte **Textfelder** mit `pattern`, `placeholder` und `maxLength` (Chrome, Firefox, Edge, Opera, Chrome iOS bleiben bei nativen Pickern). Entwurf-löschen leert diese Fallback-Felder ebenfalls.
+
+## [2.0.7] – 2026-05-10
+
+### Hinzugefügt
+
+- Blöcke **Datum**, **Uhrzeit**, **Termin** (`datetime-local`): optionales Attribut **Voreingestellter Wert** im Inspector; leer = kein HTML-`value` (Feld startet leer). Gültige Formate werden serverseitig gefiltert.
+
+### Geändert
+
+- **Entwurf löschen:** Nach `form.reset()` werden `input[type=date|time|datetime-local]` explizit geleert (kein hängender Entwurfs-/Browserzustand).
+- **Datum (Frontend):** `min`/`max` aus den Block-Attributen werden im PHP-Renderer mit ausgegeben (wie schon im Editor-Save).
+
+## [2.0.6] – 2026-05-10
+
+### Geändert
+
+- Formular-Markup: `<form class="gfb-form">` erhält `lang="…"` (Locale), damit native `type="time"`/`date`-Controls stärker an die Site-Sprache gebunden sind (Hinweis in README zu Browser-Meldung „Ungültiger Wert“ bei 12h-System-UI).
+
 ## [2.0.5] – 2026-05-10
 
 ### Geändert
