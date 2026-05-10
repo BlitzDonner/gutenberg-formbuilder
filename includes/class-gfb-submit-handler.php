@@ -111,8 +111,8 @@ class GFB_Submit_Handler {
 			self::STATUS_ERR_RATE       => __( 'Zu viele Anfragen. Bitte warte kurz und versuche es erneut.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_SCHEMA     => __( 'Formularschema nicht gefunden.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_DUPLICATE  => __( 'Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_VALIDATION => __( 'Bitte überprüfe deine Eingaben.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_FILE       => __( 'Eine hochgeladene Datei wurde abgelehnt.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_VALIDATION => __( 'Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_FILE       => __( 'Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_PERSIST    => __( 'Speichern fehlgeschlagen. Bitte versuche es erneut.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_EXTERNAL   => __( 'Die Anfrage konnte nicht verarbeitet werden.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_CRYPTO     => __( 'Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren.', 'gutenberg-formbuilder' ),
@@ -245,7 +245,10 @@ class GFB_Submit_Handler {
 		foreach ( $schema as $field ) {
 			$res = self::process_field_value( $field, $pending_file_ids );
 			if ( is_wp_error( $res ) ) {
-				$errors[] = $res->get_error_message();
+				$errors[] = array(
+					'code'    => $res->get_error_code(),
+					'message' => $res->get_error_message(),
+				);
 				continue;
 			}
 			// Sensitive Werte (string oder array) verschlüsseln.
@@ -409,14 +412,61 @@ class GFB_Submit_Handler {
 	}
 
 	/**
+	 * WP_Error-Codes, bei denen eine Datei verworfen wurde und ein einheitlicher
+	 * Hinweis (kein Speichern / gesamtes Formular nicht übermittelt) angehängt werden soll.
+	 *
+	 * @param string $code Fehlercode.
+	 * @return bool
+	 */
+	private static function validation_error_code_is_file_rejection_with_global_hint( $code ) {
+		return in_array(
+			(string) $code,
+			array(
+				'gfb_file_ext',
+				'gfb_file_accept',
+				'gfb_file_mime',
+				'gfb_file_invalid',
+				'gfb_file_name',
+				'gfb_size',
+				'gfb_upload',
+				'gfb_virus',
+			),
+			true
+		);
+	}
+
+	/**
+	 * Zusatztext: Datei nicht übernommen, Formular insgesamt nicht gesendet.
+	 *
+	 * @return string
+	 */
+	private static function file_rejection_form_not_sent_suffix() {
+		return __(
+			'Die Datei wurde nicht übernommen (nicht gespeichert) und zählt nicht zur Einsendung. Nach dem Neuladen der Seite ist die Auswahl im Datei-Feld leer — bitte wähle bei Bedarf eine zulässige Datei erneut. Das gesamte Formular wurde nicht übermittelt; es wurde kein neuer Eintrag gespeichert.',
+			'gutenberg-formbuilder'
+		);
+	}
+
+	/**
 	 * Mehrere Validierungsfehler in einen kurzen, bereinigten Text giessen.
 	 *
-	 * @param array<int,string> $errors Fehlermeldungen.
+	 * @param array<int, string|array{code?:string, message?:string}> $errors Meldungen bzw. code+message.
 	 * @return string
 	 */
 	private static function join_validation_errors( array $errors ) {
-		$cleaned = array();
+		$cleaned                = array();
+		$append_file_reject_hint = false;
 		foreach ( $errors as $err ) {
+			$code = '';
+			if ( is_array( $err ) && isset( $err['message'] ) ) {
+				$code = isset( $err['code'] ) ? (string) $err['code'] : '';
+				if ( self::validation_error_code_is_file_rejection_with_global_hint( $code ) ) {
+					$append_file_reject_hint = true;
+				}
+				$err = (string) $err['message'];
+			} elseif ( ! is_string( $err ) ) {
+				continue;
+			}
 			$err = wp_strip_all_tags( (string) $err );
 			$err = preg_replace( '/\s+/', ' ', $err );
 			$err = trim( $err );
@@ -427,7 +477,11 @@ class GFB_Submit_Handler {
 				break;
 			}
 		}
-		return implode( ' ', $cleaned );
+		$out = implode( ' ', $cleaned );
+		if ( $append_file_reject_hint ) {
+			$out = trim( $out . ' ' . self::file_rejection_form_not_sent_suffix() );
+		}
+		return mb_substr( $out, 0, 500 );
 	}
 
 	/**
@@ -476,7 +530,13 @@ class GFB_Submit_Handler {
 			'gfb_code'   => $status_slug,
 			'gfb_form'   => $form_id,
 		);
-		if ( '' !== $detail && self::STATUS_ERR_VALIDATION === $status_slug ) {
+		$detail_slugs = array(
+			self::STATUS_ERR_VALIDATION,
+			self::STATUS_ERR_FILE,
+			self::STATUS_ERR_EXTERNAL,
+			self::STATUS_ERR_CRYPTO,
+		);
+		if ( '' !== $detail && in_array( $status_slug, $detail_slugs, true ) ) {
 			$args['gfb_detail'] = mb_substr( sanitize_text_field( $detail ), 0, 500 );
 		}
 		if ( '' !== $draft_key ) {

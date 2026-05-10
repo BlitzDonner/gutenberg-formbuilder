@@ -2,11 +2,12 @@
 /**
  * Plugin Name: Gutenberg Formbuilder
  * Description: Sicherheitszentrierter Formular-Builder für Gutenberg mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
- * Version: 2.0.1
+ * Version: 2.0.5
  * Author: ClaudeStation
  * Requires at least: 6.6
  * Requires PHP: 7.4
  * Text Domain: gutenberg-formbuilder
+ * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GFB_PLUGIN_FILE', __FILE__ );
 define( 'GFB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GFB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'GFB_PLUGIN_VERSION', '2.0.1' );
+define( 'GFB_PLUGIN_VERSION', '2.0.5' );
 
 // Reihenfolge wichtig: Crypto + Capabilities + Audit zuerst, dann alles, was sie nutzt.
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-crypto.php';
@@ -30,6 +31,21 @@ require_once GFB_PLUGIN_DIR . 'includes/class-gfb-plugin.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-submit-handler.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-submissions.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-settings.php';
+
+/**
+ * Lädt Übersetzungen gemäss WordPress-Locale (Einstellungen → Allgemein → Sprache der Website).
+ * Mehrsprachige Plugins können den Filter `locale` setzen; dieser Hook läuft danach auf `init`.
+ *
+ * @return void
+ */
+function gfb_load_textdomain() {
+	load_plugin_textdomain(
+		'gutenberg-formbuilder',
+		false,
+		dirname( plugin_basename( GFB_PLUGIN_FILE ) ) . '/languages'
+	);
+}
+add_action( 'init', 'gfb_load_textdomain', 1 );
 
 register_activation_hook( __FILE__, array( 'GFB_Submit_Handler', 'activate' ) );
 register_deactivation_hook(

@@ -553,7 +553,7 @@ class GFB_Plugin {
 		}
 		$key = $post_id . ':' . $form_id . ':' . $instance_id;
 		$draft_enabled   = ! isset( $attributes['draftEnabled'] ) || (bool) $attributes['draftEnabled'];
-		$restore_mode    = isset( $attributes['restoreMode'] ) ? sanitize_key( (string) $attributes['restoreMode'] ) : 'prompt';
+		$restore_mode    = isset( $attributes['restoreMode'] ) ? sanitize_key( (string) $attributes['restoreMode'] ) : 'auto';
 		$draft_ttl_days  = isset( $attributes['draftTtlDays'] ) ? absint( $attributes['draftTtlDays'] ) : 7;
 		$show_draft_reset = ! isset( $attributes['showDraftReset'] ) || (bool) $attributes['showDraftReset'];
 
@@ -584,10 +584,11 @@ class GFB_Plugin {
 					? __( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' )
 					: __( 'Beim Absenden ist ein Fehler aufgetreten.', 'gutenberg-formbuilder' );
 			}
-			// Optionaler kurzer Detailtext (nur bei Validierungsfehlern; sanitisiert).
-			if ( 'error' === $status && 'err_validation' === $status_code && isset( $_GET['gfb_detail'] ) ) {
+			// Optionaler Detailtext (URL-Whitelist); nur serverseitig erzeugte Slugs.
+			$detail_codes = array( 'err_validation', 'err_file', 'err_external', 'err_crypto' );
+			if ( 'error' === $status && $status_code && in_array( $status_code, $detail_codes, true ) && isset( $_GET['gfb_detail'] ) ) {
 				$detail = sanitize_text_field( wp_unslash( $_GET['gfb_detail'] ) );
-				$detail = mb_substr( $detail, 0, 300 );
+				$detail = mb_substr( $detail, 0, 500 );
 				if ( '' !== $detail ) {
 					$status_msg .= ' ' . $detail;
 				}

@@ -1205,10 +1205,10 @@
 						} ),
 						el( SelectControl, {
 							label: __( 'Wiederherstellung', 'gutenberg-formbuilder' ),
-							value: attributes.restoreMode || 'prompt',
+							value: attributes.restoreMode || 'auto',
 							options: [
-								{ label: __( 'Nachfragen', 'gutenberg-formbuilder' ), value: 'prompt' },
 								{ label: __( 'Automatisch', 'gutenberg-formbuilder' ), value: 'auto' },
+								{ label: __( 'Nachfragen', 'gutenberg-formbuilder' ), value: 'prompt' },
 							],
 							onChange: function ( value ) {
 								setAttributes( { restoreMode: value } );

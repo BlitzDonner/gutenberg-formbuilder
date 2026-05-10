@@ -1,0 +1,191 @@
+# French (France) translation for Gutenberg Formbuilder
+msgid ""
+msgstr ""
+"Project-Id-Version: Gutenberg Formbuilder 2.0.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-10 12:00+0000\n"
+"PO-Revision-Date: 2026-05-10 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: French\n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Danke! Das Formular wurde erfolgreich gesendet."
+msgstr "Merci ! Le formulaire a bien été envoyé."
+
+msgid "Ungültige Formularanfrage."
+msgstr "Requête de formulaire invalide."
+
+msgid "Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut absenden."
+msgstr "La vérification de sécurité a échoué. Veuillez recharger la page et renvoyer le formulaire."
+
+msgid "Sitzung abgelaufen. Bitte Seite neu laden und erneut absenden."
+msgstr "Session expirée. Veuillez recharger la page et renvoyer le formulaire."
+
+msgid "Die Anfrage wurde als Spam erkannt."
+msgstr "La requête a été identifiée comme indésirable (spam)."
+
+msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgstr "Trop de requêtes. Veuillez patienter un instant et réessayer."
+
+msgid "Formularschema nicht gefunden."
+msgstr "Schéma du formulaire introuvable."
+
+msgid "Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen."
+msgstr "Noms de champs techniques en double dans le formulaire. Veuillez dupliquer l’un des champs concernés ou modifier le libellé ou le texte indicatif."
+
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgstr "Le formulaire n’a pas été envoyé. Veuillez vérifier les messages et renvoyer le formulaire."
+
+msgid "Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
+msgstr "Un fichier téléversé a été refusé. Dans ce cas, le formulaire n’a pas été envoyé ; aucune nouvelle entrée n’a été enregistrée."
+
+msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgstr "L’enregistrement a échoué. Veuillez réessayer."
+
+msgid "Die Anfrage konnte nicht verarbeitet werden."
+msgstr "La requête n’a pas pu être traitée."
+
+msgid "Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren."
+msgstr "Le chiffrement n’est pas configuré sur ce serveur. Veuillez contacter l’administrateur."
+
+msgid "Eine hochgeladene Datei wurde vom Virenscanner als schädlich erkannt."
+msgstr "Un fichier téléversé a été détecté comme malveillant par l’antivirus."
+
+msgid "Die Datei wurde nicht übernommen (nicht gespeichert) und zählt nicht zur Einsendung. Nach dem Neuladen der Seite ist die Auswahl im Datei-Feld leer — bitte wähle bei Bedarf eine zulässige Datei erneut. Das gesamte Formular wurde nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
+msgstr "Le fichier n’a pas été accepté (non enregistré) et ne compte pas dans l’envoi. Après rechargement de la page, le champ fichier est vide — veuillez sélectionner à nouveau un fichier autorisé si nécessaire. L’intégralité du formulaire n’a pas été envoyée ; aucune nouvelle entrée n’a été enregistrée."
+
+msgid "Neues Formular (%1$s) auf Beitrag %2$d"
+msgstr "Nouveau formulaire (%1$s) sur l’article %2$d"
+
+msgid "Ungültiges verstecktes Feld."
+msgstr "Champ masqué invalide."
+
+msgid "Bitte fülle das Feld \"%s\" aus."
+msgstr "Veuillez remplir le champ « %s »."
+
+msgid "Bitte bestätige \"%s\"."
+msgstr "Veuillez confirmer « %s »."
+
+msgid "Das Feld \"%s\" enthält keine gültige E-Mail-Adresse."
+msgstr "Le champ « %s » ne contient pas d’adresse e-mail valide."
+
+msgid "Das Feld \"%s\" enthält keine gültige URL."
+msgstr "Le champ « %s » ne contient pas d’URL valide."
+
+msgid "Das Feld \"%s\" muss eine Zahl sein."
+msgstr "Le champ « %s » doit être un nombre."
+
+msgid "Zahl zu klein."
+msgstr "Nombre trop petit."
+
+msgid "Zahl zu gross."
+msgstr "Nombre trop grand."
+
+msgid "Ungültiges Datum."
+msgstr "Date invalide."
+
+msgid "Ungültige Uhrzeit."
+msgstr "Heure invalide."
+
+msgid "Ungültiges Datum/Uhrzeit."
+msgstr "Date/heure invalide."
+
+msgid "Das Feld \"%s\" enthält eine ungültige Telefonnummer."
+msgstr "Le champ « %s » contient un numéro de téléphone invalide."
+
+msgid "Ungültige Auswahl."
+msgstr "Sélection invalide."
+
+msgid "Eingabe zu lang."
+msgstr "Saisie trop longue."
+
+msgid "Bitte wähle eine Datei für \"%s\"."
+msgstr "Veuillez choisir un fichier pour « %s »."
+
+msgid "Mehrfach-Uploads sind nicht erlaubt."
+msgstr "Les envois multiples de fichiers ne sont pas autorisés."
+
+msgid "Datei-Upload fehlgeschlagen."
+msgstr "Échec du téléversement du fichier."
+
+msgid "Datei ist zu gross."
+msgstr "Le fichier est trop volumineux."
+
+msgid "Diese Datei wurde vom Virenscanner als schädlich erkannt."
+msgstr "Ce fichier a été détecté comme malveillant par l’antivirus."
+
+msgid "Virenscan derzeit nicht verfügbar; Upload wird verweigert."
+msgstr "Analyse antivirus momentanément indisponible ; le téléversement a été refusé."
+
+msgid "Ungültiger Datei-Upload."
+msgstr "Téléversement de fichier invalide."
+
+msgid "Ungültiger Dateiname."
+msgstr "Nom de fichier invalide."
+
+msgid "Dieser Dateityp ist nicht erlaubt."
+msgstr "Ce type de fichier n’est pas autorisé."
+
+msgid "Dateien ohne Endung sind nicht erlaubt."
+msgstr "Les fichiers sans extension ne sont pas autorisés."
+
+msgid "Dateityp konnte nicht verifiziert werden."
+msgstr "Le type de fichier n’a pas pu être vérifié."
+
+msgid "Dateiinhalt passt nicht zur Endung."
+msgstr "Le contenu du fichier ne correspond pas à l’extension."
+
+msgid "Dateityp ist für dieses Feld nicht erlaubt."
+msgstr "Ce type de fichier n’est pas autorisé pour ce champ."
+
+msgid "Datei-Uploads sind aktuell blockiert: Die Option \"Pflicht für Datei-Uploads\" ist aktiv, aber kein ClamAV-Scanner eingerichtet. Lösung: in \"Sicherheit & Einstellungen\" entweder ClamAV korrekt konfigurieren ODER die Pflicht-Option deaktivieren."
+msgstr "Les téléversements de fichiers sont bloqués : l’option « Obligatoire pour les téléversements » est activée, mais aucun scanner ClamAV n’est configuré. Solution : sous « Sécurité et paramètres », configurez correctement ClamAV OU désactivez l’option obligatoire."
+
+msgid "Verschlüsselung nicht konfiguriert."
+msgstr "Chiffrement non configuré."
+
+msgid "Kein gültiger Upload."
+msgstr "Téléversement invalide."
+
+msgid "Storage-Verzeichnis konnte nicht angelegt werden."
+msgstr "Le répertoire de stockage n’a pas pu être créé."
+
+msgid "Datei konnte nicht gelesen werden."
+msgstr "Le fichier n’a pas pu être lu."
+
+msgid "Verschlüsselung fehlgeschlagen."
+msgstr "Échec du chiffrement."
+
+msgid "Storage-Unterordner konnte nicht angelegt werden."
+msgstr "Le sous-dossier de stockage n’a pas pu être créé."
+
+msgid "Storage-Schreibfehler."
+msgstr "Erreur d’écriture du stockage."
+
+msgid "Datei-Metadaten konnten nicht gespeichert werden."
+msgstr "Les métadonnées du fichier n’ont pas pu être enregistrées."
+
+msgid "Datei nicht gefunden."
+msgstr "Fichier introuvable."
+
+msgid "Verschlüsselung nicht verfügbar."
+msgstr "Chiffrement indisponible."
+
+msgid "Schlüssel konnte nicht entwrappt werden."
+msgstr "La clé n’a pas pu être déballée (unwrap)."
+
+msgid "Datei nicht im Storage gefunden."
+msgstr "Fichier introuvable dans le stockage."
+
+msgid "Datei konnte nicht entschlüsselt werden (Tag-Mismatch)."
+msgstr "Le fichier n’a pas pu être déchiffré (incohérence d’authentification)."
+
+msgid "Beim Absenden ist ein Fehler aufgetreten."
+msgstr "Une erreur s’est produite lors de l’envoi du formulaire."
+
+msgid "Entwurf löschen"
+msgstr "Effacer le brouillon"

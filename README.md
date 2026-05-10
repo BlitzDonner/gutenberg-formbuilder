@@ -4,6 +4,8 @@ WordPress-Plugin: Formular-Builder **nur mit Gutenberg-Blöcken**, serverseitige
 
 **Aktuelle Version:** in `gutenberg-formbuilder.php` → `GFB_PLUGIN_VERSION` / Header `Version:` (bei Releases immer **beide** Stellen sowie `blocks/form/block.json` → `version` anheben, damit Browser-Caches für `editor.js` / `frontend.js` / CSS greifen). **GitHub-Releases:** [Releases](https://github.com/BlitzDonner/gutenberg-formbuilder/releases) inkl. Installations-ZIP; Änderungsliste: [`CHANGELOG.md`](CHANGELOG.md).
 
+**Sprachen:** Öffentliche Formular- und Fehlermeldungen nutzen WordPress-i18n (`load_plugin_textdomain` auf `init`, Ordner [`languages/`](languages/)). Mitgeliefert sind u. a. **Englisch (`en_US`)**, **Französisch (`fr_FR`)**, **Italienisch (`it_IT`)**; Quellstrings im Code sind Deutsch. Die gewählte Locale entspricht typischerweise **Einstellungen → Allgemein → Sprache der Website** (mehrsprachige Plugins können den `locale`-Filter setzen). Details: [`INSTALL.md`](INSTALL.md#10-mehrsprachige-frontend-meldungen).
+
 ---
 
 ## Formular: Erscheinungsbild und Farben
@@ -45,7 +47,7 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
    - `includes/class-gfb-submit-handler.php` – Validierung, DB-Insert, Mail
    - `includes/class-gfb-admin-submissions.php` – Admin-Seite „Formular-Einträge“, Löschen (Redirect im `load-*`-Hook!)
    - `assets/editor.js` – alle Block-`edit`/`save`-Definitionen
-   - `assets/frontend.js` – IndexedDB-Entwürfe, Debounce, Safari-Hacks
+   - `assets/frontend.js` – IndexedDB-Entwürfe, Wiederherstellung (`restoreMode`: Standard **automatisch**), Debounce, Safari-Hacks
    - `assets/form.css` – **Frontend**-Styles (`wp_enqueue_style( 'gfb-form' )` bei jedem gerenderten Formular, inkl. `appearanceMode=theme`); im öffentlichen Frontend wird `gfb-editor.css` **nicht** geladen.
    - `assets/gfb-editor.css` – **nur** Block-Editor-Canvas: zusammen mit `form.css` per `assets/editor.js` → `gfbSyncEditorFormStylesheet()` in den Canvas-Iframe (Link-IDs `gfb-editor-canvas-form-stylesheet` / `gfb-editor-chrome-stylesheet`), sobald ein `gfb/form`-Block existiert. Die `block.json`-Dateien setzen dafür **kein** `editorStyle`.
    - `assets/admin-submissions.css` – nur Referenz; im Admin wird CSS **inline** aus der Datei gelesen (kein zuverlässiger `plugins_url()` auf manchen Local-Setups)
@@ -76,7 +78,7 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
 - Submit über `admin_post` / `admin_post_nopriv` mit Nonce, Honeypot, Timing, Rate-Limit
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen)
-- Lokale Entwürfe (IndexedDB), optional Wiederherstellen / Entwurf löschen (inkl. Safari-Fixes)
+- Lokale Entwürfe (IndexedDB): **Standard** ist automatische Wiederherstellung ohne Browser-Dialog; optional **Nachfragen** (`restoreMode: prompt`) im Block **Formular** → Formulareinstellungen; Button **Entwurf löschen** (abschaltbar)
 
 ## Repository-Layout
 
@@ -85,6 +87,7 @@ gutenberg-formbuilder.php   # Bootstrap, Konstanten, Version
 includes/                   # PHP: Plugin, Submit, Admin
 assets/                     # editor.js, frontend.js, CSS
 blocks/*/block.json         # Block-Metadaten
+languages/                  # Übersetzungen (*.po / *.mo), siehe INSTALL.md
 docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 ```
 
@@ -94,7 +97,7 @@ docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 - Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Editor-Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
 
-**Zuletzt dokumentiert (Auszug):** automatische technische Feldnamen (`syncAutoFieldName` in `assets/editor.js`), Formular-`formId` bei Duplikat (`syncFormInstance`), Farb-/Verlauf-Panels inkl. zugeklapptem Panel „Farben (Feld überschreiben)“ (`renderGfbColorPanel` mit `PanelBody`), Canvas-Styling (`gfb-editor.css`: disabled-Felder, Theme-Hintergrund), `flex-direction: column` für `.gfb-form-fields` in `form.css`, erweiterter Farb-Sanitizer, Shell-Gradient-Klassen, Radio-`optionsLayout`, leeres Feld-`label` in der Editor-Vorschau, Schema-Suche beim Submit (`locate_form_block_for_post`, FSE/Muster/Template-Part), Redirect-Parameter `gfb_status` / `gfb_code` (ohne `gfb_msg`).
+**Zuletzt dokumentiert (Auszug):** mitgelieferte Locale-Dateien `languages/gutenberg-formbuilder-{en_US,fr_FR,it_IT}.mo`, Entwurfs-**Wiederherstellung** Standard `auto` (`blocks/form/block.json`, verstecktes Feld `gfb_draft_mode` in `class-gfb-plugin.php`), Submit-**Detailnotices** (`gfb_detail` für `err_validation`, `err_file`, `err_external`, `err_crypto`), automatische technische Feldnamen (`syncAutoFieldName`), Formular-`formId` bei Duplikat (`syncFormInstance`), Farb-/Verlauf-Panels (`renderGfbColorPanel`), Canvas-Styling (`gfbSyncEditorFormStylesheet`), Schema-Suche (`locate_form_block_for_post`), Redirect `gfb_status` / `gfb_code` / `gfb_detail`.
 
 ## Submit-Fehler: „Formularschema nicht gefunden“
 

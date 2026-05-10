@@ -31,6 +31,7 @@ Jede Formularübermittlung wird technisch abgesichert. Das Plugin nutzt mehrere 
 - Dynamischer Honeypot gegen einfache Bots.
 - IP-basiertes Rate-Limiting gegen Flooding.
 - Whitelist für Statuswerte und sichere Weiterleitungen mit `wp_safe_redirect`.
+- Nutzersichtbare Meldungen kommen aus festen Übersetzungsstrings (kein freier Text in der Redirect-URL); optional liefert das Plugin fertige **Locale-Dateien** für mehrere Sprachen im Ordner `languages/`.
 
 Diese Massnahmen reduzieren Spam, Replay-Angriffe, manipulierte Redirects und ungültige Formularzustände.
 

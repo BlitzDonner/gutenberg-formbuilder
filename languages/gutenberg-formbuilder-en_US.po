@@ -1,0 +1,192 @@
+# English (United States) translation for Gutenberg Formbuilder
+# Copyright (C) 2026
+msgid ""
+msgstr ""
+"Project-Id-Version: Gutenberg Formbuilder 2.0.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-10 12:00+0000\n"
+"PO-Revision-Date: 2026-05-10 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Danke! Das Formular wurde erfolgreich gesendet."
+msgstr "Thank you! The form was sent successfully."
+
+msgid "Ungültige Formularanfrage."
+msgstr "Invalid form request."
+
+msgid "Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut absenden."
+msgstr "Security check failed. Please reload the page and submit again."
+
+msgid "Sitzung abgelaufen. Bitte Seite neu laden und erneut absenden."
+msgstr "Session expired. Please reload the page and submit again."
+
+msgid "Die Anfrage wurde als Spam erkannt."
+msgstr "This request was identified as spam."
+
+msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgstr "Too many requests. Please wait a moment and try again."
+
+msgid "Formularschema nicht gefunden."
+msgstr "Form schema not found."
+
+msgid "Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen."
+msgstr "Duplicate technical field names in the form. Please duplicate one of the affected fields or adjust the label or placeholder."
+
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgstr "The form was not submitted. Please review the messages and submit again."
+
+msgid "Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
+msgstr "An uploaded file was rejected. In this case the form was not submitted; no new entry was saved."
+
+msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgstr "Saving failed. Please try again."
+
+msgid "Die Anfrage konnte nicht verarbeitet werden."
+msgstr "The request could not be processed."
+
+msgid "Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren."
+msgstr "Encryption is not configured on this server. Please contact the administrator."
+
+msgid "Eine hochgeladene Datei wurde vom Virenscanner als schädlich erkannt."
+msgstr "An uploaded file was flagged as malicious by the antivirus scanner."
+
+msgid "Die Datei wurde nicht übernommen (nicht gespeichert) und zählt nicht zur Einsendung. Nach dem Neuladen der Seite ist die Auswahl im Datei-Feld leer — bitte wähle bei Bedarf eine zulässige Datei erneut. Das gesamte Formular wurde nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
+msgstr "The file was not accepted (not saved) and does not count toward your submission. After reloading the page the file field is empty — please select an allowed file again if needed. The entire form was not submitted; no new entry was saved."
+
+msgid "Neues Formular (%1$s) auf Beitrag %2$d"
+msgstr "New form (%1$s) on post %2$d"
+
+msgid "Ungültiges verstecktes Feld."
+msgstr "Invalid hidden field."
+
+msgid "Bitte fülle das Feld \"%s\" aus."
+msgstr "Please fill in the field \"%s\"."
+
+msgid "Bitte bestätige \"%s\"."
+msgstr "Please confirm \"%s\"."
+
+msgid "Das Feld \"%s\" enthält keine gültige E-Mail-Adresse."
+msgstr "The field \"%s\" does not contain a valid email address."
+
+msgid "Das Feld \"%s\" enthält keine gültige URL."
+msgstr "The field \"%s\" does not contain a valid URL."
+
+msgid "Das Feld \"%s\" muss eine Zahl sein."
+msgstr "The field \"%s\" must be a number."
+
+msgid "Zahl zu klein."
+msgstr "Number is too small."
+
+msgid "Zahl zu gross."
+msgstr "Number is too large."
+
+msgid "Ungültiges Datum."
+msgstr "Invalid date."
+
+msgid "Ungültige Uhrzeit."
+msgstr "Invalid time."
+
+msgid "Ungültiges Datum/Uhrzeit."
+msgstr "Invalid date/time."
+
+msgid "Das Feld \"%s\" enthält eine ungültige Telefonnummer."
+msgstr "The field \"%s\" contains an invalid phone number."
+
+msgid "Ungültige Auswahl."
+msgstr "Invalid selection."
+
+msgid "Eingabe zu lang."
+msgstr "Input is too long."
+
+msgid "Bitte wähle eine Datei für \"%s\"."
+msgstr "Please choose a file for \"%s\"."
+
+msgid "Mehrfach-Uploads sind nicht erlaubt."
+msgstr "Multiple uploads are not allowed."
+
+msgid "Datei-Upload fehlgeschlagen."
+msgstr "File upload failed."
+
+msgid "Datei ist zu gross."
+msgstr "The file is too large."
+
+msgid "Diese Datei wurde vom Virenscanner als schädlich erkannt."
+msgstr "This file was flagged as malicious by the antivirus scanner."
+
+msgid "Virenscan derzeit nicht verfügbar; Upload wird verweigert."
+msgstr "Antivirus scan is currently unavailable; the upload was rejected."
+
+msgid "Ungültiger Datei-Upload."
+msgstr "Invalid file upload."
+
+msgid "Ungültiger Dateiname."
+msgstr "Invalid file name."
+
+msgid "Dieser Dateityp ist nicht erlaubt."
+msgstr "This file type is not allowed."
+
+msgid "Dateien ohne Endung sind nicht erlaubt."
+msgstr "Files without an extension are not allowed."
+
+msgid "Dateityp konnte nicht verifiziert werden."
+msgstr "The file type could not be verified."
+
+msgid "Dateiinhalt passt nicht zur Endung."
+msgstr "The file contents do not match the extension."
+
+msgid "Dateityp ist für dieses Feld nicht erlaubt."
+msgstr "This file type is not allowed for this field."
+
+msgid "Datei-Uploads sind aktuell blockiert: Die Option \"Pflicht für Datei-Uploads\" ist aktiv, aber kein ClamAV-Scanner eingerichtet. Lösung: in \"Sicherheit & Einstellungen\" entweder ClamAV korrekt konfigurieren ODER die Pflicht-Option deaktivieren."
+msgstr "File uploads are currently blocked: the \"Required for file uploads\" option is enabled, but no ClamAV scanner is configured. Fix this under \"Security & settings\" by configuring ClamAV correctly OR by disabling the required option."
+
+msgid "Verschlüsselung nicht konfiguriert."
+msgstr "Encryption is not configured."
+
+msgid "Kein gültiger Upload."
+msgstr "Not a valid upload."
+
+msgid "Storage-Verzeichnis konnte nicht angelegt werden."
+msgstr "The storage directory could not be created."
+
+msgid "Datei konnte nicht gelesen werden."
+msgstr "The file could not be read."
+
+msgid "Verschlüsselung fehlgeschlagen."
+msgstr "Encryption failed."
+
+msgid "Storage-Unterordner konnte nicht angelegt werden."
+msgstr "The storage subdirectory could not be created."
+
+msgid "Storage-Schreibfehler."
+msgstr "Storage write error."
+
+msgid "Datei-Metadaten konnten nicht gespeichert werden."
+msgstr "File metadata could not be saved."
+
+msgid "Datei nicht gefunden."
+msgstr "File not found."
+
+msgid "Verschlüsselung nicht verfügbar."
+msgstr "Encryption is not available."
+
+msgid "Schlüssel konnte nicht entwrappt werden."
+msgstr "The key could not be unwrapped."
+
+msgid "Datei nicht im Storage gefunden."
+msgstr "File not found in storage."
+
+msgid "Datei konnte nicht entschlüsselt werden (Tag-Mismatch)."
+msgstr "The file could not be decrypted (tag mismatch)."
+
+msgid "Beim Absenden ist ein Fehler aufgetreten."
+msgstr "An error occurred while submitting the form."
+
+msgid "Entwurf löschen"
+msgstr "Clear draft"

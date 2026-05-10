@@ -172,7 +172,7 @@
 		var draftModeField = form.querySelector( 'input[name="gfb_draft_mode"]' );
 		var draftTtlField = form.querySelector( 'input[name="gfb_draft_ttl_days"]' );
 		var draftEnabled = ! draftEnabledField || draftEnabledField.value !== '0';
-		var restoreMode = draftModeField ? draftModeField.value : 'prompt';
+		var restoreMode = draftModeField ? draftModeField.value : 'auto';
 		var ttlDays = draftTtlField ? parseInt( draftTtlField.value, 10 ) : 7;
 		var ttlMs = Number.isNaN( ttlDays ) || ttlDays < 1 ? DEFAULT_TTL_MS : ttlDays * 24 * 60 * 60 * 1000;
 		var resetButton = form.querySelector( '.gfb-draft-reset-button' );

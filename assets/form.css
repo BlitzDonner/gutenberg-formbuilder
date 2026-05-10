@@ -326,6 +326,21 @@
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+/*
+ * Zahleneingabe: WebKit behält innere/äussere Spin-Buttons oft trotz `appearance: none`
+ * teilweise im Layout; Gecko nutzt eine eigene Number-UI. Dadurch wirken Höhe und
+ * optische Linie zu `type=tel` / `text` verschoben — im Block-Editor (nebeneinander)
+ * und im Frontend gleichermassen sichtbar.
+ */
+.gfb-form-wrapper .gfb-field input[type="number"] {
+	-moz-appearance: textfield;
+}
+.gfb-form-wrapper .gfb-field input[type="number"]::-webkit-inner-spin-button,
+.gfb-form-wrapper .gfb-field input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea {
 	min-height: 7rem;
 	resize: vertical;

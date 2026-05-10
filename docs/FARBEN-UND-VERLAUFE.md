@@ -26,3 +26,7 @@ Kurzdoku zum Verhalten von **Gutenberg Formbuilder** (Ergänzung zum [README](..
 
 - Die Karten-Hintergrund-Logik setzt standardmässig einen **vertikalen** Verlauf aus `--gfb-shell-top` / `--gfb-shell-bottom`, die aus `--gfb-*-form-shell` kommen. Ein **Verlauf** in `--gfb-*-form-shell` darf nicht als Farbstopp in einem äusseren `linear-gradient` stehen (ungültig → wirkt weiss). Mit den Shell-Gradient-Klassen wird stattdessen `background: var(--gfb-light-form-shell)` bzw. `var(--gfb-dark-form-shell)` gesetzt.
 - **`color:` / `border-color:`:** Verläufe gelten dort nicht; nutzbar sind Verläufe v. a. bei `background` (z. B. Feldhintergrund, Button-Hintergrund, Formularbereich).
+
+## Verwandtes (nicht Farben)
+
+Submit, Entwürfe (IndexedDB), Übersetzungen und Admin-Sicherheit: siehe [`README.md`](../README.md) und [`INSTALL.md`](../INSTALL.md).

@@ -1,0 +1,191 @@
+# Italian (Italy) translation for Gutenberg Formbuilder
+msgid ""
+msgstr ""
+"Project-Id-Version: Gutenberg Formbuilder 2.0.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-10 12:00+0000\n"
+"PO-Revision-Date: 2026-05-10 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Italian\n"
+"Language: it_IT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Danke! Das Formular wurde erfolgreich gesendet."
+msgstr "Grazie! Il modulo è stato inviato correttamente."
+
+msgid "Ungültige Formularanfrage."
+msgstr "Richiesta del modulo non valida."
+
+msgid "Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut absenden."
+msgstr "Verifica di sicurezza non riuscita. Ricarica la pagina e invia di nuovo."
+
+msgid "Sitzung abgelaufen. Bitte Seite neu laden und erneut absenden."
+msgstr "Sessione scaduta. Ricarica la pagina e invia di nuovo."
+
+msgid "Die Anfrage wurde als Spam erkannt."
+msgstr "La richiesta è stata identificata come spam."
+
+msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgstr "Troppe richieste. Attendi un momento e riprova."
+
+msgid "Formularschema nicht gefunden."
+msgstr "Schema del modulo non trovato."
+
+msgid "Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen."
+msgstr "Nomi tecnici dei campi duplicati nel modulo. Duplica uno dei campi interessati oppure modifica etichetta o segnaposto."
+
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgstr "Il modulo non è stato inviato. Controlla i messaggi e invia di nuovo."
+
+msgid "Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
+msgstr "Un file caricato è stato rifiutato. In questo caso il modulo non è stato inviato; non è stata salvata alcuna nuova voce."
+
+msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgstr "Salvataggio non riuscito. Riprova."
+
+msgid "Die Anfrage konnte nicht verarbeitet werden."
+msgstr "Impossibile elaborare la richiesta."
+
+msgid "Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren."
+msgstr "La crittografia non è configurata su questo server. Contatta l’amministratore."
+
+msgid "Eine hochgeladene Datei wurde vom Virenscanner als schädlich erkannt."
+msgstr "Un file caricato è stato rilevato come dannoso dall’antivirus."
+
+msgid "Die Datei wurde nicht übernommen (nicht gespeichert) und zählt nicht zur Einsendung. Nach dem Neuladen der Seite ist die Auswahl im Datei-Feld leer — bitte wähle bei Bedarf eine zulässige Datei erneut. Das gesamte Formular wurde nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
+msgstr "Il file non è stato accettato (non salvato) e non conta come invio. Dopo il ricaricamento della pagina il campo file è vuoto — se necessario scegli di nuovo un file consentito. L’intero modulo non è stato inviato; non è stata salvata alcuna nuova voce."
+
+msgid "Neues Formular (%1$s) auf Beitrag %2$d"
+msgstr "Nuovo modulo (%1$s) nell’articolo %2$d"
+
+msgid "Ungültiges verstecktes Feld."
+msgstr "Campo nascosto non valido."
+
+msgid "Bitte fülle das Feld \"%s\" aus."
+msgstr "Compila il campo \"%s\"."
+
+msgid "Bitte bestätige \"%s\"."
+msgstr "Conferma \"%s\"."
+
+msgid "Das Feld \"%s\" enthält keine gültige E-Mail-Adresse."
+msgstr "Il campo \"%s\" non contiene un indirizzo e-mail valido."
+
+msgid "Das Feld \"%s\" enthält keine gültige URL."
+msgstr "Il campo \"%s\" non contiene un URL valido."
+
+msgid "Das Feld \"%s\" muss eine Zahl sein."
+msgstr "Il campo \"%s\" deve essere un numero."
+
+msgid "Zahl zu klein."
+msgstr "Numero troppo piccolo."
+
+msgid "Zahl zu gross."
+msgstr "Numero troppo grande."
+
+msgid "Ungültiges Datum."
+msgstr "Data non valida."
+
+msgid "Ungültige Uhrzeit."
+msgstr "Ora non valida."
+
+msgid "Ungültiges Datum/Uhrzeit."
+msgstr "Data/ora non valida."
+
+msgid "Das Feld \"%s\" enthält eine ungültige Telefonnummer."
+msgstr "Il campo \"%s\" contiene un numero di telefono non valido."
+
+msgid "Ungültige Auswahl."
+msgstr "Selezione non valida."
+
+msgid "Eingabe zu lang."
+msgstr "Input troppo lungo."
+
+msgid "Bitte wähle eine Datei für \"%s\"."
+msgstr "Scegli un file per \"%s\"."
+
+msgid "Mehrfach-Uploads sind nicht erlaubt."
+msgstr "Non sono consentiti caricamenti multipli."
+
+msgid "Datei-Upload fehlgeschlagen."
+msgstr "Caricamento del file non riuscito."
+
+msgid "Datei ist zu gross."
+msgstr "Il file è troppo grande."
+
+msgid "Diese Datei wurde vom Virenscanner als schädlich erkannt."
+msgstr "Questo file è stato rilevato come dannoso dall’antivirus."
+
+msgid "Virenscan derzeit nicht verfügbar; Upload wird verweigert."
+msgstr "Scansione antivirus al momento non disponibile; caricamento rifiutato."
+
+msgid "Ungültiger Datei-Upload."
+msgstr "Caricamento file non valido."
+
+msgid "Ungültiger Dateiname."
+msgstr "Nome file non valido."
+
+msgid "Dieser Dateityp ist nicht erlaubt."
+msgstr "Questo tipo di file non è consentito."
+
+msgid "Dateien ohne Endung sind nicht erlaubt."
+msgstr "I file senza estensione non sono consentiti."
+
+msgid "Dateityp konnte nicht verifiziert werden."
+msgstr "Impossibile verificare il tipo di file."
+
+msgid "Dateiinhalt passt nicht zur Endung."
+msgstr "Il contenuto del file non corrisponde all’estensione."
+
+msgid "Dateityp ist für dieses Feld nicht erlaubt."
+msgstr "Questo tipo di file non è consentito per questo campo."
+
+msgid "Datei-Uploads sind aktuell blockiert: Die Option \"Pflicht für Datei-Uploads\" ist aktiv, aber kein ClamAV-Scanner eingerichtet. Lösung: in \"Sicherheit & Einstellungen\" entweder ClamAV korrekt konfigurieren ODER die Pflicht-Option deaktivieren."
+msgstr "I caricamenti file sono bloccati: l’opzione \"Obbligatorio per i caricamenti file\" è attiva, ma non è configurato alcuno scanner ClamAV. Soluzione: in \"Sicurezza e impostazioni\" configura correttamente ClamAV oppure disattiva l’opzione obbligatoria."
+
+msgid "Verschlüsselung nicht konfiguriert."
+msgstr "Crittografia non configurata."
+
+msgid "Kein gültiger Upload."
+msgstr "Caricamento non valido."
+
+msgid "Storage-Verzeichnis konnte nicht angelegt werden."
+msgstr "Impossibile creare la directory di archiviazione."
+
+msgid "Datei konnte nicht gelesen werden."
+msgstr "Impossibile leggere il file."
+
+msgid "Verschlüsselung fehlgeschlagen."
+msgstr "Crittografia non riuscita."
+
+msgid "Storage-Unterordner konnte nicht angelegt werden."
+msgstr "Impossibile creare la sottocartella di archiviazione."
+
+msgid "Storage-Schreibfehler."
+msgstr "Errore di scrittura nell’archiviazione."
+
+msgid "Datei-Metadaten konnten nicht gespeichert werden."
+msgstr "Impossibile salvare i metadati del file."
+
+msgid "Datei nicht gefunden."
+msgstr "File non trovato."
+
+msgid "Verschlüsselung nicht verfügbar."
+msgstr "Crittografia non disponibile."
+
+msgid "Schlüssel konnte nicht entwrappt werden."
+msgstr "Impossibile eseguire l’unwrap della chiave."
+
+msgid "Datei nicht im Storage gefunden."
+msgstr "File non trovato nell’archiviazione."
+
+msgid "Datei konnte nicht entschlüsselt werden (Tag-Mismatch)."
+msgstr "Impossibile decifrare il file (tag non corrispondente)."
+
+msgid "Beim Absenden ist ein Fehler aufgetreten."
+msgstr "Si è verificato un errore durante l’invio del modulo."
+
+msgid "Entwurf löschen"
+msgstr "Elimina bozza"

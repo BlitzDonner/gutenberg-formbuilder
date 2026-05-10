@@ -52,7 +52,7 @@ Dieses Dokument beschreibt das Bedrohungsmodell, die getroffenen Massnahmen, das
 |---|---|---|
 | Anonymer Bot/Spammer | Spam-Flood | HMAC-Anti-Replay, dynamischer Honeypot, IP-Rate-Limit |
 | Anonymer Angreifer mit File-Feld | RCE durch hochgeladene Datei | Static Validation + optional ClamAV + Speicherung **nicht unter öffentlicher URL** (Default: Dot-Pfad unter `wp-content/`, optional per Filter ausserhalb des Webroots), AES-256-GCM-Verschlüsselung |
-| Anonymer Angreifer | Reflektierte XSS / Open-Redirect | Status-Slug-Whitelist, i18n-Texte, `wp_safe_redirect` |
+| Anonymer Angreifer | Reflektierte XSS / Open-Redirect | Status-Slug-Whitelist, serverseitige i18n-Texte (inkl. gebündelter `.mo` unter `languages/` für u. a. `en_US`, `fr_FR`, `it_IT`), `wp_safe_redirect` |
 | Anonymer Angreifer | Mail-Header/Body-Injection | CRLF-Strip, `wp_strip_all_tags`, expliziter `Content-Type` |
 | Editor mit `unfiltered_html` | Stored XSS in Form-Markup | Dynamisches `render_callback` für ALLE Felder (kein vertrauenswürdiger save()-Output), `wp_kses` als zweite Schicht |
 | Site-Admin (DSGVO) | Personenbezug-Mgmt | IP-Pseudonymisierung-Filter, Personal-Data-Exporter/Eraser |

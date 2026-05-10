@@ -135,3 +135,12 @@ Beim Aktivieren der 2.0-Version:
 - Neue Submissions werden gemaess Block-Attribut `sensitive` und/oder File-Feld behandelt.
 - Bestehende Forms im Editor: alle Felder nutzen ab sofort dynamische Renderer (PHP). Das im Block-Comment gespeicherte alte HTML wird ignoriert.
 - Wenn ein Form ein File-Feld enthielt, ist 2.0 strenger: Crypto muss konfiguriert sein, sonst werden neue Uploads mit klarer Fehlermeldung abgelehnt. ClamAV-Pflicht ist nur dann hart, wenn sie in den Einstellungen explizit aktiviert wird (Default: aus).
+
+## 10. Mehrsprachige Frontend-Meldungen
+
+Öffentliche Hinweise nach dem Absenden (Erfolg, Validierung, Datei abgelehnt usw.) laufen über WordPress-Übersetzungen (**Textdomain** `gutenberg-formbuilder`).
+
+- Mitgelieferte Dateien: `languages/gutenberg-formbuilder-en_US.mo` (und `.po`), ebenso `fr_FR`, `it_IT`. Weitere Sprachen: z. B. Kopie einer `.po` unter passendem Dateinamen (`gutenberg-formbuilder-en_GB.mo`) oder ein Werkzeug wie **Loco Translate**.
+- Die Locale richtet sich in der Regel nach **Einstellungen → Allgemein → Sprache der Website**. Mehrsprachige Plugins (Polylang, WPML, …) können den Filter `locale` setzen — dann greifen dieselben Dateien, sobald die Locale passt.
+- **Hinweis:** `admin-post.php` kann bei **eingeloggten** Benutzern die **Profil-Sprache** statt nur der Seitensprache verwenden (WordPress-Standard).
+- `.mo` aus `.po` erzeugen (lokal, falls `gettext` installiert): `msgfmt -c -o languages/gutenberg-formbuilder-en_GB.mo languages/gutenberg-formbuilder-en_GB.po`
