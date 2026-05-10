@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Gutenberg Formbuilder
- * Description: Formular-Builder direkt im Gutenberg-Editor mit lokalen Entwürfen in IndexedDB.
- * Version: 1.0.0
+ * Description: Sicherheitszentrierter Formular-Builder für Gutenberg mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
+ * Version: 2.0.1
  * Author: ClaudeStation
  * Requires at least: 6.6
  * Requires PHP: 7.4
@@ -16,12 +16,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GFB_PLUGIN_FILE', __FILE__ );
 define( 'GFB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GFB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'GFB_PLUGIN_VERSION', '1.0.0' );
+define( 'GFB_PLUGIN_VERSION', '2.0.1' );
 
+// Reihenfolge wichtig: Crypto + Capabilities + Audit zuerst, dann alles, was sie nutzt.
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-crypto.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-capabilities.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-audit.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-clamav.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-file-storage.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-security.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-field-renderer.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-plugin.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-submit-handler.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-submissions.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-settings.php';
 
 register_activation_hook( __FILE__, array( 'GFB_Submit_Handler', 'activate' ) );
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		$ts = wp_next_scheduled( 'gfb_rewrap_cron' );
+		if ( $ts ) {
+			wp_unschedule_event( $ts, 'gfb_rewrap_cron' );
+		}
+	}
+);
+add_action( 'gfb_rewrap_cron', array( 'GFB_Submit_Handler', 'cron_rewrap' ) );
 
+GFB_Security::boot();
+GFB_File_Storage::boot();
 GFB_Plugin::boot();
+GFB_Admin_Settings::boot();

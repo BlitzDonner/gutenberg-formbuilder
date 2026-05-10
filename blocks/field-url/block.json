@@ -1,82 +1,86 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "gfb/field-url",
-  "version": "0.2.0",
-  "title": "URL",
-  "category": "gfb-fields",
-  "icon": {
-    "src": "admin-links"
-  },
-  "description": "Webadresse (URL).",
-  "textdomain": "gutenberg-formbuilder",
-  "attributes": {
-    "label": {
-      "type": "string",
-      "default": "Website"
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "gfb/field-url",
+    "version": "2.0.0",
+    "title": "URL",
+    "category": "gfb-fields",
+    "icon": {
+        "src": "admin-links"
     },
-    "name": {
-      "type": "string",
-      "default": ""
-    },
-    "placeholder": {
-      "type": "string",
-      "default": "https://"
-    },
-    "required": {
-      "type": "boolean",
-      "default": false
-    }
-  },
-  "supports": {
-    "html": false,
-    "spacing": {
-      "margin": true,
-      "padding": true
-    },
-    "color": {
-      "text": true,
-      "background": true
-    },
-    "typography": {
-      "fontSize": true,
-      "lineHeight": true,
-      "fontWeight": true
-    },
-    "border": true
-  },
-  "usesContext": [
-    "gfb/formId",
-    "gfb/appearanceMode",
-    "gfb/colorLabel",
-    "gfb/colorText",
-    "gfb/colorPlaceholder",
-    "gfb/colorFieldBg",
-    "gfb/colorBorder",
-    "gfb/colorFocus",
-    "gfb/colorButtonBg",
-    "gfb/colorButtonText",
-    "gfb/darkColorLabel",
-    "gfb/darkColorText",
-    "gfb/darkColorPlaceholder",
-    "gfb/darkColorFieldBg",
-    "gfb/darkColorBorder",
-    "gfb/darkColorFocus",
-    "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText",
-    "gfb/colorFormShell",
-    "gfb/darkColorFormShell"
-  ],
-  "editorScript": "gfb-editor",
-  "example": {
+    "description": "Webadresse (URL).",
+    "textdomain": "gutenberg-formbuilder",
     "attributes": {
-      "label": "Website",
-      "name": "sb_url",
-      "placeholder": "https://",
-      "required": false
-    }
-  },
-  "ancestor": [
-    "gfb/form"
-  ]
+        "label": {
+            "type": "string",
+            "default": "Website"
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "placeholder": {
+            "type": "string",
+            "default": "https://"
+        },
+        "required": {
+            "type": "boolean",
+            "default": false
+        },
+        "sensitive": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "supports": {
+        "html": false,
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "color": {
+            "text": true,
+            "background": true
+        },
+        "typography": {
+            "fontSize": true,
+            "lineHeight": true,
+            "fontWeight": true
+        },
+        "border": true
+    },
+    "usesContext": [
+        "gfb/formId",
+        "gfb/appearanceMode",
+        "gfb/colorLabel",
+        "gfb/colorText",
+        "gfb/colorPlaceholder",
+        "gfb/colorFieldBg",
+        "gfb/colorBorder",
+        "gfb/colorFocus",
+        "gfb/colorButtonBg",
+        "gfb/colorButtonText",
+        "gfb/darkColorLabel",
+        "gfb/darkColorText",
+        "gfb/darkColorPlaceholder",
+        "gfb/darkColorFieldBg",
+        "gfb/darkColorBorder",
+        "gfb/darkColorFocus",
+        "gfb/darkColorButtonBg",
+        "gfb/darkColorButtonText",
+        "gfb/colorFormShell",
+        "gfb/darkColorFormShell"
+    ],
+    "editorScript": "gfb-editor",
+    "example": {
+        "attributes": {
+            "label": "Website",
+            "name": "sb_url",
+            "placeholder": "https://",
+            "required": false
+        }
+    },
+    "ancestor": [
+        "gfb/form"
+    ]
 }

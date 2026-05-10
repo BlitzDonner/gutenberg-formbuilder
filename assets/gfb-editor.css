@@ -1,6 +1,7 @@
 /**
- * Nur Block-Editor: Inserter-Vorschau / Style Book (Felder ohne umgebendes Formular)
- * sowie Block-Listen-Icons. Formular-Canvas nutzt dieselbe form.css wie das Frontend.
+ * Nur Block-Editor: Inserter-Vorschau / Style Book (Felder ohne umgebendes Formular),
+ * Block-Listen-Icons, sowie Canvas-Anpassungen, damit die Formularvorschau dem Frontend
+ * näher kommt (disabled-Felder, Theme-Hintergrund). form.css wird zusätzlich geladen.
  */
 
 .block-editor-block-preview__content .gfb-field,
@@ -50,4 +51,81 @@
 .block-editor [class*="editor-block-list-item-gfb-"] .block-editor-block-icon.has-colors svg {
 	color: currentColor !important;
 	fill: currentColor !important;
+}
+
+/*
+ * Formular-Vorschau im Canvas-Iframe: Felder sind disabled (kein Absenden/Fokus).
+ * Browser + form.css (opacity bei Hell/Dunkel/Auto) machen sie sonst grau bzw. blass.
+ * Theme (Standard): kein Feld-Skin in form.css — UA-„disabled“-Grau, hier wie aktive Eingaben.
+ */
+.editor-styles-wrapper .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:disabled,
+.editor-styles-wrapper .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea:disabled,
+.editor-styles-wrapper .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select:disabled,
+.editor-styles-wrapper .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:disabled {
+	opacity: 1 !important;
+	cursor: default;
+}
+
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):disabled,
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-field textarea:disabled {
+	appearance: none;
+	-webkit-appearance: none;
+	background-color: var(--gfb-bg, Field);
+	color: var(--gfb-text, FieldText) !important;
+	-webkit-text-fill-color: var(--gfb-text, FieldText) !important;
+	border: 1px solid var(--gfb-border, color-mix(in srgb, FieldText 22%, Field));
+	border-radius: 0.625rem;
+	padding: 0.75rem 0.875rem;
+	min-height: 2.75rem;
+	opacity: 1 !important;
+	cursor: default;
+	font-family: inherit;
+	font-size: 1.0625rem;
+	line-height: 1.35;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+}
+
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-field select:disabled {
+	appearance: auto;
+	-webkit-appearance: auto;
+	background-color: var(--gfb-bg, Field);
+	color: var(--gfb-text, FieldText) !important;
+	-webkit-text-fill-color: var(--gfb-text, FieldText) !important;
+	border: 1px solid var(--gfb-border, color-mix(in srgb, FieldText 22%, Field));
+	border-radius: 0.625rem;
+	padding: 0.75rem 0.875rem;
+	min-height: 2.75rem;
+	opacity: 1 !important;
+	cursor: default;
+	font-family: inherit;
+	font-size: 1.0625rem;
+	line-height: 1.35;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+}
+
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-field textarea:disabled {
+	min-height: 7rem;
+	resize: vertical;
+}
+
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-field-checkbox input[type="checkbox"]:disabled,
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-radio-row input[type="radio"]:disabled {
+	opacity: 1 !important;
+	cursor: default;
+}
+
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"] .gfb-field-submit button[type="submit"]:disabled {
+	opacity: 1 !important;
+	cursor: default;
+}
+
+/* Theme-Formular ohne Kartenfläche: hinter transparentem Wrapper schimmert der graue Editor-Canvas — wie Seitenfläche (Canvas) wirken lassen, sofern kein Block-Hintergrund gesetzt ist. */
+.editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"]:not(.has-background) {
+	background-color: Canvas;
 }

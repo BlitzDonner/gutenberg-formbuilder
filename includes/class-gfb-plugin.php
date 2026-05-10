@@ -95,7 +95,7 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Lädt gfb-frontend auf Folgeseiten ohne Formularblock (IndexedDB-Draft per URL löschen).
+	 * Lädt gfb-frontend auf Folgeseiten ohne Formularblock (IndexedDB-Entwurf per URL löschen).
 	 *
 	 * @return void
 	 */
@@ -134,22 +134,29 @@ class GFB_Plugin {
 			)
 		);
 
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-text' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-email' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-textarea' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-select' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-checkbox' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-submit' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-number' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-tel' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-url' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-date' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-time' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-datetime' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-radio' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-hidden' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-range' );
-		register_block_type( GFB_PLUGIN_DIR . 'blocks/field-file' );
+		// Alle Field-Blöcke werden serverseitig gerendert (K3 Variante A).
+		// HTML-Output kommt aus GFB_Field_Renderer; das im Editor `save()`
+		// erzeugte Markup wird nur für deprecated-Validierung ungültiger
+		// Altbestand benutzt (Backwards-Compat).
+		$field_blocks = array(
+			'gfb/field-text', 'gfb/field-email', 'gfb/field-textarea',
+			'gfb/field-select', 'gfb/field-checkbox', 'gfb/field-submit',
+			'gfb/field-number', 'gfb/field-tel', 'gfb/field-url',
+			'gfb/field-date', 'gfb/field-time', 'gfb/field-datetime',
+			'gfb/field-radio', 'gfb/field-hidden', 'gfb/field-range',
+			'gfb/field-file',
+		);
+		foreach ( $field_blocks as $name ) {
+			$slug = substr( $name, strlen( 'gfb/' ) );
+			register_block_type(
+				GFB_PLUGIN_DIR . 'blocks/' . $slug,
+				array(
+					'render_callback' => static function ( $attrs ) use ( $name ) {
+						return GFB_Field_Renderer::render( $name, is_array( $attrs ) ? $attrs : array() );
+					},
+				)
+			);
+		}
 	}
 
 	/**
@@ -193,7 +200,8 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Gefährliche CSS-Fragmente ausschließen (kein url(), kein expression etc.).
+	 * Gefährliche CSS-Fragmente ausschliessen (kein url(), kein expression etc.).
+	 * M3: zusätzlich Newlines und Semikolons, um Style-Property-Injection zu unterbinden.
 	 *
 	 * @param string $s Wert.
 	 * @return bool True wenn unsicher.
@@ -202,7 +210,7 @@ class GFB_Plugin {
 		if ( preg_match( '/\burl\s*\(|expression\s*\(|@import|javascript\s*:/i', $s ) ) {
 			return true;
 		}
-		foreach ( array( '<', '>', '`', '\\' ) as $bad ) {
+		foreach ( array( '<', '>', '`', '\\', ';', "\r", "\n", "\t", "\0" ) as $bad ) {
 			if ( false !== strpos( $s, $bad ) ) {
 				return true;
 			}
@@ -212,12 +220,13 @@ class GFB_Plugin {
 
 	/**
 	 * Erlaubt eine begrenzte Länge, ausgewogene Klammern und keine blockierten Token.
+	 * M3: Default-Limit auf 512 reduziert (vorher 4096).
 	 *
 	 * @param string $value Wert.
 	 * @param int    $max_len Maximale Zeichenlänge.
 	 * @return string Bereinigter Wert oder leer.
 	 */
-	private static function gfb_sanitize_functional_css_color( $value, $max_len = 4096 ) {
+	private static function gfb_sanitize_functional_css_color( $value, $max_len = 512 ) {
 		if ( strlen( $value ) > $max_len ) {
 			return '';
 		}
@@ -334,7 +343,7 @@ class GFB_Plugin {
 	 * CSS-Variablen für das Formular-Wrapper-Element (Theme-Farben).
 	 *
 	 * @param array<string,mixed> $attributes Block-Attribute.
-	 * @return string Semikolon-getrennte Deklarationen ohne abschließendes Semikolon am Ende (für style=").
+	 * @return string Semikolon-getrennte Deklarationen ohne abschliessendes Semikolon am Ende (für style=").
 	 */
 	private static function build_form_inline_color_style( $attributes ) {
 		$light_map = array(
@@ -537,7 +546,7 @@ class GFB_Plugin {
 
 		$action = esc_url( admin_url( 'admin-post.php' ) );
 
-		// Stabiler Draft-Key pro Block-Instanz (IndexedDB), nicht pro PHP-Render (sonst Löschen/Restore falsch).
+		// Stabiler Entwurf-Schlüssel pro Block-Instanz (IndexedDB), nicht pro PHP-Render (sonst Löschen/Restore falsch).
 		$instance_id = isset( $attributes['blockInstanceId'] ) ? sanitize_key( (string) $attributes['blockInstanceId'] ) : '';
 		if ( '' === $instance_id ) {
 			$instance_id = '0';
@@ -561,9 +570,32 @@ class GFB_Plugin {
 		/* Immer laden: bei „Theme + eigene Farben“ verbinden die Regeln Inline-Variablen mit den Feldern; bei Hell/Dunkel/Auto schützen !important-Deklarationen Eingabetext vor Theme-Overrides. */
 		wp_enqueue_style( 'gfb-form' );
 
+		// H5: Status + Detail aus URL nur über Whitelist; Texte serverseitig.
 		$status      = isset( $_GET['gfb_status'] ) ? sanitize_key( wp_unslash( $_GET['gfb_status'] ) ) : '';
 		$status_form = isset( $_GET['gfb_form'] ) ? sanitize_key( wp_unslash( $_GET['gfb_form'] ) ) : '';
-		$status_msg  = isset( $_GET['gfb_msg'] ) ? sanitize_text_field( wp_unslash( $_GET['gfb_msg'] ) ) : '';
+		$status_code = isset( $_GET['gfb_code'] ) ? sanitize_key( wp_unslash( $_GET['gfb_code'] ) ) : '';
+		$status_msg  = '';
+		if ( in_array( $status, array( 'success', 'error' ), true ) && $status_form === $form_id ) {
+			if ( '' !== $status_code ) {
+				$status_msg = GFB_Submit_Handler::status_message_for( $status_code );
+			}
+			if ( '' === $status_msg ) {
+				$status_msg = ( 'success' === $status )
+					? __( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' )
+					: __( 'Beim Absenden ist ein Fehler aufgetreten.', 'gutenberg-formbuilder' );
+			}
+			// Optionaler kurzer Detailtext (nur bei Validierungsfehlern; sanitisiert).
+			if ( 'error' === $status && 'err_validation' === $status_code && isset( $_GET['gfb_detail'] ) ) {
+				$detail = sanitize_text_field( wp_unslash( $_GET['gfb_detail'] ) );
+				$detail = mb_substr( $detail, 0, 300 );
+				if ( '' !== $detail ) {
+					$status_msg .= ' ' . $detail;
+				}
+			}
+		} else {
+			// Status nicht zu unserem Formular oder ungültig -> kein Notice anzeigen.
+			$status = '';
+		}
 
 		$has_file_field = false;
 		if ( $block instanceof WP_Block && ! empty( $block->parsed_block['innerBlocks'] ) ) {
@@ -594,18 +626,28 @@ class GFB_Plugin {
 		$wrapper_attrs = get_block_wrapper_attributes( $wrapper_attr_args, $block );
 
 		$inner_fields = self::build_form_inner_fields_layout( $attributes, $block );
-		$inner_class = implode( ' ', $inner_fields['classes'] );
+		$inner_class  = implode( ' ', $inner_fields['classes'] );
+
+		// H1+H3: Honeypot-Feldname pro Instanz + HMAC-Token, der den Honeypot-Namen mitbindet.
+		$hp_field  = GFB_Security::honeypot_field_name( $post_id, $form_id, $instance_id );
+		$gfb_token = GFB_Security::create_token( $post_id, $form_id, $instance_id, $hp_field );
+
+		// K3: Inner-Block-Markup vor Ausgabe streng filtern, damit selbst manipulierte
+		// Block-Comments keine Skripte/Attribute einschleusen können.
+		$safe_content = self::ksesed_inner_blocks_html( (string) $content );
+
 		ob_start();
 		?>
 		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<?php if ( $status && $status_form === $form_id && $status_msg ) : ?>
+			<?php if ( $status && $status_msg ) : ?>
 				<div class="gfb-notice gfb-notice-<?php echo esc_attr( $status ); ?>">
 					<?php echo esc_html( $status_msg ); ?>
 				</div>
 			<?php endif; ?>
 			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
-				<input type="hidden" name="gfb_rendered_at" value="<?php echo esc_attr( (string) time() ); ?>" />
-				<input type="text" name="gfb_hp_field" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
+				<input type="hidden" name="gfb_token" value="<?php echo esc_attr( $gfb_token ); ?>" />
+				<input type="hidden" name="gfb_instance_id" value="<?php echo esc_attr( $instance_id ); ?>" />
+				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
 				<?php wp_nonce_field( 'gfb_submit_' . $form_id . '_' . $post_id, 'gfb_nonce' ); ?>
 				<input type="hidden" name="action" value="gfb_submit" />
 				<input type="hidden" name="gfb_post_id" value="<?php echo esc_attr( $post_id ); ?>" />
@@ -616,19 +658,111 @@ class GFB_Plugin {
 				<input type="hidden" name="gfb_draft_ttl_days" value="<?php echo esc_attr( (string) $draft_ttl_days ); ?>" />
 				<?php if ( $draft_enabled && $show_draft_reset ) : ?>
 					<p class="gfb-draft-tools">
-						<button type="button" class="gfb-draft-reset-button"><?php esc_html_e( 'Draft löschen', 'gutenberg-formbuilder' ); ?></button>
+						<button type="button" class="gfb-draft-reset-button"><?php esc_html_e( 'Entwurf löschen', 'gutenberg-formbuilder' ); ?></button>
 					</p>
 				<?php endif; ?>
 				<?php if ( ! empty( $inner_fields['style_css'] ) ) : ?>
 					<style><?php echo $inner_fields['style_css']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS aus wp_get_layout_style() ?></style>
 				<?php endif; ?>
 				<div class="<?php echo esc_attr( $inner_class ); ?>">
-					<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php echo $safe_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- über wp_kses() vorgefiltert ?>
 				</div>
 			</form>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Strenge KSES-Whitelist für das von Field-Block-`save()` produzierte HTML.
+	 *
+	 * Verteidigung gegen Stored XSS, falls jemand mit unfiltered_html-Capability
+	 * (oder bei kuenftigen WP-Kses-Bypass-Bugs) Block-Markup direkt manipuliert.
+	 *
+	 * @param string $html Roh-HTML aus do_blocks() der InnerBlocks.
+	 * @return string Gefiltertes HTML.
+	 */
+	private static function ksesed_inner_blocks_html( $html ) {
+		$attr_global = array(
+			'class'    => true,
+			'id'       => true,
+			'style'    => true,
+			'data-*'   => true,
+			'tabindex' => true,
+			'aria-*'   => true,
+			'role'     => true,
+			'hidden'   => true,
+			'title'    => true,
+			'lang'     => true,
+			'dir'      => true,
+		);
+		$attr_form_input = array_merge(
+			$attr_global,
+			array(
+				'name'         => true,
+				'value'        => true,
+				'placeholder'  => true,
+				'required'     => true,
+				'readonly'     => true,
+				'disabled'     => true,
+				'autocomplete' => true,
+				'autofocus'    => true,
+				'min'          => true,
+				'max'          => true,
+				'step'         => true,
+				'minlength'    => true,
+				'maxlength'    => true,
+				'pattern'      => true,
+				'inputmode'    => true,
+				'multiple'     => true,
+				'accept'       => true,
+				'size'         => true,
+				'type'         => true,
+				'checked'      => true,
+				'list'         => true,
+			)
+		);
+
+		$allowed = array(
+			'div'      => $attr_global,
+			'span'     => $attr_global,
+			'p'        => $attr_global,
+			'label'    => array_merge( $attr_global, array( 'for' => true ) ),
+			'fieldset' => array_merge( $attr_global, array( 'form' => true ) ),
+			'legend'   => $attr_global,
+			'small'    => $attr_global,
+			'em'       => $attr_global,
+			'strong'   => $attr_global,
+			'br'       => $attr_global,
+			'ul'       => $attr_global,
+			'ol'       => $attr_global,
+			'li'       => $attr_global,
+			'output'   => array_merge( $attr_global, array( 'for' => true, 'name' => true ) ),
+			'input'    => $attr_form_input,
+			'textarea' => array_merge( $attr_form_input, array( 'rows' => true, 'cols' => true, 'wrap' => true ) ),
+			'select'   => $attr_form_input,
+			'option'   => array_merge( $attr_global, array( 'value' => true, 'selected' => true, 'disabled' => true, 'label' => true ) ),
+			'optgroup' => array_merge( $attr_global, array( 'label' => true, 'disabled' => true ) ),
+			'datalist' => $attr_global,
+			'button'   => array_merge( $attr_global, array( 'type' => true, 'name' => true, 'value' => true, 'disabled' => true, 'form' => true ) ),
+			'a'        => array_merge( $attr_global, array( 'href' => true, 'target' => true, 'rel' => true ) ),
+		);
+
+		/**
+		 * Erlaubte Tags/Attribute für Field-Block-Inner-HTML. Erweiterungen mit
+		 * Bedacht (nichts mit JS-/Style-führenden Attributen wie on*, srcdoc, etc.).
+		 *
+		 * @param array<string,array<string,bool>> $allowed
+		 */
+		$allowed = apply_filters( 'gfb_inner_blocks_allowed_html', $allowed );
+
+		$kses = wp_kses( $html, $allowed, array( 'http', 'https', 'mailto', 'tel' ) );
+
+		// Sicherheitsnetz: alle "on*"-Eventhandler entfernen, falls sie irgendwo durchrutschen sollten.
+		$kses = preg_replace( '/\s+on[a-z]+\s*=\s*"[^"]*"/i', '', (string) $kses );
+		$kses = preg_replace( '/\s+on[a-z]+\s*=\s*\'[^\']*\'/i', '', (string) $kses );
+
+		return (string) $kses;
 	}
 
 	/**
@@ -907,11 +1041,17 @@ class GFB_Plugin {
 		}
 
 		$row = array(
-			'name'     => $key,
-			'label'    => $label,
-			'type'     => $type,
-			'required' => ! empty( $attrs['required'] ) && 'hidden' !== $type,
+			'name'      => $key,
+			'label'     => $label,
+			'type'      => $type,
+			'required'  => ! empty( $attrs['required'] ) && 'hidden' !== $type,
+			// Sensitive: Wert wird vor dem Speichern verschlüsselt (AES-256-GCM via GFB_Crypto).
+			'sensitive' => ! empty( $attrs['sensitive'] ),
 		);
+		// Files sind immer verschlüsselt-im-Storage; das `sensitive`-Flag ist hier ohne Effekt.
+		if ( 'file' === $type ) {
+			$row['sensitive'] = false;
+		}
 
 		if ( in_array( $type, array( 'select', 'radio' ), true ) && isset( $attrs['options'] ) ) {
 			$row['options'] = self::parse_option_lines( (string) $attrs['options'] );
@@ -935,6 +1075,11 @@ class GFB_Plugin {
 
 		if ( 'hidden' === $type && isset( $attrs['hiddenValue'] ) ) {
 			$row['hidden_value'] = sanitize_text_field( (string) $attrs['hiddenValue'] );
+		}
+
+		// M5: lockedValue erzwingt den Server-Wert. Client-POST wird ignoriert.
+		if ( 'hidden' === $type && ! empty( $attrs['lockedValue'] ) ) {
+			$row['locked'] = true;
 		}
 
 		if ( 'file' === $type ) {

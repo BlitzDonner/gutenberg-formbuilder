@@ -164,7 +164,7 @@
 		if ( ! key ) {
 			return;
 		}
-		/** Nach manuellem Löschen kurz kein erneutes Speichern (sonst z. B. Safari: Alert → visibilitychange → Draft ist sofort wieder da). */
+		/** Nach manuellem Löschen kurz kein erneutes Speichern (sonst z. B. Safari: Alert → visibilitychange → Entwurf ist sofort wieder da). */
 		var persistAllowed = true;
 		/** Nach reset()/Löschen: Events vom Browser blockieren, die sonst sofort wieder speichern. */
 		var draftSuppressUntil = 0;
@@ -194,11 +194,11 @@
 					.then( function () {
 						form.reset();
 						initRangeValueDisplays( form );
-						window.alert( 'Lokaler Draft wurde gelöscht.' );
+						window.alert( 'Lokaler Entwurf wurde gelöscht.' );
 					} )
 					.catch( function () {
 						window.alert(
-							'Der Draft konnte nicht gelöscht werden. Bitte Seite neu laden und erneut versuchen.'
+							'Der Entwurf konnte nicht gelöscht werden. Bitte Seite neu laden und erneut versuchen.'
 						);
 					} )
 					.finally( function () {
@@ -245,7 +245,7 @@
 
 		/**
 		 * Sofort speichern (ohne Debounce). Wichtig für Safari/WebKit: vor dem Entladen
-		 * schließen sich Transaktionen oft, bevor ein verzögerter Timeout läuft.
+		 * schliessen sich Transaktionen oft, bevor ein verzögerter Timeout läuft.
 		 */
 		function flushDraft() {
 			if ( ! persistAllowed || Date.now() < draftSuppressUntil ) {
@@ -279,7 +279,7 @@
 		window.addEventListener( 'beforeunload', flushDraft );
 
 		form.addEventListener( 'submit', function () {
-			// Draft wird final nach erfolgreichem Submit über URL-Status gelöscht.
+			// Lokaler Entwurf wird nach erfolgreichem Submit über URL-Parameter endgültig gelöscht.
 		} );
 	}
 

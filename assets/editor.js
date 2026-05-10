@@ -85,29 +85,63 @@
 	 *
 	 * @param {string} title
 	 * @param {Array<{label:string,value?:string,onChange:function(string):void}>} rows
+	 * @param {{wrapInPanelBody?:boolean,panelBodyInitialOpen?:boolean}|undefined} options
+	 *        wrapInPanelBody: z. B. Feld-Inspector — PanelBody mit initialOpen zuverlässig zugeklappt
+	 *        (PanelColorGradientSettings basiert auf ToolsPanel und ignoriert initialOpen oft).
 	 */
-	function renderGfbColorPanel( title, rows ) {
-		if ( PanelColorGradientSettings ) {
-			// Theme kann color.customGradient / Paletten deaktivieren — dann wäre canChooseAGradient false und kein Verlauf-Tab. Für Formularfarben immer eigene Farben + Verläufe erlauben.
-			return el( PanelColorGradientSettings, {
-				title: title,
-				initialOpen: false,
-				disableCustomColors: false,
-				disableCustomGradients: false,
-				settings: mapColorSettingsToGradientSettings( rows ),
-			} );
+	function renderGfbColorPanel( title, rows, options ) {
+		options = options || {};
+		var usePanelBody = !! options.wrapInPanelBody;
+		var panelBodyOpen =
+			options.panelBodyInitialOpen !== undefined ? !! options.panelBodyInitialOpen : false;
+
+		function innerColorPanel() {
+			if ( PanelColorGradientSettings ) {
+				// Theme kann color.customGradient / Paletten deaktivieren — dann wäre canChooseAGradient false und kein Verlauf-Tab. Für Formularfarben immer eigene Farben + Verläufe erlauben.
+				var gradProps = {
+					disableCustomColors: false,
+					disableCustomGradients: false,
+					settings: mapColorSettingsToGradientSettings( rows ),
+				};
+				if ( usePanelBody ) {
+					gradProps.title = '';
+					gradProps.initialOpen = true;
+				} else {
+					gradProps.title = title;
+					gradProps.initialOpen = false;
+				}
+				return el( PanelColorGradientSettings, gradProps );
+			}
+			var colorProps = {
+				colorSettings: rows.map( function ( r ) {
+					return Object.assign( {}, r, { enableAlpha: true } );
+				} ),
+			};
+			if ( usePanelBody ) {
+				colorProps.title = '';
+				colorProps.initialOpen = true;
+			} else {
+				colorProps.title = title;
+				colorProps.initialOpen = false;
+			}
+			return el( PanelColorSettings, colorProps );
 		}
-		return el( PanelColorSettings, {
-			title: title,
-			initialOpen: false,
-			colorSettings: rows.map( function ( r ) {
-				return Object.assign( {}, r, { enableAlpha: true } );
-			} ),
-		} );
+
+		if ( usePanelBody ) {
+			return el(
+				PanelBody,
+				{
+					title: title,
+					initialOpen: panelBodyOpen,
+				},
+				innerColorPanel()
+			);
+		}
+		return innerColorPanel();
 	}
 	/**
-	 * Hält formId pro Block-Instanz eindeutig: Duplizieren kopiert formId,
-	 * daher Abgleich mit der stabilen Editor-clientId.
+	 * Hält formId pro Block-Instanz eindeutig: Duplizieren kopiert formId/blockInstanceId,
+	 * daher Abgleich mit der stabilen Editor-clientId (neue formId bei neuer Instanz).
 	 */
 	function syncFormInstance( attributes, setAttributes, clientId ) {
 		useEffect(
@@ -115,10 +149,12 @@
 				if ( attributes.blockInstanceId === clientId ) {
 					return;
 				}
+				/* Alte Inhalte ohne blockInstanceId: formId behalten, nur Instanz binden. */
 				if ( ! attributes.blockInstanceId && attributes.formId ) {
 					setAttributes( { blockInstanceId: clientId } );
 					return;
 				}
+				/* Kopie / Einfügen: fremde blockInstanceId oder leeres Formular → neue formId. */
 				var generated = 'gfb_' + clientId.replace( /-/g, '' ).slice( 0, 12 );
 				setAttributes( {
 					blockInstanceId: clientId,
@@ -228,18 +264,129 @@
 		'gfb/field-submit',
 	];
 
-	function ensureFieldName( attributes, setAttributes, clientId, fallbackPrefix, legacyNames ) {
+	/**
+	 * Umlaute und häufige Akzente für technische Namen (POST-Keys) in ASCII approximieren.
+	 *
+	 * @param {string} s
+	 * @return {string}
+	 */
+	function gfbTransliterateForFieldSlug( s ) {
+		var map = {
+			ä: 'ae',
+			ö: 'oe',
+			ü: 'ue',
+			Ä: 'ae',
+			Ö: 'oe',
+			Ü: 'ue',
+			ß: 'ss',
+			à: 'a',
+			á: 'a',
+			â: 'a',
+			è: 'e',
+			é: 'e',
+			ê: 'e',
+			ì: 'i',
+			í: 'i',
+			î: 'i',
+			ò: 'o',
+			ó: 'o',
+			ô: 'o',
+			ù: 'u',
+			ú: 'u',
+			û: 'u',
+			ç: 'c',
+			ñ: 'n',
+		};
+		var t = String( s );
+		var out = '';
+		for ( var i = 0; i < t.length; i++ ) {
+			var c = t.charAt( i );
+			var rep = map[ c ];
+			out += typeof rep === 'string' ? rep : c;
+		}
+		return out;
+	}
+
+	/**
+	 * Aus Label/Platzhalter einen stabilen Slug (a-z, 0-9, Unterstrich).
+	 *
+	 * @param {string} raw
+	 * @return {string}
+	 */
+	function gfbSlugifyFieldBase( raw ) {
+		var s = gfbTransliterateForFieldSlug( raw );
+		s = s.replace( /<[^>]*>/g, '' );
+		s = s.toLowerCase().replace( /[^a-z0-9_]+/g, '_' ).replace( /_+/g, '_' ).replace( /^_|_$/g, '' );
+		if ( s.length === 0 ) {
+			s = 'feld';
+		}
+		if ( s.length > 48 ) {
+			s = s.slice( 0, 48 ).replace( /_+$/g, '' );
+		}
+		return s;
+	}
+
+	/**
+	 * Technischer name-Attributwert: Slug aus Label oder Platzhalter oder Fallback + Instanz-ID.
+	 *
+	 * @param {string} labelTrim
+	 * @param {string} placeholderTrim
+	 * @param {string} fallbackPrefix
+	 * @param {string} clientId
+	 * @return {string}
+	 */
+	function gfbBuildAutoFieldName( labelTrim, placeholderTrim, fallbackPrefix, clientId ) {
+		var baseSource =
+			labelTrim !== ''
+				? labelTrim
+				: placeholderTrim !== ''
+					? placeholderTrim
+					: fallbackPrefix;
+		var base = gfbSlugifyFieldBase( baseSource );
+		var gid = clientId.replace( /-/g, '' ).slice( 0, 12 );
+		if ( gid.length === 0 ) {
+			gid = '0';
+		}
+		return base + '_' + gid;
+	}
+
+	/**
+	 * Hält `name` automatisch synchron (Label/Platzhalter + eindeutige Block-ID).
+	 * Bei Duplikat/Kopie ändert sich clientId → neuer Name. Nicht im Inspector editierbar.
+	 *
+	 * @param {Record<string, unknown>} attributes
+	 * @param {function(Record<string, unknown>):void} setAttributes
+	 * @param {string} clientId
+	 * @param {boolean} includePlaceholder
+	 * @param {string} fallbackPrefix
+	 * @param {string[]} legacyNames
+	 */
+	function syncAutoFieldName( attributes, setAttributes, clientId, includePlaceholder, fallbackPrefix, legacyNames ) {
 		useEffect(
 			function () {
-				var n = attributes.name != null ? String( attributes.name ).trim() : '';
-				var mustGenerate = n === '' || legacyNames.indexOf( n ) !== -1;
-				if ( ! mustGenerate ) {
+				var lab = attributes.label != null ? String( attributes.label ).trim() : '';
+				var ph = '';
+				if ( includePlaceholder && attributes.placeholder != null ) {
+					ph = String( attributes.placeholder ).trim();
+				}
+				var desired = gfbBuildAutoFieldName( lab, ph, fallbackPrefix, clientId );
+				var current = attributes.name != null ? String( attributes.name ).trim() : '';
+				var legacy = legacyNames.indexOf( current ) !== -1;
+				if ( ! legacy && current === desired ) {
 					return;
 				}
-				var generated = fallbackPrefix + '_' + clientId.replace( /-/g, '' ).slice( 0, 10 );
-				setAttributes( { name: generated } );
+				setAttributes( { name: desired } );
 			},
-			[ attributes.name, clientId, setAttributes, fallbackPrefix, legacyNames ]
+			[
+				attributes.label,
+				attributes.placeholder,
+				attributes.name,
+				clientId,
+				setAttributes,
+				includePlaceholder,
+				fallbackPrefix,
+				legacyNames,
+			]
 		);
 	}
 
@@ -255,41 +402,44 @@
 					},
 				}
 			),
-			el(
-				TextControl,
-				{
-					label: __( 'Feldname (technisch)', 'gutenberg-formbuilder' ),
-					value: attributes.name || '',
-					onChange: function ( value ) {
-						var normalized = value.toLowerCase().replace( /[^a-z0-9_]/g, '_' );
-						setAttributes( { name: normalized } );
-					},
-					help: __( 'Nur a-z, 0-9 und _.', 'gutenberg-formbuilder' ),
-				}
-			),
-			el(
-				ToggleControl,
-				{
-					label: __( 'Pflichtfeld', 'gutenberg-formbuilder' ),
-					checked: !! attributes.required,
-					onChange: function ( value ) {
-						setAttributes( { required: value } );
-					},
-				}
-			),
 		];
 
 		if ( includePlaceholder ) {
-			controls.splice(
-				2,
-				0,
+			controls.push(
+				el( TextControl, {
+					label: __( 'Placeholder', 'gutenberg-formbuilder' ),
+					value: attributes.placeholder || '',
+					onChange: function ( value ) {
+						setAttributes( { placeholder: value } );
+					},
+				} )
+			);
+		}
+
+		controls.push(
+			el( ToggleControl, {
+				label: __( 'Pflichtfeld', 'gutenberg-formbuilder' ),
+				checked: !! attributes.required,
+				onChange: function ( value ) {
+					setAttributes( { required: value } );
+				},
+			} )
+		);
+
+		// Sensitivität: verschlüsselt-im-Storage-Toggle. Server prüft das gleiche Flag.
+		if ( typeof attributes.sensitive !== 'undefined' ) {
+			controls.push(
 				el(
-					TextControl,
+					ToggleControl,
 					{
-						label: __( 'Placeholder', 'gutenberg-formbuilder' ),
-						value: attributes.placeholder || '',
+						label: __( 'Vertraulich (verschlüsselt speichern)', 'gutenberg-formbuilder' ),
+						help: __(
+							'Wenn aktiv, wird der Feldwert mit AES-256-GCM verschlüsselt in der Datenbank gespeichert. Anzeige im Admin nur für Benutzer mit der Berechtigung "gfb_decrypt_submissions".',
+							'gutenberg-formbuilder'
+						),
+						checked: !! attributes.sensitive,
 						onChange: function ( value ) {
-							setAttributes( { placeholder: value } );
+							setAttributes( { sensitive: !! value } );
 						},
 					}
 				)
@@ -866,35 +1016,40 @@
 	function renderFieldColorOverrideControls( attributes, setAttributes ) {
 		return renderGfbColorPanel(
 			__( 'Farben (Feld überschreiben)', 'gutenberg-formbuilder' ),
-			createFormColorSettings( attributes, setAttributes )
+			createFormColorSettings( attributes, setAttributes ),
+			{ wrapInPanelBody: true }
 		);
 	}
 
 	/** Nur Absenden-Block: Button- und Fokus-Overrides ohne die übrigen Feld-Farben. */
 	function renderSubmitButtonColorOverrideControls( attributes, setAttributes ) {
-		return renderGfbColorPanel( __( 'Button & Fokus (Feld überschreiben)', 'gutenberg-formbuilder' ), [
-			{
-				label: __( 'Fokus (Rahmen, Schieberegler)', 'gutenberg-formbuilder' ),
-				value: attributes.colorFocus || '',
-				onChange: function ( v ) {
-					setAttributes( { colorFocus: v || '' } );
+		return renderGfbColorPanel(
+			__( 'Button & Fokus (Feld überschreiben)', 'gutenberg-formbuilder' ),
+			[
+				{
+					label: __( 'Fokus (Rahmen, Schieberegler)', 'gutenberg-formbuilder' ),
+					value: attributes.colorFocus || '',
+					onChange: function ( v ) {
+						setAttributes( { colorFocus: v || '' } );
+					},
 				},
-			},
-			{
-				label: __( 'Button-Hintergrund', 'gutenberg-formbuilder' ),
-				value: attributes.colorButtonBg || '',
-				onChange: function ( v ) {
-					setAttributes( { colorButtonBg: v || '' } );
+				{
+					label: __( 'Button-Hintergrund', 'gutenberg-formbuilder' ),
+					value: attributes.colorButtonBg || '',
+					onChange: function ( v ) {
+						setAttributes( { colorButtonBg: v || '' } );
+					},
 				},
-			},
-			{
-				label: __( 'Button-Text', 'gutenberg-formbuilder' ),
-				value: attributes.colorButtonText || '',
-				onChange: function ( v ) {
-					setAttributes( { colorButtonText: v || '' } );
+				{
+					label: __( 'Button-Text', 'gutenberg-formbuilder' ),
+					value: attributes.colorButtonText || '',
+					onChange: function ( v ) {
+						setAttributes( { colorButtonText: v || '' } );
+					},
 				},
-			},
-		] );
+			],
+			{ wrapInPanelBody: true }
+		);
 	}
 
 	registerBlockType( 'gfb/form', {
@@ -1040,9 +1195,9 @@
 							title: __( 'Formulareinstellungen', 'gutenberg-formbuilder' ),
 							initialOpen: true,
 						},
-						el( Notice, { status: 'info', isDismissible: false }, __( 'Feldwerte werden im Browser lokal zwischengespeichert.', 'gutenberg-formbuilder' ) ),
+						el( Notice, { status: 'info', isDismissible: false }, __( 'Feldwerte werden im Browser als lokale Entwürfe zwischengespeichert.', 'gutenberg-formbuilder' ) ),
 						el( ToggleControl, {
-							label: __( 'Lokale Draftspeicherung aktivieren', 'gutenberg-formbuilder' ),
+							label: __( 'Lokale Entwurfsspeicherung aktivieren', 'gutenberg-formbuilder' ),
 							checked: attributes.draftEnabled !== false,
 							onChange: function ( value ) {
 								setAttributes( { draftEnabled: value } );
@@ -1062,7 +1217,7 @@
 						} ),
 						__experimentalNumberControl
 							? el( __experimentalNumberControl, {
-									label: __( 'Draft-Ablauf in Tagen', 'gutenberg-formbuilder' ),
+									label: __( 'Entwurf läuft ab nach (Tage)', 'gutenberg-formbuilder' ),
 									value: attributes.draftTtlDays || 7,
 									onChange: function ( value ) {
 										var parsed = parseInt( value, 10 );
@@ -1083,7 +1238,7 @@
 							  } )
 							: null,
 						el( ToggleControl, {
-							label: __( 'Button „Draft löschen“ anzeigen', 'gutenberg-formbuilder' ),
+							label: __( 'Button „Entwurf löschen“ anzeigen', 'gutenberg-formbuilder' ),
 							checked: attributes.showDraftReset !== false,
 							onChange: function ( value ) {
 								setAttributes( { showDraftReset: value } );
@@ -1168,7 +1323,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'textfeld', GFB_LEGACY_NAMES_TEXT );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, true, 'textfeld', GFB_LEGACY_NAMES_TEXT );
 
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-text',
@@ -1222,7 +1377,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'email', GFB_LEGACY_NAMES_EMAIL );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, true, 'email', GFB_LEGACY_NAMES_EMAIL );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-email',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1275,7 +1430,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'nachricht', GFB_LEGACY_NAMES_TEXTAREA );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, true, 'nachricht', GFB_LEGACY_NAMES_TEXTAREA );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-textarea',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1326,7 +1481,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'auswahl', GFB_LEGACY_NAMES_SELECT );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'auswahl', GFB_LEGACY_NAMES_SELECT );
 			var options = ( attributes.options || '' )
 				.split( /\n/ )
 				.map( function ( item ) {
@@ -1408,7 +1563,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'zustimmung', GFB_LEGACY_NAMES_CHECKBOX );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'zustimmung', GFB_LEGACY_NAMES_CHECKBOX );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-checkbox',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1513,7 +1668,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'zahl', GFB_LEGACY_NAMES_NUMBER );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, true, 'zahl', GFB_LEGACY_NAMES_NUMBER );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-number',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1573,7 +1728,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'telefon', GFB_LEGACY_NAMES_TEL );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, true, 'telefon', GFB_LEGACY_NAMES_TEL );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-tel',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1628,7 +1783,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'website', GFB_LEGACY_NAMES_URL );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, true, 'website', GFB_LEGACY_NAMES_URL );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-url',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1681,7 +1836,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'datum', GFB_LEGACY_NAMES_DATE );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'datum', GFB_LEGACY_NAMES_DATE );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-date',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1737,7 +1892,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'uhrzeit', GFB_LEGACY_NAMES_TIME );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'uhrzeit', GFB_LEGACY_NAMES_TIME );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-time',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1783,7 +1938,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'termin', GFB_LEGACY_NAMES_DATETIME );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'termin', GFB_LEGACY_NAMES_DATETIME );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-datetime',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1834,7 +1989,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'radio', GFB_LEGACY_NAMES_RADIO );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'radio', GFB_LEGACY_NAMES_RADIO );
 			var options = ( attributes.options || '' )
 				.split( /\n/ )
 				.map( function ( item ) {
@@ -1956,7 +2111,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'hidden', GFB_LEGACY_NAMES_HIDDEN );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'hidden', GFB_LEGACY_NAMES_HIDDEN );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-hidden',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -1982,18 +2137,21 @@
 							),
 						} ),
 						el( TextControl, {
-							label: __( 'Feldname (technisch)', 'gutenberg-formbuilder' ),
-							value: attributes.name || '',
-							onChange: function ( value ) {
-								var normalized = value.toLowerCase().replace( /[^a-z0-9_]/g, '_' );
-								setAttributes( { name: normalized } );
-							},
-						} ),
-						el( TextControl, {
 							label: __( 'Wert', 'gutenberg-formbuilder' ),
 							value: attributes.hiddenValue || '',
 							onChange: function ( value ) {
 								setAttributes( { hiddenValue: value } );
+							},
+						} ),
+						el( ToggleControl, {
+							label: __( 'Wert serverseitig erzwingen (empfohlen)', 'gutenberg-formbuilder' ),
+							help: __(
+								'Wenn aktiv, wird der oben gesetzte Wert beim Absenden serverseitig gesetzt. Werte aus dem Browser werden ignoriert (Schutz gegen Manipulation).',
+								'gutenberg-formbuilder'
+							),
+							checked: !! attributes.lockedValue,
+							onChange: function ( value ) {
+								setAttributes( { lockedValue: !! value } );
 							},
 						} )
 					)
@@ -2030,7 +2188,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'wert', GFB_LEGACY_NAMES_RANGE );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'wert', GFB_LEGACY_NAMES_RANGE );
 			var min = attributes.min || '0';
 			var max = attributes.max || '100';
 			var step = attributes.step || '1';
@@ -2129,7 +2287,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
-			ensureFieldName( attributes, setAttributes, props.clientId, 'datei', GFB_LEGACY_NAMES_FILE );
+			syncAutoFieldName( attributes, setAttributes, props.clientId, false, 'datei', GFB_LEGACY_NAMES_FILE );
 			var blockProps = useBlockProps( {
 				className: 'gfb-field gfb-field-file',
 				style: buildMergedFieldColorStyle( attributes, props.context || {} ),
@@ -2153,7 +2311,7 @@
 						} ),
 						__experimentalNumberControl
 							? el( __experimentalNumberControl, {
-									label: __( 'Max. Größe (MB)', 'gutenberg-formbuilder' ),
+									label: __( 'Max. Grösse (MB)', 'gutenberg-formbuilder' ),
 									value: attributes.maxSizeMb || 8,
 									onChange: function ( value ) {
 										var parsed = parseInt( value, 10 );

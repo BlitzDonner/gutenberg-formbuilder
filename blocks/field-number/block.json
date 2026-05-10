@@ -1,97 +1,101 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "gfb/field-number",
-  "version": "0.2.0",
-  "title": "Zahl",
-  "category": "gfb-fields",
-  "icon": {
-    "src": "calculator"
-  },
-  "description": "Numerisches Eingabefeld.",
-  "textdomain": "gutenberg-formbuilder",
-  "attributes": {
-    "label": {
-      "type": "string",
-      "default": "Zahl"
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "gfb/field-number",
+    "version": "2.0.0",
+    "title": "Zahl",
+    "category": "gfb-fields",
+    "icon": {
+        "src": "calculator"
     },
-    "name": {
-      "type": "string",
-      "default": ""
-    },
-    "placeholder": {
-      "type": "string",
-      "default": ""
-    },
-    "required": {
-      "type": "boolean",
-      "default": false
-    },
-    "min": {
-      "type": "string",
-      "default": ""
-    },
-    "max": {
-      "type": "string",
-      "default": ""
-    },
-    "step": {
-      "type": "string",
-      "default": ""
-    }
-  },
-  "supports": {
-    "html": false,
-    "spacing": {
-      "margin": true,
-      "padding": true
-    },
-    "color": {
-      "text": true,
-      "background": true
-    },
-    "typography": {
-      "fontSize": true,
-      "lineHeight": true,
-      "fontWeight": true
-    },
-    "border": true
-  },
-  "usesContext": [
-    "gfb/formId",
-    "gfb/appearanceMode",
-    "gfb/colorLabel",
-    "gfb/colorText",
-    "gfb/colorPlaceholder",
-    "gfb/colorFieldBg",
-    "gfb/colorBorder",
-    "gfb/colorFocus",
-    "gfb/colorButtonBg",
-    "gfb/colorButtonText",
-    "gfb/darkColorLabel",
-    "gfb/darkColorText",
-    "gfb/darkColorPlaceholder",
-    "gfb/darkColorFieldBg",
-    "gfb/darkColorBorder",
-    "gfb/darkColorFocus",
-    "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText",
-    "gfb/colorFormShell",
-    "gfb/darkColorFormShell"
-  ],
-  "editorScript": "gfb-editor",
-  "example": {
+    "description": "Numerisches Eingabefeld.",
+    "textdomain": "gutenberg-formbuilder",
     "attributes": {
-      "label": "Zahl",
-      "name": "sb_num",
-      "placeholder": "",
-      "min": "0",
-      "max": "100",
-      "step": "1",
-      "required": false
-    }
-  },
-  "ancestor": [
-    "gfb/form"
-  ]
+        "label": {
+            "type": "string",
+            "default": "Zahl"
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "placeholder": {
+            "type": "string",
+            "default": ""
+        },
+        "required": {
+            "type": "boolean",
+            "default": false
+        },
+        "min": {
+            "type": "string",
+            "default": ""
+        },
+        "max": {
+            "type": "string",
+            "default": ""
+        },
+        "step": {
+            "type": "string",
+            "default": ""
+        },
+        "sensitive": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "supports": {
+        "html": false,
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "color": {
+            "text": true,
+            "background": true
+        },
+        "typography": {
+            "fontSize": true,
+            "lineHeight": true,
+            "fontWeight": true
+        },
+        "border": true
+    },
+    "usesContext": [
+        "gfb/formId",
+        "gfb/appearanceMode",
+        "gfb/colorLabel",
+        "gfb/colorText",
+        "gfb/colorPlaceholder",
+        "gfb/colorFieldBg",
+        "gfb/colorBorder",
+        "gfb/colorFocus",
+        "gfb/colorButtonBg",
+        "gfb/colorButtonText",
+        "gfb/darkColorLabel",
+        "gfb/darkColorText",
+        "gfb/darkColorPlaceholder",
+        "gfb/darkColorFieldBg",
+        "gfb/darkColorBorder",
+        "gfb/darkColorFocus",
+        "gfb/darkColorButtonBg",
+        "gfb/darkColorButtonText",
+        "gfb/colorFormShell",
+        "gfb/darkColorFormShell"
+    ],
+    "editorScript": "gfb-editor",
+    "example": {
+        "attributes": {
+            "label": "Zahl",
+            "name": "sb_num",
+            "placeholder": "",
+            "min": "0",
+            "max": "100",
+            "step": "1",
+            "required": false
+        }
+    },
+    "ancestor": [
+        "gfb/form"
+    ]
 }

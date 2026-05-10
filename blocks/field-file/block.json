@@ -1,87 +1,91 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "gfb/field-file",
-  "version": "0.2.0",
-  "title": "Datei-Upload",
-  "category": "gfb-fields",
-  "icon": {
-    "src": "upload"
-  },
-  "description": "Datei hochladen.",
-  "textdomain": "gutenberg-formbuilder",
-  "attributes": {
-    "label": {
-      "type": "string",
-      "default": "Datei"
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "gfb/field-file",
+    "version": "2.0.0",
+    "title": "Datei-Upload",
+    "category": "gfb-fields",
+    "icon": {
+        "src": "upload"
     },
-    "name": {
-      "type": "string",
-      "default": ""
-    },
-    "required": {
-      "type": "boolean",
-      "default": false
-    },
-    "accept": {
-      "type": "string",
-      "default": ""
-    },
-    "maxSizeMb": {
-      "type": "number",
-      "default": 8
-    }
-  },
-  "supports": {
-    "html": false,
-    "spacing": {
-      "margin": true,
-      "padding": true
-    },
-    "color": {
-      "text": true,
-      "background": true
-    },
-    "typography": {
-      "fontSize": true,
-      "lineHeight": true,
-      "fontWeight": true
-    },
-    "border": true
-  },
-  "usesContext": [
-    "gfb/formId",
-    "gfb/appearanceMode",
-    "gfb/colorLabel",
-    "gfb/colorText",
-    "gfb/colorPlaceholder",
-    "gfb/colorFieldBg",
-    "gfb/colorBorder",
-    "gfb/colorFocus",
-    "gfb/colorButtonBg",
-    "gfb/colorButtonText",
-    "gfb/darkColorLabel",
-    "gfb/darkColorText",
-    "gfb/darkColorPlaceholder",
-    "gfb/darkColorFieldBg",
-    "gfb/darkColorBorder",
-    "gfb/darkColorFocus",
-    "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText",
-    "gfb/colorFormShell",
-    "gfb/darkColorFormShell"
-  ],
-  "editorScript": "gfb-editor",
-  "example": {
+    "description": "Datei hochladen.",
+    "textdomain": "gutenberg-formbuilder",
     "attributes": {
-      "label": "Datei",
-      "name": "sb_file",
-      "required": false,
-      "accept": ".pdf,image/*",
-      "maxSizeMb": 8
-    }
-  },
-  "ancestor": [
-    "gfb/form"
-  ]
+        "label": {
+            "type": "string",
+            "default": "Datei"
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "required": {
+            "type": "boolean",
+            "default": false
+        },
+        "accept": {
+            "type": "string",
+            "default": ""
+        },
+        "maxSizeMb": {
+            "type": "number",
+            "default": 8
+        },
+        "sensitive": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "supports": {
+        "html": false,
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "color": {
+            "text": true,
+            "background": true
+        },
+        "typography": {
+            "fontSize": true,
+            "lineHeight": true,
+            "fontWeight": true
+        },
+        "border": true
+    },
+    "usesContext": [
+        "gfb/formId",
+        "gfb/appearanceMode",
+        "gfb/colorLabel",
+        "gfb/colorText",
+        "gfb/colorPlaceholder",
+        "gfb/colorFieldBg",
+        "gfb/colorBorder",
+        "gfb/colorFocus",
+        "gfb/colorButtonBg",
+        "gfb/colorButtonText",
+        "gfb/darkColorLabel",
+        "gfb/darkColorText",
+        "gfb/darkColorPlaceholder",
+        "gfb/darkColorFieldBg",
+        "gfb/darkColorBorder",
+        "gfb/darkColorFocus",
+        "gfb/darkColorButtonBg",
+        "gfb/darkColorButtonText",
+        "gfb/colorFormShell",
+        "gfb/darkColorFormShell"
+    ],
+    "editorScript": "gfb-editor",
+    "example": {
+        "attributes": {
+            "label": "Datei",
+            "name": "sb_file",
+            "required": false,
+            "accept": ".pdf,image/*",
+            "maxSizeMb": 8
+        }
+    },
+    "ancestor": [
+        "gfb/form"
+    ]
 }

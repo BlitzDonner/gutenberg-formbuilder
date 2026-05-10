@@ -1,77 +1,81 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "gfb/field-time",
-  "version": "0.2.0",
-  "title": "Uhrzeit",
-  "category": "gfb-fields",
-  "icon": {
-    "src": "clock"
-  },
-  "description": "Uhrzeit.",
-  "textdomain": "gutenberg-formbuilder",
-  "attributes": {
-    "label": {
-      "type": "string",
-      "default": "Uhrzeit"
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "gfb/field-time",
+    "version": "2.0.0",
+    "title": "Uhrzeit",
+    "category": "gfb-fields",
+    "icon": {
+        "src": "clock"
     },
-    "name": {
-      "type": "string",
-      "default": ""
-    },
-    "required": {
-      "type": "boolean",
-      "default": false
-    }
-  },
-  "supports": {
-    "html": false,
-    "spacing": {
-      "margin": true,
-      "padding": true
-    },
-    "color": {
-      "text": true,
-      "background": true
-    },
-    "typography": {
-      "fontSize": true,
-      "lineHeight": true,
-      "fontWeight": true
-    },
-    "border": true
-  },
-  "usesContext": [
-    "gfb/formId",
-    "gfb/appearanceMode",
-    "gfb/colorLabel",
-    "gfb/colorText",
-    "gfb/colorPlaceholder",
-    "gfb/colorFieldBg",
-    "gfb/colorBorder",
-    "gfb/colorFocus",
-    "gfb/colorButtonBg",
-    "gfb/colorButtonText",
-    "gfb/darkColorLabel",
-    "gfb/darkColorText",
-    "gfb/darkColorPlaceholder",
-    "gfb/darkColorFieldBg",
-    "gfb/darkColorBorder",
-    "gfb/darkColorFocus",
-    "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText",
-    "gfb/colorFormShell",
-    "gfb/darkColorFormShell"
-  ],
-  "editorScript": "gfb-editor",
-  "example": {
+    "description": "Uhrzeit.",
+    "textdomain": "gutenberg-formbuilder",
     "attributes": {
-      "label": "Uhrzeit",
-      "name": "sb_time",
-      "required": false
-    }
-  },
-  "ancestor": [
-    "gfb/form"
-  ]
+        "label": {
+            "type": "string",
+            "default": "Uhrzeit"
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "required": {
+            "type": "boolean",
+            "default": false
+        },
+        "sensitive": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "supports": {
+        "html": false,
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "color": {
+            "text": true,
+            "background": true
+        },
+        "typography": {
+            "fontSize": true,
+            "lineHeight": true,
+            "fontWeight": true
+        },
+        "border": true
+    },
+    "usesContext": [
+        "gfb/formId",
+        "gfb/appearanceMode",
+        "gfb/colorLabel",
+        "gfb/colorText",
+        "gfb/colorPlaceholder",
+        "gfb/colorFieldBg",
+        "gfb/colorBorder",
+        "gfb/colorFocus",
+        "gfb/colorButtonBg",
+        "gfb/colorButtonText",
+        "gfb/darkColorLabel",
+        "gfb/darkColorText",
+        "gfb/darkColorPlaceholder",
+        "gfb/darkColorFieldBg",
+        "gfb/darkColorBorder",
+        "gfb/darkColorFocus",
+        "gfb/darkColorButtonBg",
+        "gfb/darkColorButtonText",
+        "gfb/colorFormShell",
+        "gfb/darkColorFormShell"
+    ],
+    "editorScript": "gfb-editor",
+    "example": {
+        "attributes": {
+            "label": "Uhrzeit",
+            "name": "sb_time",
+            "required": false
+        }
+    },
+    "ancestor": [
+        "gfb/form"
+    ]
 }

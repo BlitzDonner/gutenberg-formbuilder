@@ -30,7 +30,7 @@ class GFB_Admin_Submissions {
 		if ( ! isset( $_GET['action'], $_GET['submission'] ) || 'delete' !== $_GET['action'] ) {
 			return;
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DELETE_SUBMISSIONS ) ) {
 			return;
 		}
 
@@ -40,8 +40,18 @@ class GFB_Admin_Submissions {
 			return;
 		}
 
+		// Erst Files (Storage + DB-Reihen) löschen, dann Submission.
+		$files_deleted = GFB_File_Storage::delete_for_submission( $id );
+
 		global $wpdb;
 		$wpdb->delete( self::table_name(), array( 'id' => $id ), array( '%d' ) );
+
+		GFB_Audit::record(
+			'submission_deleted',
+			'submission',
+			(string) $id,
+			array( 'files' => $files_deleted )
+		);
 
 		wp_safe_redirect(
 			add_query_arg(
@@ -102,7 +112,7 @@ class GFB_Admin_Submissions {
 		add_menu_page(
 			__( 'Formular-Einträge', 'gutenberg-formbuilder' ),
 			__( 'Formular-Einträge', 'gutenberg-formbuilder' ),
-			'manage_options',
+			GFB_Capabilities::CAP_VIEW_SUBMISSIONS,
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render_page' ),
 			'dashicons-feedback',
@@ -132,7 +142,7 @@ class GFB_Admin_Submissions {
 	 * @return void
 	 */
 	public static function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_VIEW_SUBMISSIONS ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung.', 'gutenberg-formbuilder' ) );
 		}
 
@@ -218,13 +228,24 @@ class GFB_Admin_Submissions {
 		if ( empty( $field_rows ) ) {
 			echo '<p class="gfb-admin-empty">' . esc_html__( 'Keine Felddaten.', 'gutenberg-formbuilder' ) . '</p>';
 		} else {
+			$can_decrypt = GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS );
+			$can_dl      = GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES );
+			$any_decrypt = false;
 			foreach ( $field_rows as $key ) {
 				$value = $payload[ $key ];
 				$label = isset( $labels[ $key ] ) ? $labels[ $key ] : $key;
 				echo '<div class="gfb-admin-field">';
 				echo '<div class="gfb-admin-field-label">' . esc_html( $label ) . '</div>';
-				echo '<div class="gfb-admin-field-value">' . self::format_field_value( $value ) . '</div>';
+				echo '<div class="gfb-admin-field-value">' . self::format_field_value( $value, $key, $can_decrypt, $can_dl, $any_decrypt ) . '</div>';
 				echo '</div>';
+			}
+			if ( $any_decrypt ) {
+				GFB_Audit::record(
+					'submission_decrypted',
+					'submission',
+					(string) $row->id,
+					array( 'fields_decrypted' => true )
+				);
 			}
 		}
 
@@ -247,13 +268,57 @@ class GFB_Admin_Submissions {
 	}
 
 	/**
-	 * @param mixed $value Field value.
+	 * @param mixed   $value         Field value (kann Envelope-Array, File-Ref-Array oder String sein).
+	 * @param string  $field_name    Feldname (für AAD beim Entschlüsseln).
+	 * @param bool    $can_decrypt   Darf entschlüsseln.
+	 * @param bool    $can_download  Darf Datei-Anhänge herunterladen.
+	 * @param bool    &$any_decrypt  Wird true gesetzt, sobald mindestens ein Wert entschlüsselt wurde (für Audit).
 	 * @return string HTML (escaped).
 	 */
-	private static function format_field_value( $value ) {
+	private static function format_field_value( $value, $field_name = '', $can_decrypt = false, $can_download = false, &$any_decrypt = false ) {
+		// 1) Datei-Referenz?
+		if ( is_array( $value ) && isset( $value['_ref'] ) && 0 === strpos( (string) $value['_ref'], 'gfb-file:' ) ) {
+			$file_id = isset( $value['file_id'] ) ? (int) $value['file_id'] : (int) substr( $value['_ref'], strlen( 'gfb-file:' ) );
+			$file    = $file_id > 0 ? GFB_File_Storage::get( $file_id ) : null;
+			if ( ! $file ) {
+				return '<em>' . esc_html__( '[Datei #', 'gutenberg-formbuilder' ) . esc_html( (string) $file_id ) . esc_html__( ' nicht gefunden]', 'gutenberg-formbuilder' ) . '</em>';
+			}
+			$meta = sprintf( '%s — %s — %s', $file->original_name, size_format( (int) $file->size_bytes ), $file->mime );
+			$out  = '<div class="gfb-admin-file">';
+			$out .= '<div><strong>' . esc_html( $file->original_name ) . '</strong>'
+				. ' <span class="gfb-admin-file-meta">(' . esc_html( $meta ) . ')</span></div>';
+			$out .= '<div class="gfb-admin-file-fingerprint"><code>sha256: ' . esc_html( $file->sha256_plain ) . '</code></div>';
+			if ( $can_download ) {
+				$out .= '<div><a class="button" href="' . esc_url( GFB_File_Storage::download_url( $file_id ) ) . '">'
+					. esc_html__( 'Verschlüsselt herunterladen (Klartext-Stream)', 'gutenberg-formbuilder' )
+					. '</a></div>';
+			} else {
+				$out .= '<div><em>' . esc_html__( 'Keine Berechtigung zum Download.', 'gutenberg-formbuilder' ) . '</em></div>';
+			}
+			$out .= '</div>';
+			return $out;
+		}
+
+		// 2) Verschlüsseltes Feld-Envelope?
+		if ( GFB_Crypto::is_field_envelope( $value ) ) {
+			if ( ! $can_decrypt ) {
+				return '<em class="gfb-admin-encrypted">' . esc_html__( '[verschlüsselt — keine Berechtigung zum Entschlüsseln]', 'gutenberg-formbuilder' ) . '</em>'
+					. ' <small>(key #' . esc_html( (string) $value['key_id'] ) . ')</small>';
+			}
+			$plain = GFB_Crypto::decrypt_field( $value, 'field:' . (string) $field_name );
+			if ( false === $plain ) {
+				return '<em class="gfb-admin-encrypted">' . esc_html__( '[Entschlüsselung fehlgeschlagen — möglicherweise wurde der Schlüssel rotiert]', 'gutenberg-formbuilder' ) . '</em>';
+			}
+			$any_decrypt = true;
+			return '<span class="gfb-admin-decrypted">' . nl2br( esc_html( (string) $plain ) ) . '</span>'
+				. ' <small class="gfb-admin-decrypted-meta">' . esc_html__( '(entschlüsselt)', 'gutenberg-formbuilder' ) . '</small>';
+		}
+
+		// 3) Plain-Array (Mehrfachauswahl etc.)
 		if ( is_array( $value ) ) {
 			return '<pre class="gfb-admin-pre">' . esc_html( wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ) . '</pre>';
 		}
+
 		$s = (string) $value;
 		if ( preg_match( '#^https?://#i', $s ) ) {
 			return '<a href="' . esc_url( $s ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $s ) . '</a>';
@@ -423,8 +488,14 @@ class GFB_Admin_Submissions {
 			if ( $n >= 2 ) {
 				break;
 			}
-			$s = is_scalar( $v ) ? (string) $v : wp_json_encode( $v );
-			$s = trim( wp_strip_all_tags( $s ) );
+			if ( GFB_Crypto::is_field_envelope( $v ) ) {
+				$s = '[verschlüsselt]';
+			} elseif ( is_array( $v ) && isset( $v['_ref'] ) && 0 === strpos( (string) $v['_ref'], 'gfb-file:' ) ) {
+				$s = '[Datei #' . (int) ( $v['file_id'] ?? 0 ) . ']';
+			} else {
+				$s = is_scalar( $v ) ? (string) $v : wp_json_encode( $v );
+				$s = trim( wp_strip_all_tags( $s ) );
+			}
 			if ( '' !== $s ) {
 				$parts[] = mb_strlen( $s ) > 80 ? mb_substr( $s, 0, 80 ) . '…' : $s;
 				++$n;

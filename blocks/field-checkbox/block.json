@@ -1,77 +1,81 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "gfb/field-checkbox",
-  "version": "0.1.0",
-  "title": "Checkbox",
-  "category": "gfb-fields",
-  "icon": {
-    "src": "yes-alt"
-  },
-  "description": "Checkbox-Feld.",
-  "textdomain": "gutenberg-formbuilder",
-  "attributes": {
-    "label": {
-      "type": "string",
-      "default": "Ich stimme zu"
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "gfb/field-checkbox",
+    "version": "2.0.0",
+    "title": "Checkbox",
+    "category": "gfb-fields",
+    "icon": {
+        "src": "yes-alt"
     },
-    "name": {
-      "type": "string",
-      "default": ""
-    },
-    "required": {
-      "type": "boolean",
-      "default": false
-    }
-  },
-  "supports": {
-    "html": false,
-    "spacing": {
-      "margin": true,
-      "padding": true
-    },
-    "color": {
-      "text": true,
-      "background": true
-    },
-    "typography": {
-      "fontSize": true,
-      "lineHeight": true,
-      "fontWeight": true
-    },
-    "border": true
-  },
-  "usesContext": [
-    "gfb/formId",
-    "gfb/appearanceMode",
-    "gfb/colorLabel",
-    "gfb/colorText",
-    "gfb/colorPlaceholder",
-    "gfb/colorFieldBg",
-    "gfb/colorBorder",
-    "gfb/colorFocus",
-    "gfb/colorButtonBg",
-    "gfb/colorButtonText",
-    "gfb/darkColorLabel",
-    "gfb/darkColorText",
-    "gfb/darkColorPlaceholder",
-    "gfb/darkColorFieldBg",
-    "gfb/darkColorBorder",
-    "gfb/darkColorFocus",
-    "gfb/darkColorButtonBg",
-    "gfb/darkColorButtonText",
-    "gfb/colorFormShell",
-    "gfb/darkColorFormShell"
-  ],
-  "editorScript": "gfb-editor",
-  "example": {
+    "description": "Checkbox-Feld.",
+    "textdomain": "gutenberg-formbuilder",
     "attributes": {
-      "label": "Ich stimme den Bedingungen zu",
-      "name": "sb_check",
-      "required": false
-    }
-  },
-  "ancestor": [
-    "gfb/form"
-  ]
+        "label": {
+            "type": "string",
+            "default": "Ich stimme zu"
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "required": {
+            "type": "boolean",
+            "default": false
+        },
+        "sensitive": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "supports": {
+        "html": false,
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "color": {
+            "text": true,
+            "background": true
+        },
+        "typography": {
+            "fontSize": true,
+            "lineHeight": true,
+            "fontWeight": true
+        },
+        "border": true
+    },
+    "usesContext": [
+        "gfb/formId",
+        "gfb/appearanceMode",
+        "gfb/colorLabel",
+        "gfb/colorText",
+        "gfb/colorPlaceholder",
+        "gfb/colorFieldBg",
+        "gfb/colorBorder",
+        "gfb/colorFocus",
+        "gfb/colorButtonBg",
+        "gfb/colorButtonText",
+        "gfb/darkColorLabel",
+        "gfb/darkColorText",
+        "gfb/darkColorPlaceholder",
+        "gfb/darkColorFieldBg",
+        "gfb/darkColorBorder",
+        "gfb/darkColorFocus",
+        "gfb/darkColorButtonBg",
+        "gfb/darkColorButtonText",
+        "gfb/colorFormShell",
+        "gfb/darkColorFormShell"
+    ],
+    "editorScript": "gfb-editor",
+    "example": {
+        "attributes": {
+            "label": "Ich stimme den Bedingungen zu",
+            "name": "sb_check",
+            "required": false
+        }
+    },
+    "ancestor": [
+        "gfb/form"
+    ]
 }

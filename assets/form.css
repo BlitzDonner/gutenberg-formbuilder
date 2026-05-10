@@ -1,11 +1,11 @@
 /**
  * Gutenberg Formbuilder – Frontend & Editor
- * Layout und Typo; Farben standardmäßig über CSS-Systemfarben (Field, LinkText, Canvas …).
+ * Layout und Typo; Farben standardmässig über CSS-Systemfarben (Field, LinkText, Canvas …).
  */
 
 /*
  * Plugin-Variablen und Layout: Hell/Dunkel/Automatisch ohne feste Hex-Palette.
- * „Theme (Standard)“: keine Karten-/Token-Regeln außer bei .gfb-form-colors-custom (eigene Farben).
+ * «Theme (Standard)»: keine Karten-/Token-Regeln ausser bei .gfb-form-colors-custom (eigene Farben).
  * color-scheme auf dem Wrapper steuert die Auflösung von Field / FieldText / Canvas.
  * form.css wird immer mit dem Formular geladen; bei Hell/Dunkel/Auto schützt !important vor Theme-Overrides.
  */
@@ -149,12 +149,15 @@
 
 .gfb-form-fields {
 	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	gap: var(--gfb-stack-gap);
 	align-items: unset !important;
 }
 
 /*
  * Formularbereich: ein echter Verlauf in --gfb-*-form-shell darf nicht als „Farbe“ in
- * linear-gradient(180deg, var(--gfb-shell-top), …) stehen (ungültig → wirkt weiß).
+ * linear-gradient(180deg, var(--gfb-shell-top), …) stehen (ungültig → wirkt weiss).
  */
 .gfb-form-wrapper[data-gfb-appearance="light"].gfb-form-shell-gradient--light {
 	background: var(--gfb-light-form-shell);
@@ -220,7 +223,7 @@
 	color: var(--gfb-text);
 }
 
-/* Draft-Zeile */
+/* Entwurf löschen (Zeile) */
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-draft-tools {
 	margin: 0 0 var(--gfb-stack-gap);
 	padding: 0;

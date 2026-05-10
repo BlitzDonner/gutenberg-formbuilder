@@ -1,6 +1,9 @@
 <?php
 /**
  * Submit handling for Gutenberg Formbuilder.
+ *
+ * Sicherheitsrelevant: Alle externen Eingaben (POST/FILES/SERVER) werden
+ * über GFB_Security validiert. Anonymer Endpoint (admin_post_nopriv).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -8,8 +11,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class GFB_Submit_Handler {
+
+	const STATUS_OK              = 'success';
+	const STATUS_ERR_REQUEST     = 'err_request';
+	const STATUS_ERR_NONCE       = 'err_nonce';
+	const STATUS_ERR_TOKEN       = 'err_token';
+	const STATUS_ERR_SPAM        = 'err_spam';
+	const STATUS_ERR_RATE        = 'err_rate';
+	const STATUS_ERR_SCHEMA      = 'err_schema';
+	const STATUS_ERR_DUPLICATE   = 'err_duplicate';
+	const STATUS_ERR_VALIDATION  = 'err_validation';
+	const STATUS_ERR_FILE        = 'err_file';
+	const STATUS_ERR_PERSIST     = 'err_persist';
+	const STATUS_ERR_EXTERNAL    = 'err_external';
+	const STATUS_ERR_CRYPTO      = 'err_crypto';
+	const STATUS_ERR_VIRUS       = 'err_virus';
+
 	/**
-	 * Create storage table on activation.
+	 * Create storage tables, directories and capability mapping on activation.
 	 *
 	 * @return void
 	 */
@@ -33,6 +52,90 @@ class GFB_Submit_Handler {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+
+		// Begleit-Tabellen.
+		GFB_File_Storage::install_table();
+		GFB_Audit::install_table();
+
+		// Privates Storage-Verzeichnis anlegen (mit .htaccess-Schutz).
+		GFB_File_Storage::ensure_storage_directory();
+
+		// Default-Capability-Zuordnung (Administrator bekommt alle Plugin-Caps).
+		GFB_Capabilities::bootstrap_defaults();
+
+		// Einmalige ClamAV-Default-Migration: Pflicht-Modus auf "optional" zurücksetzen,
+		// wenn er nur durch den alten Default true war (kein Hoster-Setup vorhanden).
+		GFB_Clamav::maybe_migrate_defaults();
+
+		// Re-Wrap-Cron registrieren (rotation, idle).
+		if ( ! wp_next_scheduled( 'gfb_rewrap_cron' ) ) {
+			wp_schedule_event( time() + 600, 'hourly', 'gfb_rewrap_cron' );
+		}
+
+		GFB_Audit::record( 'plugin_activated', 'system', '', array() );
+
+		// Direkt nach Aktivierung den Storage-Erreichbarkeits-Test laufen lassen
+		// und das Ergebnis als Transient cachen (Admin-Notice erscheint dann
+		// beim ersten Wp-Admin-Aufruf).
+		if ( class_exists( 'GFB_File_Storage' ) ) {
+			$reach = GFB_File_Storage::public_reachability_test();
+			set_transient( 'gfb_storage_reach', $reach, DAY_IN_SECONDS );
+		}
+	}
+
+	/**
+	 * Cron-Lauf: re-wrap einer Charge alter DEKs mit der aktiven KEK.
+	 *
+	 * @return void
+	 */
+	public static function cron_rewrap() {
+		if ( ! GFB_Crypto::is_available() ) {
+			return;
+		}
+		GFB_File_Storage::rewrap_batch( 100 );
+	}
+
+	/**
+	 * Statusslug => i18n-Text. Verhindert, dass Angreifer beliebige Notices
+	 * via URL platzieren können (H5).
+	 *
+	 * @return array<string,string>
+	 */
+	private static function status_messages() {
+		return array(
+			self::STATUS_OK             => __( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_REQUEST    => __( 'Ungültige Formularanfrage.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_NONCE      => __( 'Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut absenden.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_TOKEN      => __( 'Sitzung abgelaufen. Bitte Seite neu laden und erneut absenden.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_SPAM       => __( 'Die Anfrage wurde als Spam erkannt.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_RATE       => __( 'Zu viele Anfragen. Bitte warte kurz und versuche es erneut.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_SCHEMA     => __( 'Formularschema nicht gefunden.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_DUPLICATE  => __( 'Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_VALIDATION => __( 'Bitte überprüfe deine Eingaben.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_FILE       => __( 'Eine hochgeladene Datei wurde abgelehnt.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_PERSIST    => __( 'Speichern fehlgeschlagen. Bitte versuche es erneut.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_EXTERNAL   => __( 'Die Anfrage konnte nicht verarbeitet werden.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_CRYPTO     => __( 'Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_VIRUS      => __( 'Eine hochgeladene Datei wurde vom Virenscanner als schädlich erkannt.', 'gutenberg-formbuilder' ),
+		);
+	}
+
+	/**
+	 * @return array<int,string>
+	 */
+	private static function valid_status_slugs() {
+		return array_keys( self::status_messages() );
+	}
+
+	/**
+	 * Public Helper: Gibt den i18n-Text für einen Status-Slug zurück oder leer.
+	 *
+	 * @param string $slug Status-Slug.
+	 * @return string
+	 */
+	public static function status_message_for( $slug ) {
+		$map = self::status_messages();
+		return isset( $map[ $slug ] ) ? $map[ $slug ] : '';
 	}
 
 	/**
@@ -41,18 +144,48 @@ class GFB_Submit_Handler {
 	 * @return void
 	 */
 	public static function handle() {
-		$post_id = isset( $_POST['gfb_post_id'] ) ? absint( wp_unslash( $_POST['gfb_post_id'] ) ) : 0;
-		$form_id = isset( $_POST['gfb_form_id'] ) ? sanitize_key( wp_unslash( $_POST['gfb_form_id'] ) ) : '';
-		$ip_address = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$post_id    = isset( $_POST['gfb_post_id'] ) ? absint( wp_unslash( $_POST['gfb_post_id'] ) ) : 0;
+		$form_id    = isset( $_POST['gfb_form_id'] ) ? sanitize_key( wp_unslash( $_POST['gfb_form_id'] ) ) : '';
+		$instance   = isset( $_POST['gfb_instance_id'] ) ? sanitize_key( wp_unslash( $_POST['gfb_instance_id'] ) ) : '0';
+		$ip_address = GFB_Security::get_client_ip();
 
 		if ( ! $post_id || ! $form_id ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Ungültige Formularanfrage.', 'gutenberg-formbuilder' ) );
+			GFB_Security::log_event( 'submit_invalid_request' );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_REQUEST );
 		}
 
-		check_admin_referer( 'gfb_submit_' . $form_id . '_' . $post_id, 'gfb_nonce' );
+		// wp_verify_nonce statt check_admin_referer: letzteres killt den Request
+		// mit dem WP-Default-403-HTML, sodass unser redirect_with_state nie
+		// läuft. Wir wollen aber konsistent mit gfb_status/gfb_code zur
+		// Form-Page zurück-redirecten (UX + auditable Reject-Pfade).
+		$nonce_value = isset( $_POST['gfb_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gfb_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce_value, 'gfb_submit_' . $form_id . '_' . $post_id ) ) {
+			GFB_Security::log_event( 'submit_nonce_fail', array( 'post_id' => $post_id, 'form_id' => $form_id ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_NONCE );
+		}
 
-		$form_attrs         = GFB_Plugin::get_form_block_attributes_from_post( $post_id, $form_id );
-		$thank_you_page_id  = isset( $form_attrs['thankYouPageId'] ) ? absint( $form_attrs['thankYouPageId'] ) : 0;
+		// HMAC-Token (H3) inkl. honeypot-Feldname-Bindung.
+		$hp_field   = GFB_Security::honeypot_field_name( $post_id, $form_id, $instance );
+		$token      = isset( $_POST['gfb_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gfb_token'] ) ) : '';
+		if ( ! GFB_Security::verify_token( $token, $post_id, $form_id, $instance, $hp_field ) ) {
+			GFB_Security::log_event( 'submit_token_fail', array( 'post_id' => $post_id, 'form_id' => $form_id ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_TOKEN );
+		}
+
+		// Honeypot (H1): per Form-Instanz dynamisch.
+		if ( ! empty( $_POST[ $hp_field ] ) ) {
+			GFB_Security::log_event( 'submit_honeypot_hit', array( 'post_id' => $post_id, 'form_id' => $form_id ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_SPAM );
+		}
+
+		if ( self::is_rate_limited( $form_id, $ip_address ) ) {
+			GFB_Security::log_event( 'submit_rate_limited', array( 'form_id' => $form_id ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_RATE );
+		}
+
+		$form_attrs        = GFB_Plugin::get_form_block_attributes_from_post( $post_id, $form_id );
+		$thank_you_page_id = isset( $form_attrs['thankYouPageId'] ) ? absint( $form_attrs['thankYouPageId'] ) : 0;
+
 		$draft_key_redirect = '';
 		if ( ! empty( $_POST['gfb_draft_key'] ) ) {
 			$raw_dk = sanitize_text_field( wp_unslash( $_POST['gfb_draft_key'] ) );
@@ -61,23 +194,10 @@ class GFB_Submit_Handler {
 			}
 		}
 
-		if ( ! empty( $_POST['gfb_hp_field'] ) ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Die Anfrage wurde als Spam erkannt.', 'gutenberg-formbuilder' ) );
-		}
-
-		$rendered_at = isset( $_POST['gfb_rendered_at'] ) ? absint( wp_unslash( $_POST['gfb_rendered_at'] ) ) : 0;
-		$now         = time();
-		if ( ! $rendered_at || ( $now - $rendered_at ) < 2 || ( $now - $rendered_at ) > DAY_IN_SECONDS * 2 ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Ungültige Formularzeit. Bitte versuche es erneut.', 'gutenberg-formbuilder' ) );
-		}
-
-		if ( self::is_rate_limited( $form_id, $ip_address ) ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Zu viele Anfragen. Bitte warte kurz und versuche es erneut.', 'gutenberg-formbuilder' ) );
-		}
-
 		$schema = GFB_Plugin::get_form_schema_from_post( $post_id, $form_id );
 		if ( empty( $schema ) ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Formularschema nicht gefunden.', 'gutenberg-formbuilder' ) );
+			GFB_Security::log_event( 'submit_schema_missing', array( 'post_id' => $post_id, 'form_id' => $form_id ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_SCHEMA );
 		}
 
 		$seen_names = array();
@@ -87,36 +207,79 @@ class GFB_Submit_Handler {
 				continue;
 			}
 			if ( isset( $seen_names[ $n ] ) ) {
-				self::redirect_with_state(
-					$post_id,
-					$form_id,
-					'error',
-					__( 'Doppelte technische Feldnamen im Formular. Bitte im Editor jedes Feld eindeutig benennen.', 'gutenberg-formbuilder' )
-				);
+				GFB_Security::log_event( 'submit_duplicate_field', array( 'name' => $n ) );
+				self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_DUPLICATE );
 			}
 			$seen_names[ $n ] = true;
 		}
 
-		$payload = array();
-		$errors  = array();
+		// Crypto-Status: Pflicht, sobald sensitive Felder ODER File-Felder im Schema vorkommen.
+		$schema_has_files = false;
+		$schema_has_sensitive = false;
+		foreach ( $schema as $f ) {
+			if ( ( $f['type'] ?? '' ) === 'file' ) {
+				$schema_has_files = true;
+			}
+			if ( ! empty( $f['sensitive'] ) ) {
+				$schema_has_sensitive = true;
+			}
+		}
+		if ( ( $schema_has_files || $schema_has_sensitive ) && ! GFB_Crypto::is_available() ) {
+			GFB_Security::log_event( 'submit_no_crypto', array( 'reason' => GFB_Crypto::status()['reason'] ?? '' ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CRYPTO );
+		}
+
+		// ClamAV-Vorbedingung prüfen (nur falls File-Felder vorhanden).
+		if ( $schema_has_files ) {
+			$pre = GFB_Clamav::precondition_for_uploads();
+			if ( is_wp_error( $pre ) ) {
+				GFB_Security::log_event( 'submit_clamav_required' );
+				self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_FILE, $pre->get_error_message() );
+			}
+		}
+
+		$payload         = array();
+		$pending_file_ids = array();
+		$errors          = array();
 
 		foreach ( $schema as $field ) {
-			$res = self::process_field_value( $field );
+			$res = self::process_field_value( $field, $pending_file_ids );
 			if ( is_wp_error( $res ) ) {
 				$errors[] = $res->get_error_message();
 				continue;
+			}
+			// Sensitive Werte (string oder array) verschlüsseln.
+			if ( ! empty( $field['sensitive'] ) && is_string( $res ) && '' !== $res && 'file' !== $field['type'] ) {
+				try {
+					$res = GFB_Crypto::encrypt_field( $res, 'field:' . $field['name'] );
+				} catch ( \Throwable $e ) {
+					GFB_Security::log_event( 'submit_field_encrypt_fail', array( 'field' => $field['name'] ) );
+					self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CRYPTO );
+				}
 			}
 			$payload[ $field['name'] ] = $res;
 		}
 
 		if ( ! empty( $errors ) ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', implode( ' ', $errors ) );
+			// Bereits verschlüsselte Datei-Reihen wieder löschen, damit keine Waisen entstehen.
+			foreach ( $pending_file_ids as $fid ) {
+				GFB_File_Storage::delete( (int) $fid );
+			}
+			GFB_Security::log_event( 'submit_validation_errors', array( 'count' => count( $errors ) ) );
+			self::redirect_with_state(
+				$post_id,
+				$form_id,
+				self::STATUS_ERR_VALIDATION,
+				self::join_validation_errors( $errors )
+			);
 		}
 
 		/**
 		 * Extra validation hook for submit button flow.
 		 *
-		 * Return `WP_Error` or non-empty string to stop success handling and show an error message.
+		 * Werte im $payload sind bereits getypt und sanitisiert; trotzdem MUESSEN
+		 * eingehakte Callbacks bei Ausgaben in HTML/SQL/Mail nochmal passend
+		 * escapen.
 		 *
 		 * @param null|string|WP_Error $error      Validation result from previous callbacks.
 		 * @param array<string,mixed>  $payload    Validated payload (without _gfb_labels at this point).
@@ -128,19 +291,25 @@ class GFB_Submit_Handler {
 		$external_validation = apply_filters( 'gfb_submit_button_validation', null, $payload, $schema, $form_attrs, $post_id, $form_id );
 		if ( is_wp_error( $external_validation ) ) {
 			$message = $external_validation->get_error_message();
-			if ( '' === $message ) {
-				$message = __( 'Die Anfrage konnte nicht verarbeitet werden.', 'gutenberg-formbuilder' );
-			}
-			self::redirect_with_state( $post_id, $form_id, 'error', $message );
+			GFB_Security::log_event( 'submit_external_reject' );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_EXTERNAL, $message );
 		}
 		if ( is_string( $external_validation ) && '' !== trim( $external_validation ) ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', sanitize_text_field( $external_validation ) );
+			GFB_Security::log_event( 'submit_external_reject' );
+			self::redirect_with_state(
+				$post_id,
+				$form_id,
+				self::STATUS_ERR_EXTERNAL,
+				sanitize_text_field( $external_validation )
+			);
 		}
 
 		/**
 		 * Fires after server-side validation has completed successfully.
+		 * Werte sind bereits sanitisiert; bei eigener Persistenz/Mail nochmal
+		 * passend escapen.
 		 *
-		 * @param array<string,mixed> $payload    Validated payload (without _gfb_labels at this point).
+		 * @param array<string,mixed> $payload    Validated payload.
 		 * @param array<int,array>    $schema     Form schema used for validation.
 		 * @param array<string,mixed> $form_attrs gfb/form block attributes.
 		 * @param int                 $post_id    Post ID.
@@ -148,7 +317,7 @@ class GFB_Submit_Handler {
 		 */
 		do_action( 'gfb_after_server_validation', $payload, $schema, $form_attrs, $post_id, $form_id );
 
-		// Labels zum Zeitpunkt des Absendens (für Archiv/Backend, auch wenn sich das Formular später ändert).
+		// Labels zum Zeitpunkt des Absendens (Snapshot für Backend, auch wenn sich das Formular später ändert).
 		$label_snapshot = array();
 		foreach ( $schema as $field ) {
 			if ( ! empty( $field['name'] ) ) {
@@ -158,25 +327,67 @@ class GFB_Submit_Handler {
 		$payload['_gfb_labels'] = $label_snapshot;
 
 		global $wpdb;
-		$table_name = $wpdb->prefix . 'gfb_submissions';
+		$table_name   = $wpdb->prefix . 'gfb_submissions';
+
+		/**
+		 * IP optional pseudonymisieren oder ganz weglassen (DSGVO).
+		 *
+		 * @param string $ip Roh-IP (kann leer sein).
+		 */
+		$ip_to_store = apply_filters( 'gfb_store_ip_pre', $ip_address );
+		$ip_to_store = GFB_Security::maybe_pseudonymize_ip( (string) $ip_to_store );
+
+		/**
+		 * User-Agent optional weglassen.
+		 *
+		 * @param string $ua User-Agent.
+		 */
+		$ua_raw      = isset( $_SERVER['HTTP_USER_AGENT'] ) ? wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) : '';
+		$ua_to_store = apply_filters( 'gfb_store_user_agent', $ua_raw );
+		$ua_to_store = is_string( $ua_to_store ) ? mb_substr( sanitize_text_field( $ua_to_store ), 0, 1000 ) : '';
+
 		$inserted = $wpdb->insert(
 			$table_name,
 			array(
 				'post_id'    => $post_id,
 				'form_id'    => $form_id,
 				'payload'    => wp_json_encode( $payload ),
-				'ip_address' => $ip_address,
-				'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+				'ip_address' => (string) $ip_to_store,
+				'user_agent' => $ua_to_store,
 			),
 			array( '%d', '%s', '%s', '%s', '%s' )
 		);
 
 		if ( false === $inserted ) {
-			self::redirect_with_state( $post_id, $form_id, 'error', __( 'Speichern fehlgeschlagen. Bitte versuche es erneut.', 'gutenberg-formbuilder' ) );
+			GFB_Security::log_event( 'submit_persist_fail' );
+			// Verschlüsselte Files können nicht "verwaiste" Speicher sein.
+			foreach ( $pending_file_ids as $fid ) {
+				GFB_File_Storage::delete( (int) $fid );
+			}
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_PERSIST );
 		}
+
+		$submission_id = (int) $wpdb->insert_id;
+		// Verschlüsselte Files mit dieser Submission verbinden.
+		if ( ! empty( $pending_file_ids ) ) {
+			GFB_File_Storage::attach_to_submission( $pending_file_ids, $submission_id );
+		}
+		// Audit (zentralisiert, getrennt vom optionalen 3rd-party-Hook).
+		GFB_Audit::record(
+			'submission_insert',
+			'submission',
+			(string) $submission_id,
+			array(
+				'form_id' => $form_id,
+				'post_id' => $post_id,
+				'files'   => count( $pending_file_ids ),
+				'fields'  => count( $payload ) - 1, // ohne _gfb_labels
+			)
+		);
 
 		/**
 		 * Fires after submission values were stored in database.
+		 * Werte sind bereits sanitisiert; bei eigener Verarbeitung passend escapen.
 		 *
 		 * @param int                 $submission_id Inserted row ID in `{prefix}gfb_submissions`.
 		 * @param array<string,mixed> $payload       Stored payload (including _gfb_labels).
@@ -184,33 +395,68 @@ class GFB_Submit_Handler {
 		 * @param int                 $post_id       Post ID.
 		 * @param string              $form_id       Form ID.
 		 */
-		do_action( 'gfb_after_submission_insert', (int) $wpdb->insert_id, $payload, $form_attrs, $post_id, $form_id );
+		do_action( 'gfb_after_submission_insert', $submission_id, $payload, $form_attrs, $post_id, $form_id );
 
 		self::send_notification_mail( $post_id, $form_id, $payload );
 		self::redirect_with_state(
 			$post_id,
 			$form_id,
-			'success',
-			__( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' ),
+			self::STATUS_OK,
+			'',
 			$draft_key_redirect,
 			$thank_you_page_id
 		);
 	}
 
 	/**
-	 * Redirect back to post (oder Folgeseite) mit Query-Parametern.
+	 * Mehrere Validierungsfehler in einen kurzen, bereinigten Text giessen.
 	 *
-	 * @param int    $post_id Post id.
-	 * @param string $form_id Form id.
-	 * @param string $status Status key.
-	 * @param string $message Message for UI.
-	 * @param string $draft_key Optional. IndexedDB-Schlüssel für Draft-Löschung auf Folgeseiten.
-	 * @param int    $thank_you_page_id Optional. Bei success: Seiten-ID für Weiterleitung (0 = Formularseite).
+	 * @param array<int,string> $errors Fehlermeldungen.
+	 * @return string
+	 */
+	private static function join_validation_errors( array $errors ) {
+		$cleaned = array();
+		foreach ( $errors as $err ) {
+			$err = wp_strip_all_tags( (string) $err );
+			$err = preg_replace( '/\s+/', ' ', $err );
+			$err = trim( $err );
+			if ( '' !== $err ) {
+				$cleaned[] = mb_substr( $err, 0, 200 );
+			}
+			if ( count( $cleaned ) >= 8 ) {
+				break;
+			}
+		}
+		return implode( ' ', $cleaned );
+	}
+
+	/**
+	 * Redirect mit ausschliesslich serverseitig festgelegten Status-Slugs.
+	 * Optional zusätzliche „err_detail" mit kurzen Validierungshinweisen
+	 * (begrenzt + sanitisiert).
+	 *
+	 * @param int    $post_id           Post id.
+	 * @param string $form_id           Form id.
+	 * @param string $status_slug       Eine der STATUS_*-Konstanten.
+	 * @param string $detail            Optionaler Detailtext (nur für Validierungsfehler).
+	 * @param string $draft_key         Optional. IndexedDB-Schlüssel für Entwurf-Löschung nach Redirect.
+	 * @param int    $thank_you_page_id Optional. Bei success: Seiten-ID für Weiterleitung.
 	 * @return void
 	 */
-	private static function redirect_with_state( $post_id, $form_id, $status, $message, $draft_key = '', $thank_you_page_id = 0 ) {
+	private static function redirect_with_state(
+		$post_id,
+		$form_id,
+		$status_slug,
+		$detail = '',
+		$draft_key = '',
+		$thank_you_page_id = 0
+	) {
+		if ( ! in_array( $status_slug, self::valid_status_slugs(), true ) ) {
+			$status_slug = self::STATUS_ERR_REQUEST;
+		}
+
 		$target = $post_id ? get_permalink( $post_id ) : home_url( '/' );
-		if ( 'success' === $status && $thank_you_page_id > 0 ) {
+		if ( self::STATUS_OK === $status_slug && $thank_you_page_id > 0 ) {
 			$page = get_post( $thank_you_page_id );
 			if ( $page instanceof WP_Post && is_post_publicly_viewable( $page ) ) {
 				$permalink = get_permalink( $page );
@@ -220,11 +466,19 @@ class GFB_Submit_Handler {
 			}
 		}
 
+		// gfb_status: synchron zu altem Verhalten ("success"/"error") für
+		// vorhandene CSS-Klassen; gfb_code hält den vollen Slug für feinere
+		// Logik / Templates.
+		$visible_status = ( self::STATUS_OK === $status_slug ) ? 'success' : 'error';
+
 		$args = array(
-			'gfb_status' => $status,
+			'gfb_status' => $visible_status,
+			'gfb_code'   => $status_slug,
 			'gfb_form'   => $form_id,
-			'gfb_msg'    => $message,
 		);
+		if ( '' !== $detail && self::STATUS_ERR_VALIDATION === $status_slug ) {
+			$args['gfb_detail'] = mb_substr( sanitize_text_field( $detail ), 0, 500 );
+		}
 		if ( '' !== $draft_key ) {
 			$args['gfb_draft_key'] = $draft_key;
 		}
@@ -236,19 +490,25 @@ class GFB_Submit_Handler {
 	/**
 	 * Send e-mail notification to admin.
 	 *
+	 * Härte: Subject CRLF-strip, body wp_strip_all_tags + Limit pro Wert,
+	 * explizit text/plain-Header.
+	 *
 	 * @param int    $post_id Post id.
 	 * @param string $form_id Form id.
 	 * @param array  $payload Form data.
 	 * @return void
 	 */
 	private static function send_notification_mail( $post_id, $form_id, $payload ) {
-		$to      = get_option( 'admin_email' );
-		$subject = sprintf(
+		$to        = get_option( 'admin_email' );
+		$blogname  = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$subj_base = sprintf(
 			/* translators: 1: form id, 2: post id */
 			__( 'Neues Formular (%1$s) auf Beitrag %2$d', 'gutenberg-formbuilder' ),
 			$form_id,
 			$post_id
 		);
+		$subject = preg_replace( "/[\r\n]+/", ' ', '[' . $blogname . '] ' . $subj_base );
+		$subject = mb_substr( (string) $subject, 0, 250 );
 
 		$labels = isset( $payload['_gfb_labels'] ) && is_array( $payload['_gfb_labels'] ) ? $payload['_gfb_labels'] : array();
 
@@ -258,29 +518,56 @@ class GFB_Submit_Handler {
 				continue;
 			}
 			$display_key = isset( $labels[ $key ] ) ? $labels[ $key ] : $key;
-			if ( is_array( $value ) ) {
+			$display_key = wp_strip_all_tags( (string) $display_key );
+			$display_key = preg_replace( "/[\r\n]+/", ' ', (string) $display_key );
+			$display_key = mb_substr( $display_key, 0, 120 );
+
+			// Verschlüsselte Werte werden in der Mail NICHT entschlüsselt — die
+			// Mail könnte unverschlüsselt zugestellt werden. Stattdessen Hinweis.
+			if ( GFB_Crypto::is_field_envelope( $value ) ) {
+				$value = '[verschlüsselt — bitte im Admin entschlüsseln]';
+			} elseif ( is_array( $value ) && isset( $value['_ref'] ) && 0 === strpos( (string) $value['_ref'], 'gfb-file:' ) ) {
+				$value = '[verschlüsselte Datei #' . (int) $value['file_id'] . ' — Download im Admin]';
+			} elseif ( is_array( $value ) ) {
 				$value = wp_json_encode( $value );
 			}
+			$value = wp_strip_all_tags( (string) $value );
+			$value = preg_replace( "/[\r\n]+/", "\n", (string) $value );
+			$value = mb_substr( $value, 0, 1000 );
+
 			$lines[] = $display_key . ': ' . $value;
 		}
 
-		wp_mail( $to, $subject, implode( "\n", $lines ) );
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+
+		wp_mail( $to, $subject, implode( "\n", $lines ), $headers );
 	}
 
 	/**
 	 * Validate and sanitize one field.
 	 *
-	 * @param array<string,mixed> $field Schema row.
-	 * @return string|WP_Error
+	 * @param array<string,mixed> $field            Schema row.
+	 * @param array<int,int>      $pending_file_ids Wird per Referenz gefüllt mit erfolgreichen Datei-IDs.
+	 * @return string|array<string,mixed>|WP_Error  Wert (string), Datei-Referenz-Array oder Fehler.
 	 */
-	private static function process_field_value( array $field ) {
+	private static function process_field_value( array $field, array &$pending_file_ids = array() ) {
 		$name     = $field['name'];
 		$type     = $field['type'];
 		$required = ! empty( $field['required'] );
 		$label    = $field['label'];
 
 		if ( 'file' === $type ) {
-			return self::process_file_field( $field );
+			$res = self::process_file_field( $field );
+			if ( ! is_wp_error( $res ) && is_array( $res ) && isset( $res['file_id'] ) ) {
+				$pending_file_ids[] = (int) $res['file_id'];
+			}
+			return $res;
+		}
+
+		// Hidden mit lockedValue (M5): Wert komplett serverseitig setzen,
+		// Client-Eingaben ignorieren.
+		if ( 'hidden' === $type && ! empty( $field['locked'] ) ) {
+			return isset( $field['hidden_value'] ) ? (string) $field['hidden_value'] : '';
 		}
 
 		$raw = isset( $_POST[ $name ] ) ? wp_unslash( $_POST[ $name ] ) : '';
@@ -345,6 +632,17 @@ class GFB_Submit_Handler {
 					)
 				);
 			}
+			$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+			if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+				return new WP_Error(
+					'gfb_url',
+					sprintf(
+						/* translators: %s: field label */
+						__( 'Das Feld "%s" enthält keine gültige URL.', 'gutenberg-formbuilder' ),
+						$label
+					)
+				);
+			}
 			$value = $url;
 		}
 
@@ -364,7 +662,7 @@ class GFB_Submit_Handler {
 				return new WP_Error( 'gfb_min', __( 'Zahl zu klein.', 'gutenberg-formbuilder' ) );
 			}
 			if ( isset( $field['max'] ) && '' !== $field['max'] && $num > floatval( $field['max'] ) ) {
-				return new WP_Error( 'gfb_max', __( 'Zahl zu groß.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_max', __( 'Zahl zu gross.', 'gutenberg-formbuilder' ) );
 			}
 			$value = (string) $num;
 		}
@@ -398,6 +696,20 @@ class GFB_Submit_Handler {
 			}
 		}
 
+		if ( 'tel' === $type && '' !== $value ) {
+			// Nur Ziffern, +, -, Leerzeichen, Klammern, Punkte, Schrägstriche; max 40 Zeichen.
+			if ( ! preg_match( '/^[\d\+\-\s\(\)\.\/]{1,40}$/', $value ) ) {
+				return new WP_Error(
+					'gfb_tel',
+					sprintf(
+						/* translators: %s: field label */
+						__( 'Das Feld "%s" enthält eine ungültige Telefonnummer.', 'gutenberg-formbuilder' ),
+						$label
+					)
+				);
+			}
+		}
+
 		if ( in_array( $type, array( 'select', 'radio' ), true ) && ! empty( $field['options'] ) && '' !== $value ) {
 			$opts = $field['options'];
 			if ( ! in_array( $value, $opts, true ) ) {
@@ -405,14 +717,25 @@ class GFB_Submit_Handler {
 			}
 		}
 
+		// Generelles Längenlimit gegen Pufferaufblähung pro Feld.
+		if ( is_string( $value ) && strlen( $value ) > 100000 ) {
+			return new WP_Error( 'gfb_too_long', __( 'Eingabe zu lang.', 'gutenberg-formbuilder' ) );
+		}
+
 		return $value;
 	}
 
 	/**
-	 * Handle file upload field.
+	 * Datei-Upload-Pipeline (vorbildlich):
+	 *   1) PHP-Upload-Errors / Grössenlimit
+	 *   2) Static-Validation: Endung, Doppel-Endung, finfo-MIME, accept-Match (GFB_Security)
+	 *   3) ClamAV-Scan auf $_FILES['tmp_name']
+	 *   4) Verschlüsseln + in privaten Storage schreiben (GFB_File_Storage)
+	 *   5) Externer Post-Check-Filter (Custom-AV, Mehr-Augen)
+	 *   6) Rückgabe einer "gfb-file:<id>"-Referenz, NICHT einer URL
 	 *
 	 * @param array<string,mixed> $field Schema.
-	 * @return string|WP_Error URL or error.
+	 * @return array{file_id:int,storage_id:string,_ref:string}|string|WP_Error
 	 */
 	private static function process_file_field( array $field ) {
 		$name     = $field['name'];
@@ -426,7 +749,7 @@ class GFB_Submit_Handler {
 			$max_bytes = $wp_max;
 		}
 
-		if ( empty( $_FILES[ $name ] ) || ( isset( $_FILES[ $name ]['error'] ) && 4 === (int) $_FILES[ $name ]['error'] ) ) {
+		if ( empty( $_FILES[ $name ] ) || ( isset( $_FILES[ $name ]['error'] ) && UPLOAD_ERR_NO_FILE === (int) $_FILES[ $name ]['error'] ) ) {
 			if ( $required ) {
 				return new WP_Error(
 					'gfb_file',
@@ -441,90 +764,81 @@ class GFB_Submit_Handler {
 		}
 
 		$file = $_FILES[ $name ];
+		if ( is_array( $file['name'] ?? null ) ) {
+			GFB_Security::log_event( 'file_reject_multi' );
+			return new WP_Error( 'gfb_file', __( 'Mehrfach-Uploads sind nicht erlaubt.', 'gutenberg-formbuilder' ) );
+		}
 		if ( ! empty( $file['error'] ) && UPLOAD_ERR_OK !== (int) $file['error'] ) {
+			GFB_Security::log_event( 'file_reject_php_error', array( 'error' => (int) $file['error'] ) );
 			return new WP_Error( 'gfb_upload', __( 'Datei-Upload fehlgeschlagen.', 'gutenberg-formbuilder' ) );
 		}
-
 		if ( ! empty( $file['size'] ) && (int) $file['size'] > $max_bytes ) {
-			return new WP_Error( 'gfb_size', __( 'Datei ist zu groß.', 'gutenberg-formbuilder' ) );
+			GFB_Security::log_event( 'file_reject_too_large', array( 'size' => (int) $file['size'], 'limit' => (int) $max_bytes ) );
+			return new WP_Error( 'gfb_size', __( 'Datei ist zu gross.', 'gutenberg-formbuilder' ) );
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/file.php';
+		$accept     = isset( $field['accept'] ) ? (string) $field['accept'] : '';
+		$validation = GFB_Security::validate_uploaded_file( $file, $accept );
+		if ( is_wp_error( $validation ) ) {
+			return $validation;
+		}
+		$ext       = $validation['ext'];
+		$real_mime = $validation['mime'];
 
-		$upload = wp_handle_upload(
-			$file,
-			array(
-				'test_form' => false,
-			)
+		// ClamAV-Scan auf Tmp-Datei.
+		$clamav_set = GFB_Clamav::get_settings();
+		if ( 'disabled' !== $clamav_set['mode'] ) {
+			$scan = GFB_Clamav::scan_file( (string) $file['tmp_name'] );
+			if ( 'infected' === $scan['status'] ) {
+				GFB_Security::log_event( 'file_reject_av_infected', array( 'sig' => sanitize_text_field( $scan['details'] ) ) );
+				GFB_Audit::record(
+					'file_av_infected',
+					'system',
+					'',
+					array( 'sig' => $scan['details'], 'mime' => $real_mime )
+				);
+				return new WP_Error( 'gfb_virus', __( 'Diese Datei wurde vom Virenscanner als schädlich erkannt.', 'gutenberg-formbuilder' ) );
+			}
+			if ( 'unavailable' === $scan['status'] && ! empty( $clamav_set['require_for_uploads'] ) ) {
+				GFB_Security::log_event( 'file_reject_av_unavailable', array( 'details' => sanitize_text_field( $scan['details'] ) ) );
+				return new WP_Error( 'gfb_virus', __( 'Virenscan derzeit nicht verfügbar; Upload wird verweigert.', 'gutenberg-formbuilder' ) );
+			}
+		}
+
+		$store = GFB_File_Storage::encrypt_and_store( $file, $name, $real_mime, $ext );
+		if ( is_wp_error( $store ) ) {
+			GFB_Security::log_event( 'file_store_fail', array( 'msg' => $store->get_error_message() ) );
+			return $store;
+		}
+
+		/**
+		 * Optionaler externer Post-Check (z. B. zusätzlicher AV, externer DLP-Hook).
+		 * Wenn der Filter WP_Error zurückgibt, wird die Datei aus dem Storage gelöscht.
+		 *
+		 * @param null|WP_Error      $error      Default null = ok.
+		 * @param int                $file_id    Storage-File-ID.
+		 * @param string             $real_mime  finfo-MIME.
+		 * @param array<string,mixed>$field      Schema-Feld.
+		 */
+		$post_check = apply_filters( 'gfb_uploaded_file_post_check', null, (int) $store['file_id'], $real_mime, $field );
+		if ( is_wp_error( $post_check ) ) {
+			GFB_File_Storage::delete( (int) $store['file_id'] );
+			GFB_Security::log_event( 'file_reject_post_check', array( 'msg' => sanitize_text_field( $post_check->get_error_message() ) ) );
+			return $post_check;
+		}
+
+		return array(
+			'file_id'    => (int) $store['file_id'],
+			'storage_id' => (string) $store['storage_id'],
+			'_ref'       => 'gfb-file:' . (int) $store['file_id'],
 		);
-
-		if ( isset( $upload['error'] ) ) {
-			return new WP_Error( 'gfb_upload', sanitize_text_field( $upload['error'] ) );
-		}
-
-		if ( empty( $upload['url'] ) ) {
-			return new WP_Error( 'gfb_upload', __( 'Upload konnte nicht gespeichert werden.', 'gutenberg-formbuilder' ) );
-		}
-
-		if ( ! empty( $field['accept'] ) ) {
-			$filename = isset( $upload['file'] ) ? $upload['file'] : '';
-			$ok       = self::file_matches_accept( $filename, (string) $field['accept'] );
-			if ( ! $ok ) {
-				if ( ! empty( $upload['file'] ) && file_exists( $upload['file'] ) ) {
-					wp_delete_file( $upload['file'] );
-				}
-				return new WP_Error( 'gfb_accept', __( 'Dateityp nicht erlaubt.', 'gutenberg-formbuilder' ) );
-			}
-		}
-
-		return esc_url_raw( $upload['url'] );
 	}
 
 	/**
-	 * Rough check against accept string (e.g. ".pdf,image/*").
+	 * Lightweight IP-based rate limit. Nutzt zentralen IP-Helper (H2).
 	 *
-	 * @param string $file_path Absolute path.
-	 * @param string $accept    Accept attribute.
-	 */
-	private static function file_matches_accept( $file_path, $accept ) {
-		if ( '' === $accept || '' === $file_path ) {
-			return true;
-		}
-		$check = wp_check_filetype( $file_path );
-		$ext   = isset( $check['ext'] ) ? strtolower( (string) $check['ext'] ) : '';
-		$mime  = isset( $check['type'] ) ? (string) $check['type'] : '';
-
-		$parts = array_map( 'trim', explode( ',', $accept ) );
-		foreach ( $parts as $part ) {
-			if ( '' === $part ) {
-				continue;
-			}
-			if ( '.' === $part[0] ) {
-				$want = strtolower( ltrim( $part, '.' ) );
-				if ( $ext === $want ) {
-					return true;
-				}
-				continue;
-			}
-			if ( false !== strpos( $part, '/*' ) ) {
-				$main = str_replace( '/*', '', $part );
-				if ( $mime && 0 === strpos( $mime, $main ) ) {
-					return true;
-				}
-				continue;
-			}
-			if ( $mime && strtolower( $part ) === strtolower( $mime ) ) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Lightweight IP-based rate limit.
-	 *
-	 * @param string $form_id Form id.
-	 * @param string $ip_address Ip address.
+	 * @param string $form_id    Form id.
+	 * @param string $ip_address Bereits ermittelte Client-IP.
 	 * @return bool
 	 */
 	private static function is_rate_limited( $form_id, $ip_address ) {
@@ -535,6 +849,15 @@ class GFB_Submit_Handler {
 		$key        = 'gfb_rate_' . md5( $form_id . '|' . $ip_address );
 		$window     = 10 * MINUTE_IN_SECONDS;
 		$max_events = 5;
+		/**
+		 * Maximale Anzahl Submits pro IP/Form im Fenster (10 Min).
+		 *
+		 * @param int    $max_events Default 5.
+		 * @param string $form_id    Form-ID.
+		 */
+		$max_events = (int) apply_filters( 'gfb_rate_limit_max', $max_events, $form_id );
+		$max_events = max( 1, $max_events );
+
 		$events     = get_transient( $key );
 
 		if ( ! is_array( $events ) ) {
