@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.2.0] – 2026-05-10
+
+### Hinzugefügt
+
+- **Formular-Anzeigename** (`formTitle` am Block `gfb/form`): optional im Editor; wird bei Einsendungen in der Tabelle `form_title` gespeichert (serverseitig aus Block-Attributen, nicht aus POST). Datenbank-Upgrade `gfb_submissions_db_version` 2 inkl. Spalte `form_title`.
+- **Admin „Formular-Einträge“:** Filter nach `form_id`, Sortierung (Datum / Formularname), Spalte **Formular** mit Name und technischer ID; **Absender** statt Kurzüberblick: E-Mail und Vor-/Nachname per Feldnamen-Heuristik (bzw. Platzhalter bei Verschlüsselung).
+- **E-Mail-Benachrichtigung:** Betreff nutzt den Anzeigenamen, falls gesetzt.
+- **Datenexport (DSGVO):** Eintrag enthält Feld **Formularname** (`form_title`).
+
 ## [2.1.4] – 2026-05-10
 
 ### Geändert
