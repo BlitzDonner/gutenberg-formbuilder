@@ -15,6 +15,7 @@ class GFB_Plugin {
 	 */
 	public static function boot() {
 		add_filter( 'block_categories_all', array( __CLASS__, 'register_block_category' ), 999, 2 );
+		add_action( 'init', array( 'GFB_Submit_Handler', 'maybe_upgrade_submissions_db' ), 0 );
 		add_action( 'init', array( __CLASS__, 'register_assets' ) );
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_for_redirect_query' ), 5 );

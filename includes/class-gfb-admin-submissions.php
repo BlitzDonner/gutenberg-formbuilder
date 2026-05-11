@@ -192,7 +192,13 @@ class GFB_Admin_Submissions {
 			$labels[ $k ] = (string) $v;
 		}
 
-		$list_url = admin_url( 'admin.php?page=' . self::PAGE_SLUG );
+		$list_url = add_query_arg(
+			array_merge(
+				array( 'page' => self::PAGE_SLUG ),
+				self::list_context_for_urls( self::parse_list_form_filter(), self::parse_list_sort() )
+			),
+			admin_url( 'admin.php' )
+		);
 		$post_title = get_the_title( (int) $row->post_id );
 		if ( '' === $post_title ) {
 			$post_title = sprintf( __( 'Beitrag #%d (nicht mehr vorhanden)', 'gutenberg-formbuilder' ), (int) $row->post_id );
@@ -208,6 +214,10 @@ class GFB_Admin_Submissions {
 		echo '<dt>' . esc_html__( 'Datum', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html( self::format_datetime( $row->created_at ) ) . '</dd>';
 		echo '<dt>' . esc_html__( 'Seite / Beitrag', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html( $post_title ) . '</dd>';
 		echo '<dt>' . esc_html__( 'Formular-ID', 'gutenberg-formbuilder' ) . '</dt><dd><code>' . esc_html( (string) $row->form_id ) . '</code></dd>';
+		$form_title_meta = isset( $row->form_title ) ? trim( (string) $row->form_title ) : '';
+		if ( '' !== $form_title_meta ) {
+			echo '<dt>' . esc_html__( 'Formularname', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html( $form_title_meta ) . '</dd>';
+		}
 		echo '<dt>' . esc_html__( 'IP-Adresse', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html( (string) $row->ip_address ) . '</dd>';
 		$ua = isset( $row->user_agent ) ? (string) $row->user_agent : '';
 		if ( '' !== $ua ) {
@@ -361,6 +371,68 @@ class GFB_Admin_Submissions {
 	}
 
 	/**
+	 * Sortierung der Eintragsliste (GET `gfb_sort`).
+	 *
+	 * @return string date_desc|date_asc|form_asc|form_desc
+	 */
+	private static function parse_list_sort() {
+		if ( ! isset( $_GET['gfb_sort'] ) ) {
+			return 'date_desc';
+		}
+		$s = sanitize_key( wp_unslash( $_GET['gfb_sort'] ) );
+		$allowed = array( 'date_desc', 'date_asc', 'form_asc', 'form_desc' );
+		return in_array( $s, $allowed, true ) ? $s : 'date_desc';
+	}
+
+	/**
+	 * Filter nach Formular-ID (GET `gfb_filter_form_id`).
+	 *
+	 * @return string Leerstring = alle.
+	 */
+	private static function parse_list_form_filter() {
+		if ( ! isset( $_GET['gfb_filter_form_id'] ) ) {
+			return '';
+		}
+		return sanitize_key( wp_unslash( $_GET['gfb_filter_form_id'] ) );
+	}
+
+	/**
+	 * @param string $sort Wert von parse_list_sort().
+	 * @return string Nur aus Whitelist — für ORDER BY interpolierbar.
+	 */
+	private static function order_sql_for_list_sort( $sort ) {
+		switch ( $sort ) {
+			case 'date_asc':
+				return 'created_at ASC, id ASC';
+			case 'form_asc':
+				return 'form_title ASC, form_id ASC, created_at DESC, id DESC';
+			case 'form_desc':
+				return 'form_title DESC, form_id DESC, created_at DESC, id DESC';
+			case 'date_desc':
+			default:
+				return 'created_at DESC, id DESC';
+		}
+	}
+
+	/**
+	 * Query-Parameter für Links (Filter + Sortierung), ohne `page`.
+	 *
+	 * @param string $filter_form_id sanitize_key.
+	 * @param string $sort           parse_list_sort-Wert.
+	 * @return array<string,string>
+	 */
+	private static function list_context_for_urls( $filter_form_id, $sort ) {
+		$args = array();
+		if ( '' !== $filter_form_id ) {
+			$args['gfb_filter_form_id'] = $filter_form_id;
+		}
+		if ( 'date_desc' !== $sort ) {
+			$args['gfb_sort'] = $sort;
+		}
+		return $args;
+	}
+
+	/**
 	 * @return void
 	 */
 	private static function render_list() {
@@ -383,30 +455,91 @@ class GFB_Admin_Submissions {
 			return;
 		}
 
+		$filter_form_id = self::parse_list_form_filter();
+		$sort           = self::parse_list_sort();
+		$order_sql      = self::order_sql_for_list_sort( $sort );
+
 		$per_page = 20;
 		$paged    = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 		$offset   = ( $paged - 1 ) * $per_page;
 
 		$table = self::table_name();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+
+		if ( '' !== $filter_form_id ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE form_id = %s", $filter_form_id ) );
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+		}
 		$pages = max( 1, (int) ceil( $total / $per_page ) );
+		if ( $paged > $pages ) {
+			$paged  = $pages;
+			$offset = ( $paged - 1 ) * $per_page;
+		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT id, created_at, post_id, form_id, payload FROM {$table} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-				$per_page,
-				$offset
-			)
-		);
+		$form_groups = $wpdb->get_results( "SELECT form_id, MAX(form_title) AS form_title FROM {$table} GROUP BY form_id ORDER BY form_title ASC, form_id ASC" );
+		if ( ! is_array( $form_groups ) ) {
+			$form_groups = array();
+		}
+
+		$sql = "SELECT id, created_at, post_id, form_id, form_title, payload FROM {$table}";
+		if ( '' !== $filter_form_id ) {
+			$sql .= ' WHERE form_id = %s';
+		}
+		$sql .= " ORDER BY {$order_sql} LIMIT %d OFFSET %d";
+
+		if ( '' !== $filter_form_id ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $order_sql nur aus Whitelist.
+			$rows = $wpdb->get_results( $wpdb->prepare( $sql, $filter_form_id, $per_page, $offset ) );
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$rows = $wpdb->get_results( $wpdb->prepare( $sql, $per_page, $offset ) );
+		}
 
 		if ( ! is_array( $rows ) ) {
 			$rows = array();
 		}
 
-		if ( empty( $rows ) ) {
-			echo '<p class="gfb-admin-empty">' . esc_html__( 'Noch keine Einsendungen.', 'gutenberg-formbuilder' ) . '</p>';
+		$list_ctx = self::list_context_for_urls( $filter_form_id, $sort );
+
+		echo '<form method="get" class="gfb-admin-filters" action="' . esc_url( admin_url( 'admin.php' ) ) . '">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
+		echo '<label class="gfb-admin-filter-label"><span class="screen-reader-text">' . esc_html__( 'Formular', 'gutenberg-formbuilder' ) . '</span>';
+		echo '<select name="gfb_filter_form_id">';
+		echo '<option value="">' . esc_html__( 'Alle Formulare', 'gutenberg-formbuilder' ) . '</option>';
+		foreach ( $form_groups as $fg ) {
+			$fid = isset( $fg->form_id ) ? (string) $fg->form_id : '';
+			if ( '' === $fid ) {
+				continue;
+			}
+			$flabel = isset( $fg->form_title ) ? trim( (string) $fg->form_title ) : '';
+			$optext = '' !== $flabel ? $flabel . ' (' . $fid . ')' : $fid;
+			echo '<option value="' . esc_attr( $fid ) . '"' . selected( $filter_form_id, $fid, false ) . '>' . esc_html( $optext ) . '</option>';
+		}
+		echo '</select></label> ';
+		echo '<label class="gfb-admin-filter-label"><span class="screen-reader-text">' . esc_html__( 'Sortierung', 'gutenberg-formbuilder' ) . '</span>';
+		echo '<select name="gfb_sort">';
+		$sort_opts = array(
+			'date_desc' => __( 'Datum: neueste zuerst', 'gutenberg-formbuilder' ),
+			'date_asc'  => __( 'Datum: älteste zuerst', 'gutenberg-formbuilder' ),
+			'form_asc'  => __( 'Formular: Name A–Z', 'gutenberg-formbuilder' ),
+			'form_desc' => __( 'Formular: Name Z–A', 'gutenberg-formbuilder' ),
+		);
+		foreach ( $sort_opts as $val => $lab ) {
+			echo '<option value="' . esc_attr( $val ) . '"' . selected( $sort, $val, false ) . '>' . esc_html( $lab ) . '</option>';
+		}
+		echo '</select></label> ';
+		submit_button( __( 'Anwenden', 'gutenberg-formbuilder' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		if ( 0 === $total ) {
+			if ( '' !== $filter_form_id ) {
+				echo '<p class="gfb-admin-empty">' . esc_html__( 'Keine Einsendungen für dieses Formular.', 'gutenberg-formbuilder' ) . '</p>';
+			} else {
+				echo '<p class="gfb-admin-empty">' . esc_html__( 'Noch keine Einsendungen.', 'gutenberg-formbuilder' ) . '</p>';
+			}
 			echo '</div>';
 			return;
 		}
@@ -418,15 +551,18 @@ class GFB_Admin_Submissions {
 		echo '<th scope="col" class="manage-column">' . esc_html__( 'Datum', 'gutenberg-formbuilder' ) . '</th>';
 		echo '<th scope="col" class="manage-column">' . esc_html__( 'Seite', 'gutenberg-formbuilder' ) . '</th>';
 		echo '<th scope="col" class="manage-column">' . esc_html__( 'Formular', 'gutenberg-formbuilder' ) . '</th>';
-		echo '<th scope="col" class="manage-column">' . esc_html__( 'Kurzüberblick', 'gutenberg-formbuilder' ) . '</th>';
+		echo '<th scope="col" class="manage-column">' . esc_html__( 'Absender', 'gutenberg-formbuilder' ) . '</th>';
 		echo '<th scope="col" class="manage-column" style="width:8rem">' . esc_html__( 'Aktionen', 'gutenberg-formbuilder' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $rows as $row ) {
 			$detail_url = add_query_arg(
-				array(
-					'page'        => self::PAGE_SLUG,
-					'submission' => (int) $row->id,
+				array_merge(
+					array(
+						'page'        => self::PAGE_SLUG,
+						'submission' => (int) $row->id,
+					),
+					$list_ctx
 				),
 				admin_url( 'admin.php' )
 			);
@@ -434,14 +570,21 @@ class GFB_Admin_Submissions {
 			if ( '' === $post_title ) {
 				$post_title = '—';
 			}
-			$preview = self::preview_from_payload( (string) $row->payload );
+			$sender_cell = self::sender_column_from_payload( (string) $row->payload );
+			$row_title = isset( $row->form_title ) ? trim( (string) $row->form_title ) : '';
 
 			echo '<tr>';
 			echo '<td>' . esc_html( (string) $row->id ) . '</td>';
 			echo '<td>' . esc_html( self::format_datetime( $row->created_at ) ) . '</td>';
 			echo '<td>' . esc_html( $post_title ) . '</td>';
-			echo '<td><code>' . esc_html( (string) $row->form_id ) . '</code></td>';
-			echo '<td>' . esc_html( $preview ) . '</td>';
+			echo '<td class="gfb-admin-cell-form">';
+			if ( '' !== $row_title ) {
+				echo esc_html( $row_title ) . '<br><small class="gfb-admin-form-id"><code>' . esc_html( (string) $row->form_id ) . '</code></small>';
+			} else {
+				echo '<code>' . esc_html( (string) $row->form_id ) . '</code>';
+			}
+			echo '</td>';
+			echo '<td class="gfb-admin-cell-sender">' . wp_kses_post( $sender_cell ) . '</td>';
 			echo '<td><a href="' . esc_url( $detail_url ) . '">' . esc_html__( 'Ansehen', 'gutenberg-formbuilder' ) . '</a></td>';
 			echo '</tr>';
 		}
@@ -450,7 +593,14 @@ class GFB_Admin_Submissions {
 		echo '</div>';
 
 		if ( $pages > 1 ) {
-			$base = add_query_arg( 'paged', '%#%', admin_url( 'admin.php?page=' . self::PAGE_SLUG ) );
+			$pag_base_args = array_merge(
+				array(
+					'page'  => self::PAGE_SLUG,
+					'paged' => '%#%',
+				),
+				$list_ctx
+			);
+			$base = add_query_arg( $pag_base_args, admin_url( 'admin.php' ) );
 			echo '<div class="tablenav"><div class="tablenav-pages">';
 			echo wp_kses_post(
 				paginate_links(
@@ -471,37 +621,177 @@ class GFB_Admin_Submissions {
 	}
 
 	/**
-	 * @param string $json Payload JSON.
+	 * Technischer Feldname für Abgleich (Kleinschreibung, Bindestrich → Unterstrich).
+	 *
+	 * @param string $key Payload-Schlüssel.
 	 * @return string
 	 */
-	private static function preview_from_payload( $json ) {
-		$data = json_decode( $json, true );
-		if ( ! is_array( $data ) || empty( $data ) ) {
-			return '—';
+	private static function normalize_payload_field_key( $key ) {
+		return strtolower( str_replace( array( '-', ' ' ), '_', (string) $key ) );
+	}
+
+	/**
+	 * Skalar aus Payload-Zelle; keine Arrays/Dateien/Envelopes.
+	 *
+	 * @param mixed $value Payload-Wert.
+	 * @return string Leer wenn nicht verwendbar.
+	 */
+	private static function scalar_payload_cell( $value ) {
+		if ( GFB_Crypto::is_field_envelope( $value ) ) {
+			return '';
 		}
-		$parts = array();
-		$n     = 0;
-		foreach ( $data as $k => $v ) {
-			if ( '_gfb_labels' === $k ) {
+		if ( is_array( $value ) ) {
+			return '';
+		}
+		if ( ! is_scalar( $value ) ) {
+			return '';
+		}
+		$s = trim( wp_strip_all_tags( (string) $value ) );
+		return $s;
+	}
+
+	/**
+	 * E-Mail-Adresse aus Payload (heuristisch nach Feldnamen und Inhalt).
+	 *
+	 * @param array<string,mixed> $data Payload (ohne Meta).
+	 * @return array{0:string,1:string} Erkennungsart: 'plain'|'encrypted'|'none', Anzeigetext.
+	 */
+	private static function extract_sender_email_from_payload( array $data ) {
+		$exact_keys = array(
+			'email',
+			'e_mail',
+			'kontakt_email',
+			'kontakt_e_mail',
+			'absender',
+			'absender_email',
+			'contact_email',
+			'user_email',
+			'your_email',
+			'email_address',
+		);
+		foreach ( $data as $key => $value ) {
+			if ( '_gfb_labels' === $key ) {
 				continue;
 			}
-			if ( $n >= 2 ) {
-				break;
+			$nk = self::normalize_payload_field_key( $key );
+			if ( ! in_array( $nk, $exact_keys, true ) && false === strpos( $nk, 'email' ) && 'mail' !== $nk ) {
+				continue;
 			}
-			if ( GFB_Crypto::is_field_envelope( $v ) ) {
-				$s = '[verschlüsselt]';
-			} elseif ( is_array( $v ) && isset( $v['_ref'] ) && 0 === strpos( (string) $v['_ref'], 'gfb-file:' ) ) {
-				$s = '[Datei #' . (int) ( $v['file_id'] ?? 0 ) . ']';
-			} else {
-				$s = is_scalar( $v ) ? (string) $v : wp_json_encode( $v );
-				$s = trim( wp_strip_all_tags( $s ) );
+			if ( GFB_Crypto::is_field_envelope( $value ) ) {
+				return array( 'encrypted', __( '[E-Mail verschlüsselt]', 'gutenberg-formbuilder' ) );
 			}
-			if ( '' !== $s ) {
-				$parts[] = mb_strlen( $s ) > 80 ? mb_substr( $s, 0, 80 ) . '…' : $s;
-				++$n;
+			$s = self::scalar_payload_cell( $value );
+			if ( '' !== $s && is_email( $s ) ) {
+				return array( 'plain', $s );
 			}
 		}
-		return empty( $parts ) ? '—' : implode( ' · ', $parts );
+		foreach ( $data as $key => $value ) {
+			if ( '_gfb_labels' === $key ) {
+				continue;
+			}
+			if ( GFB_Crypto::is_field_envelope( $value ) ) {
+				continue;
+			}
+			$s = self::scalar_payload_cell( $value );
+			if ( '' !== $s && is_email( $s ) ) {
+				return array( 'plain', $s );
+			}
+		}
+		return array( 'none', '' );
+	}
+
+	/**
+	 * Vor- und Nachname aus Payload (heuristisch nach Feldnamen).
+	 *
+	 * @param array<string,mixed> $data Payload.
+	 * @return string Anzeige „Vorname Nachname“ oder leer.
+	 */
+	private static function extract_sender_name_from_payload( array $data ) {
+		$first_keys = array( 'vorname', 'firstname', 'first_name', 'fname', 'givenname', 'given_name' );
+		$last_keys  = array( 'nachname', 'lastname', 'last_name', 'lname', 'surname', 'familyname', 'family_name' );
+		$full_keys  = array( 'name', 'fullname', 'full_name', 'vollname', 'display_name', 'absendername' );
+
+		$first = '';
+		$last  = '';
+		foreach ( $data as $key => $value ) {
+			if ( '_gfb_labels' === $key ) {
+				continue;
+			}
+			$nk = self::normalize_payload_field_key( $key );
+			if ( ! in_array( $nk, $first_keys, true ) ) {
+				continue;
+			}
+			if ( GFB_Crypto::is_field_envelope( $value ) ) {
+				return __( '[Name verschlüsselt]', 'gutenberg-formbuilder' );
+			}
+			$candidate = self::scalar_payload_cell( $value );
+			if ( '' !== $candidate ) {
+				$first = $candidate;
+				break;
+			}
+		}
+		foreach ( $data as $key => $value ) {
+			if ( '_gfb_labels' === $key ) {
+				continue;
+			}
+			$nk = self::normalize_payload_field_key( $key );
+			if ( ! in_array( $nk, $last_keys, true ) ) {
+				continue;
+			}
+			if ( GFB_Crypto::is_field_envelope( $value ) ) {
+				return __( '[Name verschlüsselt]', 'gutenberg-formbuilder' );
+			}
+			$candidate = self::scalar_payload_cell( $value );
+			if ( '' !== $candidate ) {
+				$last = $candidate;
+				break;
+			}
+		}
+		if ( '' !== $first || '' !== $last ) {
+			return trim( $first . ' ' . $last );
+		}
+		foreach ( $data as $key => $value ) {
+			if ( '_gfb_labels' === $key ) {
+				continue;
+			}
+			$nk = self::normalize_payload_field_key( $key );
+			if ( ! in_array( $nk, $full_keys, true ) ) {
+				continue;
+			}
+			if ( GFB_Crypto::is_field_envelope( $value ) ) {
+				return __( '[Name verschlüsselt]', 'gutenberg-formbuilder' );
+			}
+			return self::scalar_payload_cell( $value );
+		}
+		return '';
+	}
+
+	/**
+	 * Tabellenzelle „Absender“: E-Mail-Zeile + optional Name.
+	 *
+	 * @param string $json Payload JSON.
+	 * @return string Escaped HTML.
+	 */
+	private static function sender_column_from_payload( $json ) {
+		$data = json_decode( (string) $json, true );
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
+
+		list( , $email_disp ) = self::extract_sender_email_from_payload( $data );
+		$name_disp          = self::extract_sender_name_from_payload( $data );
+
+		if ( '' === $email_disp ) {
+			$email_disp = '—';
+		}
+		$email_disp = mb_strlen( $email_disp ) > 190 ? mb_substr( $email_disp, 0, 190 ) . '…' : $email_disp;
+		$name_disp  = mb_strlen( $name_disp ) > 190 ? mb_substr( $name_disp, 0, 190 ) . '…' : $name_disp;
+
+		$out = '<div class="gfb-admin-sender-email">' . esc_html( $email_disp ) . '</div>';
+		if ( '' !== trim( $name_disp ) ) {
+			$out .= '<div class="gfb-admin-sender-name">' . esc_html( $name_disp ) . '</div>';
+		}
+		return $out;
 	}
 
 	/**

@@ -653,7 +653,7 @@ class GFB_Security {
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT id, created_at, post_id, form_id, payload, ip_address, user_agent FROM {$table} WHERE payload LIKE %s ORDER BY id ASC LIMIT 200 OFFSET %d",
+				"SELECT id, created_at, post_id, form_id, form_title, payload, ip_address, user_agent FROM {$table} WHERE payload LIKE %s ORDER BY id ASC LIMIT 200 OFFSET %d",
 				'%' . $wpdb->esc_like( (string) $email_address ) . '%',
 				( max( 1, (int) $page ) - 1 ) * 200
 			)
@@ -674,6 +674,10 @@ class GFB_Security {
 					array(
 						'name'  => __( 'Formular-ID', 'gutenberg-formbuilder' ),
 						'value' => (string) $row->form_id,
+					),
+					array(
+						'name'  => __( 'Formularname', 'gutenberg-formbuilder' ),
+						'value' => isset( $row->form_title ) ? (string) $row->form_title : '',
 					),
 					array(
 						'name'  => __( 'Beitrag', 'gutenberg-formbuilder' ),

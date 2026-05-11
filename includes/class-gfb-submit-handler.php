@@ -32,7 +32,12 @@ class GFB_Submit_Handler {
 	 *
 	 * @return void
 	 */
-	public static function activate() {
+	/**
+	 * Submissions-Tabelle anlegen/aktualisieren (dbDelta).
+	 *
+	 * @return void
+	 */
+	public static function install_submissions_table() {
 		global $wpdb;
 
 		$table_name      = $wpdb->prefix . 'gfb_submissions';
@@ -43,6 +48,7 @@ class GFB_Submit_Handler {
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			post_id BIGINT UNSIGNED NOT NULL,
 			form_id VARCHAR(190) NOT NULL,
+			form_title VARCHAR(255) NOT NULL DEFAULT '',
 			payload LONGTEXT NOT NULL,
 			ip_address VARCHAR(45) NOT NULL DEFAULT '',
 			user_agent TEXT NULL,
@@ -52,6 +58,25 @@ class GFB_Submit_Handler {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+
+	/**
+	 * Fügt u. a. Spalte `form_title` nach Updates hinzu (ohne erneute Plugin-Aktivierung).
+	 *
+	 * @return void
+	 */
+	public static function maybe_upgrade_submissions_db() {
+		$ver = (int) get_option( 'gfb_submissions_db_version', 1 );
+		if ( $ver >= 2 ) {
+			return;
+		}
+		self::install_submissions_table();
+		update_option( 'gfb_submissions_db_version', 2 );
+	}
+
+	public static function activate() {
+		self::install_submissions_table();
+		update_option( 'gfb_submissions_db_version', 2 );
 
 		// Begleit-Tabellen.
 		GFB_File_Storage::install_table();
@@ -185,6 +210,12 @@ class GFB_Submit_Handler {
 
 		$form_attrs        = GFB_Plugin::get_form_block_attributes_from_post( $post_id, $form_id );
 		$thank_you_page_id = isset( $form_attrs['thankYouPageId'] ) ? absint( $form_attrs['thankYouPageId'] ) : 0;
+
+		/** Nur aus Block-Attributen (nicht aus POST), damit der Name nicht manipulierbar ist. */
+		$form_title_stored = '';
+		if ( ! empty( $form_attrs['formTitle'] ) && is_string( $form_attrs['formTitle'] ) ) {
+			$form_title_stored = mb_substr( sanitize_text_field( $form_attrs['formTitle'] ), 0, 255 );
+		}
 
 		$draft_key_redirect = '';
 		if ( ! empty( $_POST['gfb_draft_key'] ) ) {
@@ -354,11 +385,12 @@ class GFB_Submit_Handler {
 			array(
 				'post_id'    => $post_id,
 				'form_id'    => $form_id,
+				'form_title' => $form_title_stored,
 				'payload'    => wp_json_encode( $payload ),
 				'ip_address' => (string) $ip_to_store,
 				'user_agent' => $ua_to_store,
 			),
-			array( '%d', '%s', '%s', '%s', '%s' )
+			array( '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		if ( false === $inserted ) {
@@ -400,7 +432,7 @@ class GFB_Submit_Handler {
 		 */
 		do_action( 'gfb_after_submission_insert', $submission_id, $payload, $form_attrs, $post_id, $form_id );
 
-		self::send_notification_mail( $post_id, $form_id, $payload );
+		self::send_notification_mail( $post_id, $form_id, $payload, $form_title_stored );
 		self::redirect_with_state(
 			$post_id,
 			$form_id,
@@ -558,15 +590,26 @@ class GFB_Submit_Handler {
 	 * @param array  $payload Form data.
 	 * @return void
 	 */
-	private static function send_notification_mail( $post_id, $form_id, $payload ) {
+	private static function send_notification_mail( $post_id, $form_id, $payload, $form_title = '' ) {
 		$to        = get_option( 'admin_email' );
 		$blogname  = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$subj_base = sprintf(
-			/* translators: 1: form id, 2: post id */
-			__( 'Neues Formular (%1$s) auf Beitrag %2$d', 'gutenberg-formbuilder' ),
-			$form_id,
-			$post_id
-		);
+		$form_title = is_string( $form_title ) ? trim( $form_title ) : '';
+		if ( '' !== $form_title ) {
+			$subj_base = sprintf(
+				/* translators: 1: sprechender Formularname, 2: technische Formular-ID, 3: Beitrags-ID */
+				__( 'Neues Formular: %1$s (%2$s), Beitrag %3$d', 'gutenberg-formbuilder' ),
+				$form_title,
+				$form_id,
+				$post_id
+			);
+		} else {
+			$subj_base = sprintf(
+				/* translators: 1: form id, 2: post id */
+				__( 'Neues Formular (%1$s) auf Beitrag %2$d', 'gutenberg-formbuilder' ),
+				$form_id,
+				$post_id
+			);
+		}
 		$subject = preg_replace( "/[\r\n]+/", ' ', '[' . $blogname . '] ' . $subj_base );
 		$subject = mb_substr( (string) $subject, 0, 250 );
 

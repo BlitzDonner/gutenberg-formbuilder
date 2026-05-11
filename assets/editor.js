@@ -1281,6 +1281,14 @@
 							title: __( 'Formulareinstellungen', 'gutenberg-formbuilder' ),
 							initialOpen: true,
 						},
+						el( TextControl, {
+							label: __( 'Anzeigename (optional)', 'gutenberg-formbuilder' ),
+							help: __( 'Nur für die Backend-Übersicht und den E-Mail-Betreff; wird nicht im Formular dargestellt.', 'gutenberg-formbuilder' ),
+							value: attributes.formTitle || '',
+							onChange: function ( v ) {
+								setAttributes( { formTitle: v == null ? '' : String( v ) } );
+							},
+						} ),
 						el( Notice, { status: 'info', isDismissible: false }, __( 'Feldwerte werden im Browser als lokale Entwürfe zwischengespeichert.', 'gutenberg-formbuilder' ) ),
 						el( ToggleControl, {
 							label: __( 'Lokale Entwurfsspeicherung aktivieren', 'gutenberg-formbuilder' ),

@@ -15,6 +15,10 @@
     "formId": {
       "type": "string"
     },
+    "formTitle": {
+      "type": "string",
+      "default": ""
+    },
     "blockInstanceId": {
       "type": "string"
     },

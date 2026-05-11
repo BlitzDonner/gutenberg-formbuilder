@@ -300,3 +300,33 @@
 	border-radius: var(--gfb-radius-sm);
 	max-width: 42rem;
 }
+
+#wpbody-content .wrap.gfb-admin .gfb-admin-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.65rem 1rem;
+	margin: 0 0 var(--gfb-stack);
+	max-width: 52rem;
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-admin-filters .gfb-admin-filter-label select {
+	min-width: 12rem;
+	max-width: 100%;
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-admin-cell-form .gfb-admin-form-id {
+	color: var(--gfb-muted);
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-admin-cell-sender .gfb-admin-sender-email {
+	font-weight: 500;
+	word-break: break-word;
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-admin-cell-sender .gfb-admin-sender-name {
+	margin-top: 0.2rem;
+	font-size: 0.875rem;
+	color: var(--gfb-muted);
+	word-break: break-word;
+}
