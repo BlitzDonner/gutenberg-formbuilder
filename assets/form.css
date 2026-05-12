@@ -1,46 +1,31 @@
 /**
  * Gutenberg Formbuilder – Frontend & Editor
- * Layout und Typo; Farben standardmässig über CSS-Systemfarben (Field, LinkText, Canvas …).
+ * Formular-Rahmen, Status, Entwurf, Erfolgsbereich. Keine Plugin-Styles für einzelne Felder
+ * (Labels, Inputs, Radio, Checkbox, Range, Absenden — Theme/Browser-Standard).
  */
 
 /*
- * Plugin-Variablen und Layout: Hell/Dunkel/Automatisch ohne feste Hex-Palette.
- * «Theme (Standard)»: keine Karten-/Token-Regeln ausser bei .gfb-form-colors-custom (eigene Farben).
- * color-scheme auf dem Wrapper steuert die Auflösung von Field / FieldText / Canvas.
- * form.css wird immer mit dem Formular geladen; bei Hell/Dunkel/Auto schützt !important vor Theme-Overrides.
+ * Hell/Dunkel/Auto: Tokens für Kartenfläche und Hinweise (nicht für Feld-Controls).
+ * color-scheme am Wrapper steuert Systemfarben für den Formularbereich.
  */
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) {
 	--gfb-font: inherit;
-	--gfb-label-size: 0.8125rem;
-	--gfb-label-weight: 500;
 	--gfb-body-size: 1.0625rem;
 	--gfb-radius: 10px;
 	--gfb-radius-sm: 8px;
-	--gfb-field-gap: 0.5rem;
 	--gfb-stack-gap: 1.25rem;
-	--gfb-input-pad-y: 0.75rem;
-	--gfb-input-pad-x: 0.875rem;
 
-	/* Hell- und Dunkel-Bank: gleiche System-Keywords; color-scheme am Wrapper liefert Hell/Dunkel. */
-	--gfb-light-label: GrayText;
 	--gfb-light-text: FieldText;
-	--gfb-light-placeholder: color-mix(in srgb, FieldText 44%, transparent);
 	--gfb-light-border: color-mix(in srgb, FieldText 22%, Field);
 	--gfb-light-border-focus: LinkText;
 	--gfb-light-bg: Field;
 	--gfb-light-bg-subtle: color-mix(in srgb, Field 86%, FieldText 14%);
-	--gfb-light-submit-bg: LinkText;
-	--gfb-light-submit-text: Canvas;
 
-	--gfb-dark-label: GrayText;
 	--gfb-dark-text: FieldText;
-	--gfb-dark-placeholder: color-mix(in srgb, FieldText 44%, transparent);
 	--gfb-dark-border: color-mix(in srgb, FieldText 22%, Field);
 	--gfb-dark-border-focus: LinkText;
 	--gfb-dark-bg: Field;
 	--gfb-dark-bg-subtle: color-mix(in srgb, Field 86%, FieldText 14%);
-	--gfb-dark-submit-bg: LinkText;
-	--gfb-dark-submit-text: Canvas;
 
 	box-sizing: border-box;
 	font-family: var(--gfb-font);
@@ -49,92 +34,53 @@
 	margin-inline: auto;
 }
 
-/* Aufgelöste Tokens für Komponenten (Abwärtskompatibilität: --gfb-*) */
 .gfb-form-wrapper[data-gfb-appearance="light"] {
 	color-scheme: light;
-	--gfb-label: var(--gfb-light-label);
 	--gfb-text: var(--gfb-light-text);
-	--gfb-placeholder: var(--gfb-light-placeholder);
 	--gfb-border: var(--gfb-light-border);
 	--gfb-border-focus: var(--gfb-light-border-focus);
 	--gfb-bg: var(--gfb-light-bg);
 	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
-	--gfb-submit-bg: var(--gfb-light-submit-bg);
-	--gfb-submit-text: var(--gfb-light-submit-text);
 	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
 	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
-	--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
 }
 
 .gfb-form-wrapper[data-gfb-appearance="dark"] {
 	color-scheme: dark;
-	--gfb-label: var(--gfb-dark-label);
 	--gfb-text: var(--gfb-dark-text);
-	--gfb-placeholder: var(--gfb-dark-placeholder);
 	--gfb-border: var(--gfb-dark-border);
 	--gfb-border-focus: var(--gfb-dark-border-focus);
 	--gfb-bg: var(--gfb-dark-bg);
 	--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
-	--gfb-submit-bg: var(--gfb-dark-submit-bg);
-	--gfb-submit-text: var(--gfb-dark-submit-text);
 	--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
 	--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
-	--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
 }
 
 .gfb-form-wrapper[data-gfb-appearance="auto"] {
 	color-scheme: light dark;
-	--gfb-label: var(--gfb-light-label);
 	--gfb-text: var(--gfb-light-text);
-	--gfb-placeholder: var(--gfb-light-placeholder);
 	--gfb-border: var(--gfb-light-border);
 	--gfb-border-focus: var(--gfb-light-border-focus);
 	--gfb-bg: var(--gfb-light-bg);
 	--gfb-bg-subtle: var(--gfb-light-bg-subtle);
-	--gfb-submit-bg: var(--gfb-light-submit-bg);
-	--gfb-submit-text: var(--gfb-light-submit-text);
 	--gfb-shell-top: var(--gfb-light-form-shell, var(--gfb-bg-subtle));
 	--gfb-shell-bottom: var(--gfb-light-form-shell, var(--gfb-bg));
-	--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
 	.gfb-form-wrapper[data-gfb-appearance="auto"] {
-		--gfb-label: var(--gfb-dark-label);
 		--gfb-text: var(--gfb-dark-text);
-		--gfb-placeholder: var(--gfb-dark-placeholder);
 		--gfb-border: var(--gfb-dark-border);
 		--gfb-border-focus: var(--gfb-dark-border-focus);
 		--gfb-bg: var(--gfb-dark-bg);
 		--gfb-bg-subtle: var(--gfb-dark-bg-subtle);
-		--gfb-submit-bg: var(--gfb-dark-submit-bg);
-		--gfb-submit-text: var(--gfb-dark-submit-text);
 		--gfb-shell-top: var(--gfb-dark-form-shell, var(--gfb-bg-subtle));
 		--gfb-shell-bottom: var(--gfb-dark-form-shell, var(--gfb-bg));
-		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-	}
-}
-
-@supports (color: color-mix(in srgb, red, blue)) {
-	.gfb-form-wrapper[data-gfb-appearance="light"],
-	.gfb-form-wrapper[data-gfb-appearance="auto"] {
-		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="dark"] {
-		--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.gfb-form-wrapper[data-gfb-appearance="auto"] {
-			--gfb-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--gfb-border-focus) 32%, transparent);
-		}
 	}
 }
 
 /*
- * Formular-Karte wie im Block-Editor: sonst liegen Labels auf der Seitenfarbe,
- * während Felder --gfb-bg nutzen (ungleiche Lesbarkeit bei Dunkel-Farben).
+ * Formular-Karte (Hell/Dunkel/Auto): nur der Bereich um das Formular, keine Feld-Skins.
  */
 .gfb-form-wrapper[data-gfb-appearance="light"],
 .gfb-form-wrapper[data-gfb-appearance="dark"],
@@ -146,17 +92,8 @@
 	box-shadow: 0 1px 2px color-mix(in srgb, CanvasText 6%, transparent);
 }
 
-
-.gfb-form-fields {
-	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
-	gap: var(--gfb-stack-gap);
-	align-items: unset !important;
-}
-
 /*
- * Formularbereich: ein echter Verlauf in --gfb-*-form-shell darf nicht als „Farbe“ in
+ * Formularbereich: echter Verlauf in --gfb-*-form-shell darf nicht als „Farbe“ in
  * linear-gradient(180deg, var(--gfb-shell-top), …) stehen (ungültig → wirkt weiss).
  */
 .gfb-form-wrapper[data-gfb-appearance="light"].gfb-form-shell-gradient--light {
@@ -197,7 +134,7 @@
 }
 
 .gfb-form {
-	width: 100% !important;
+	width: 100%;
 }
 
 /* Statusmeldung */
@@ -231,7 +168,7 @@
 
 .gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-draft-reset-button {
 	font-family: inherit;
-	font-size: var(--gfb-label-size);
+	font-size: 0.8125rem;
 	font-weight: 500;
 	color: var(--gfb-border-focus);
 	background: transparent;
@@ -252,465 +189,12 @@
 	border-radius: 4px;
 }
 
-/* Feldzeilen */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field {
-	display: flex;
-	flex-direction: column;
-	align-items: stretch;
-	gap: var(--gfb-field-gap);
-	margin: 0 0 var(--gfb-stack-gap);
-	padding: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:last-child {
-	margin-bottom: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field.gfb-field-hidden {
-	margin: 0;
-	padding: 0;
-	min-height: 0;
-	gap: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field > label {
-	font-size: var(--gfb-label-size);
-	font-weight: var(--gfb-label-weight);
-	line-height: 1.3;
-	color: var(--gfb-label) !important;
-	-webkit-text-fill-color: var(--gfb-label) !important;
-	letter-spacing: -0.01em;
-}
-
-/* Pflicht-Kennzeichnung */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> input[required]) > label:first-child::after,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> textarea[required]) > label:first-child::after,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> select[required]) > label:first-child::after,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field:has(> input[type="file"][required]) > label:first-child::after {
-	content: " *";
-	color: LinkText;
-	font-weight: 600;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-checkbox:has(input[required]) > label::after {
-	content: " *";
-	color: LinkText;
-	font-weight: 600;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio:has(input[required]) > legend::after {
-	content: " *";
-	color: LinkText;
-	font-weight: 600;
-}
-
-/* Text, E-Mail, Zahl, Tel, URL, Datum, Zeit (Select: natives Styling, kein Chevron mit Fixfarbe) */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea {
-	appearance: none;
-	-webkit-appearance: none;
-	width: 100%;
-	max-width: 100%;
-	margin: 0;
-	font-family: inherit;
-	font-size: var(--gfb-body-size);
-	line-height: 1.35;
-	/* Themes (Block/Classic) setzen oft input{color} mit hoher Spezifität — Eingabetext muss zuverlässig aus --gfb-text kommen. */
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	background: var(--gfb-bg);
-	border: 1px solid var(--gfb-border);
-	border-radius: var(--gfb-radius);
-	padding: var(--gfb-input-pad-y) var(--gfb-input-pad-x);
-	min-height: 2.75rem;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-/*
- * Zahleneingabe: WebKit behält innere/äussere Spin-Buttons oft trotz `appearance: none`
- * teilweise im Layout; Gecko nutzt eine eigene Number-UI. Dadurch wirken Höhe und
- * optische Linie zu `type=tel` / `text` verschoben — im Block-Editor (nebeneinander)
- * und im Frontend gleichermassen sichtbar.
- */
-.gfb-form-wrapper .gfb-field input[type="number"] {
-	-moz-appearance: textfield;
-}
-.gfb-form-wrapper .gfb-field input[type="number"]::-webkit-inner-spin-button,
-.gfb-form-wrapper .gfb-field input[type="number"]::-webkit-outer-spin-button {
-	-webkit-appearance: none;
-	margin: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea {
-	min-height: 7rem;
-	resize: vertical;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select {
-	appearance: auto;
-	-webkit-appearance: auto;
-	width: 100%;
-	max-width: 100%;
-	margin: 0;
-	font-family: inherit;
-	font-size: var(--gfb-body-size);
-	line-height: 1.35;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	background-color: var(--gfb-bg);
-	border: 1px solid var(--gfb-border);
-	border-radius: var(--gfb-radius);
-	padding: var(--gfb-input-pad-y) var(--gfb-input-pad-x);
-	min-height: 2.75rem;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-	cursor: pointer;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input::placeholder,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea::placeholder {
-	color: var(--gfb-placeholder);
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:focus,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea:focus,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select:focus {
-	outline: none;
-	border-color: var(--gfb-border-focus);
-	box-shadow: var(--gfb-shadow-focus);
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input:disabled,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field textarea:disabled,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field select:disabled {
-	opacity: 0.55;
-	cursor: not-allowed;
-}
-
-/* Datums-/Zeit-Picker: native Controls etwas luftiger; WebKit-Fallback = gleiche Zeilenhöhe */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="date"],
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="time"],
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="datetime-local"],
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input.gfb-input--webkit-fallback {
-	min-height: 2.75rem;
-	font-variant-numeric: tabular-nums;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"] {
-	padding: 0.5rem 0;
-	min-height: auto;
-	border: none;
-	font-size: var(--gfb-label-size);
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"]::file-selector-button {
-	font-family: inherit;
-	font-size: var(--gfb-label-size);
-	font-weight: 500;
-	margin-right: 0.75rem;
-	padding: 0.5rem 0.875rem;
-	border-radius: var(--gfb-radius-sm);
-	border: 1px solid var(--gfb-border);
-	background: var(--gfb-bg-subtle);
-	cursor: pointer;
-	transition: background 0.15s ease;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field input[type="file"]::file-selector-button:hover {
-	background: color-mix(in srgb, FieldText 10%, Field);
-}
-
-/* Checkbox */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-checkbox > label {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	gap: 0.75rem;
-	font-size: var(--gfb-body-size);
-	font-weight: 400;
-	line-height: 1.45;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	cursor: pointer;
-	min-height: 2.75rem;
-	padding-top: 0.125rem;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-checkbox input[type="checkbox"] {
-	width: 1.25rem;
-	height: 1.25rem;
-	min-width: 1.25rem;
-	margin: 0.15rem 0 0;
-	accent-color: var(--gfb-border-focus);
-	border-radius: 4px;
-	cursor: pointer;
-}
-
-/* Radio-Gruppe */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio {
-	border: none;
-	padding: 0;
-	margin: 0 0 var(--gfb-stack-gap);
-	min-width: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio legend {
-	display: block;
-	width: 100%;
-	font-size: var(--gfb-label-size);
-	font-weight: var(--gfb-label-weight);
-	color: var(--gfb-label) !important;
-	-webkit-text-fill-color: var(--gfb-label) !important;
-	padding: 0;
-	margin: 0 0 0.375rem;
-	letter-spacing: -0.01em;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin: 0;
-	padding: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options--row {
-	flex-direction: row;
-	flex-wrap: wrap;
-	align-items: center;
-	column-gap: 1rem;
-	row-gap: 0.5rem;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options .gfb-radio-row {
-	margin: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 0.65rem;
-	margin: 0 0 0.5rem;
-	padding: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-radio > .gfb-radio-row:last-child,
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-options > .gfb-radio-row:last-child {
-	margin-bottom: 0;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row input[type="radio"] {
-	width: 1.25rem;
-	height: 1.25rem;
-	min-width: 1.25rem;
-	margin: 0;
-	accent-color: var(--gfb-border-focus);
-	cursor: pointer;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-radio-row label {
-	font-size: var(--gfb-body-size);
-	line-height: 1.4;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	cursor: pointer;
-	margin: 0;
-	font-weight: 400;
-}
-
-/* Range */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-range .gfb-range-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 0.75rem;
-	width: 100%;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-range .gfb-range-row input[type="range"] {
-	flex: 1;
-	min-width: 0;
-	width: auto;
-	min-height: 2.25rem;
-	padding: 0.5rem 0;
-	accent-color: var(--gfb-border-focus);
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-range .gfb-range-value {
-	display: inline-block;
-	min-width: 2.75rem;
-	padding: 0.35rem 0.55rem;
-	font-size: var(--gfb-body-size);
-	font-weight: 600;
-	font-variant-numeric: tabular-nums;
-	line-height: 1.2;
-	text-align: right;
-	color: var(--gfb-text) !important;
-	-webkit-text-fill-color: var(--gfb-text) !important;
-	background: var(--gfb-bg-subtle);
-	border-radius: var(--gfb-radius-sm);
-	border: 1px solid var(--gfb-border);
-}
-
-/* Absenden */
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit {
-	margin-top: 0.25rem;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"] {
-	appearance: none;
-	-webkit-appearance: none;
-	width: 100%;
-	font-family: inherit;
-	font-size: 1.0625rem;
-	font-weight: 600;
-	line-height: 1.2;
-	color: var(--gfb-submit-text, Canvas) !important;
-	-webkit-text-fill-color: var(--gfb-submit-text, Canvas) !important;
-	background: var(--gfb-submit-bg, var(--gfb-border-focus));
-	border: none;
-	border-radius: var(--gfb-radius);
-	padding: 0.875rem 1.25rem;
-	min-height: 3rem;
-	cursor: pointer;
-	transition: filter 0.15s ease, transform 0.05s ease;
-	letter-spacing: -0.02em;
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:hover {
-	filter: brightness(0.93);
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:active {
-	transform: scale(0.99);
-}
-
-.gfb-form-wrapper:not([data-gfb-appearance="theme"]) .gfb-field-submit button[type="submit"]:focus-visible {
-	outline: none;
-	box-shadow: var(--gfb-shadow-focus);
-}
-
-/* Honeypot bleibt unsichtbar */
+/* Honeypot bleibt unsichtbar (technisch, kein sichtbares Feld-Styling) */
 .gfb-hp-field {
-	position: absolute !important;
-	left: -9999px !important;
-	opacity: 0 !important;
-	pointer-events: none !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="dark"] .gfb-field-submit button[type="submit"]:hover {
-	filter: brightness(1.08);
-}
-
-@media (prefers-color-scheme: dark) {
-	.gfb-form-wrapper[data-gfb-appearance="auto"] .gfb-field-submit button[type="submit"]:hover {
-		filter: brightness(1.08);
-	}
-}
-
-/*
- * Theme (Standard) + eigene Farben: Inline-Variablen (--gfb-light-* / --gfb-dark-*) stehen am Wrapper;
- * ohne diese Regeln greifen Themes weiterhin (form.css wurde früher im Theme-Modus nicht geladen).
- */
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field > label {
-	color: var(--gfb-light-label, CanvasText) !important;
-	-webkit-text-fill-color: var(--gfb-light-label, CanvasText) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-radio legend {
-	color: var(--gfb-light-label, CanvasText) !important;
-	-webkit-text-fill-color: var(--gfb-light-label, CanvasText) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea,
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field select {
-	color: var(--gfb-light-text, CanvasText) !important;
-	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
-	background-color: var(--gfb-light-bg, Field) !important;
-	border-color: var(--gfb-light-border, ButtonBorder) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field select {
-	appearance: auto;
-	-webkit-appearance: auto;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input::placeholder,
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea::placeholder {
-	color: var(--gfb-light-placeholder, GrayText) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-checkbox > label {
-	color: var(--gfb-light-text, CanvasText) !important;
-	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-radio-row label {
-	color: var(--gfb-light-text, CanvasText) !important;
-	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-range .gfb-range-value {
-	color: var(--gfb-light-text, CanvasText) !important;
-	-webkit-text-fill-color: var(--gfb-light-text, CanvasText) !important;
-	background-color: var(--gfb-light-bg-subtle, Field) !important;
-	border-color: var(--gfb-light-border, ButtonBorder) !important;
-}
-
-.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-submit button[type="submit"] {
-	color: var(--gfb-light-submit-text, Canvas) !important;
-	-webkit-text-fill-color: var(--gfb-light-submit-text, Canvas) !important;
-	background-color: var(--gfb-light-submit-bg, LinkText) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field > label {
-		color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-radio legend {
-		color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-label, var(--gfb-light-label, CanvasText)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea,
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field select {
-		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-		background-color: var(--gfb-dark-bg, var(--gfb-light-bg, Field)) !important;
-		border-color: var(--gfb-dark-border, var(--gfb-light-border, ButtonBorder)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field input::placeholder,
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field textarea::placeholder {
-		color: var(--gfb-dark-placeholder, var(--gfb-light-placeholder, GrayText)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-checkbox > label {
-		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-radio-row label {
-		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-range .gfb-range-value {
-		color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-text, var(--gfb-light-text, CanvasText)) !important;
-		background-color: var(--gfb-dark-bg-subtle, var(--gfb-light-bg-subtle, Field)) !important;
-		border-color: var(--gfb-dark-border, var(--gfb-light-border, ButtonBorder)) !important;
-	}
-
-	.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom .gfb-field-submit button[type="submit"] {
-		color: var(--gfb-dark-submit-text, var(--gfb-light-submit-text, Canvas)) !important;
-		-webkit-text-fill-color: var(--gfb-dark-submit-text, var(--gfb-light-submit-text, Canvas)) !important;
-		background-color: var(--gfb-dark-submit-bg, var(--gfb-light-submit-bg, LinkText)) !important;
-	}
+	position: absolute;
+	left: -9999px;
+	opacity: 0;
+	pointer-events: none;
 }
 
 /* Erfolgsbereich (Frontend nach erfolgreichem Absenden ohne Folgeseite) */

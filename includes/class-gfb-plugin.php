@@ -584,7 +584,7 @@ class GFB_Plugin {
 		$appearance = self::sanitize_appearance_mode( isset( $attributes['appearanceMode'] ) ? $attributes['appearanceMode'] : 'theme' );
 
 		wp_enqueue_script( 'gfb-frontend' );
-		/* Immer laden: bei „Theme + eigene Farben“ verbinden die Regeln Inline-Variablen mit den Feldern; bei Hell/Dunkel/Auto schützen !important-Deklarationen Eingabetext vor Theme-Overrides. */
+		/* Immer laden: bei „Theme + eigene Farben“ verbinden die Regeln Inline-Variablen mit den Feldern; bei Hell/Dunkel/Auto über Tokens am Wrapper. */
 		wp_enqueue_style( 'gfb-form' );
 
 		// H5: Status + Detail aus URL nur über Whitelist; Texte serverseitig.

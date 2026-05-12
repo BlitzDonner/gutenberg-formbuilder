@@ -1872,7 +1872,19 @@
 					),
 					renderSubmitButtonColorOverrideControls( attributes, setAttributes )
 				),
-				el( 'button', { type: 'submit', disabled: true }, attributes.label || __( 'Formular absenden', 'gutenberg-formbuilder' ) )
+				el(
+					'div',
+					{ className: 'wp-block-button is-style-default' },
+					el(
+						'button',
+						{
+							type: 'submit',
+							disabled: true,
+							className: 'wp-block-button__link wp-element-button',
+						},
+						attributes.label || __( 'Formular absenden', 'gutenberg-formbuilder' )
+					)
+				)
 			);
 		},
 		save: function ( props ) {
@@ -1884,7 +1896,18 @@
 			return el(
 				'div',
 				saveProps,
-				el( 'button', { type: 'submit' }, a.label || __( 'Formular absenden', 'gutenberg-formbuilder' ) )
+				el(
+					'div',
+					{ className: 'wp-block-button is-style-default' },
+					el(
+						'button',
+						{
+							type: 'submit',
+							className: 'wp-block-button__link wp-element-button',
+						},
+						a.label || __( 'Formular absenden', 'gutenberg-formbuilder' )
+					)
+				)
 			);
 		},
 	} );

@@ -123,7 +123,7 @@ class GFB_Field_Renderer {
 		if ( '' === $txt || '' === $name ) {
 			return '';
 		}
-		return '<label class="gfb-field-label" for="' . esc_attr( $name ) . '">'
+		return '<label for="' . esc_attr( $name ) . '">'
 			. esc_html( $txt )
 			. '</label>';
 	}
@@ -199,7 +199,7 @@ class GFB_Field_Renderer {
 		if ( ! empty( $attrs['maxlength'] ) ) {
 			$attr .= ' maxlength="' . (int) $attrs['maxlength'] . '"';
 		}
-		$inner = '<input class="gfb-input"' . $attr . ' />';
+		$inner = '<input' . $attr . ' />';
 		return self::wrap( $field_class, $inner, $c, self::label( $c['name'], $c['label'] ) );
 	}
 
@@ -233,7 +233,7 @@ class GFB_Field_Renderer {
 		if ( ! empty( $a['maxlength'] ) ) {
 			$attr .= ' maxlength="' . (int) $a['maxlength'] . '"';
 		}
-		$inner = '<textarea class="gfb-textarea"' . $attr . '></textarea>';
+		$inner = '<textarea' . $attr . '></textarea>';
 		return self::wrap( 'gfb-field-textarea', $inner, $c, self::label( $c['name'], $c['label'] ) );
 	}
 
@@ -247,7 +247,7 @@ class GFB_Field_Renderer {
 		if ( $c['required'] ) {
 			$attr .= ' required';
 		}
-		$inner = '<select class="gfb-select"' . $attr . '>';
+		$inner = '<select' . $attr . '>';
 		// Optional Placeholder als erste Option.
 		if ( '' !== $c['placeholder'] ) {
 			$inner .= '<option value="" disabled selected>' . esc_html( $c['placeholder'] ) . '</option>';
@@ -266,24 +266,38 @@ class GFB_Field_Renderer {
 		}
 		$opts   = self::option_lines( isset( $a['options'] ) ? (string) $a['options'] : '' );
 		$layout = isset( $a['optionsLayout'] ) ? sanitize_key( (string) $a['optionsLayout'] ) : 'column';
-		$inner  = '<div class="gfb-radio-list gfb-radio-list--' . esc_attr( $layout ) . '" role="radiogroup"';
-		if ( '' !== trim( $c['label'] ) ) {
-			$inner .= ' aria-label="' . esc_attr( $c['label'] ) . '"';
-		}
-		$inner .= '>';
-		$idx = 0;
+		$opts_class = 'gfb-radio-options' . ( 'row' === $layout ? ' gfb-radio-options--row' : '' );
+		$inner        = '<div class="' . esc_attr( $opts_class ) . '">';
+		$idx          = 0;
 		foreach ( $opts as $opt ) {
-			$id     = $c['name'] . '_' . $idx;
-			$inner .= '<label class="gfb-radio">'
-				. '<input type="radio" name="' . esc_attr( $c['name'] ) . '" value="' . esc_attr( $opt ) . '" id="' . esc_attr( $id ) . '"' . ( $c['required'] ? ' required' : '' ) . ' />'
-				. '<span>' . esc_html( $opt ) . '</span>'
-				. '</label>';
+			$id  = $c['name'] . '_' . $idx;
+			$req = ( $c['required'] && 0 === $idx ) ? ' required' : '';
+			$inner .= '<div class="gfb-radio-row">'
+				. '<input type="radio" name="' . esc_attr( $c['name'] ) . '" value="' . esc_attr( $opt ) . '" id="' . esc_attr( $id ) . '"' . $req . ' />'
+				. ' <label for="' . esc_attr( $id ) . '">' . esc_html( $opt ) . '</label>'
+				. '</div>';
 			++$idx;
 		}
 		$inner .= '</div>';
-		// Bei Radio kein <label for>, wir nutzen eine Group-Überschrift.
-		$group = trim( $c['label'] ) !== '' ? '<div class="gfb-field-label">' . esc_html( $c['label'] ) . '</div>' : '';
-		return self::wrap( 'gfb-field-radio', $inner, $c, $group );
+
+		$fs_attrs = '';
+		if ( $c['sensitive'] ) {
+			$fs_attrs = ' data-gfb-sensitive="1"';
+		}
+		$pill = $c['sensitive']
+			? '<span class="gfb-pill gfb-pill-sensitive" aria-label="' . esc_attr__( 'Wird verschlüsselt gespeichert', 'gutenberg-formbuilder' ) . '">'
+				. esc_html__( 'verschlüsselt', 'gutenberg-formbuilder' )
+				. '</span>'
+			: '';
+		$legend = '' !== trim( $c['label'] )
+			? '<legend>' . esc_html( trim( $c['label'] ) ) . '</legend>'
+			: '';
+
+		return '<fieldset class="gfb-field gfb-field-radio"' . $fs_attrs . '>'
+			. $legend
+			. $pill
+			. $inner
+			. '</fieldset>';
 	}
 
 	public static function render_checkbox( $a ) {
@@ -291,9 +305,9 @@ class GFB_Field_Renderer {
 		if ( '' === $c['name'] ) {
 			return '';
 		}
-		$inner = '<label class="gfb-checkbox">'
+		$inner = '<label for="' . esc_attr( $c['name'] ) . '">'
 			. '<input type="checkbox" name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '" value="1"' . ( $c['required'] ? ' required' : '' ) . ' />'
-			. '<span>' . esc_html( $c['label'] ) . '</span>'
+			. ' ' . esc_html( $c['label'] )
 			. '</label>';
 		return self::wrap( 'gfb-field-checkbox', $inner, $c, '' );
 	}
@@ -316,7 +330,7 @@ class GFB_Field_Renderer {
 		if ( $c['required'] ) {
 			$attr .= ' required';
 		}
-		$inner = '<input class="gfb-input"' . $attr . ' />';
+		$inner = '<input' . $attr . ' />';
 		return self::wrap( 'gfb-field-number', $inner, $c, self::label( $c['name'], $c['label'] ) );
 	}
 
@@ -335,8 +349,10 @@ class GFB_Field_Renderer {
 		$attr   .= ' max="' . esc_attr( $max ) . '"';
 		$attr   .= ' step="' . esc_attr( $step ) . '"';
 		$attr   .= ' value="' . esc_attr( $default ) . '"';
-		$inner   = '<input class="gfb-input"' . $attr . ' />'
-			. '<output class="gfb-range-value" for="' . esc_attr( $c['name'] ) . '">' . esc_html( $default ) . '</output>';
+		$inner   = '<div class="gfb-range-row">'
+			. '<input' . $attr . ' />'
+			. '<output class="gfb-range-value" for="' . esc_attr( $c['name'] ) . '">' . esc_html( $default ) . '</output>'
+			. '</div>';
 		return self::wrap( 'gfb-field-range', $inner, $c, self::label( $c['name'], $c['label'] ) );
 	}
 
@@ -366,7 +382,7 @@ class GFB_Field_Renderer {
 			$attr .= ' required';
 		}
 		$hint   = sprintf( esc_html__( 'Datei wird verschlüsselt gespeichert (max. %d MB).', 'gutenberg-formbuilder' ), $max_mb );
-		$inner  = '<input class="gfb-input"' . $attr . ' />'
+		$inner  = '<input' . $attr . ' />'
 			. '<small class="gfb-help">' . $hint . '</small>';
 		// Bei Files setzen wir das Sensitive-Pill IMMER, weil der Storage immer verschlüsselt.
 		$c['sensitive'] = true;
@@ -374,11 +390,13 @@ class GFB_Field_Renderer {
 	}
 
 	public static function render_submit( $a ) {
-		$text = isset( $a['buttonText'] ) ? (string) $a['buttonText'] : __( 'Absenden', 'gutenberg-formbuilder' );
-		$text = '' === trim( $text ) ? __( 'Absenden', 'gutenberg-formbuilder' ) : $text;
-		return '<div class="gfb-field gfb-field-submit"><button type="submit" class="gfb-submit">'
+		$text = isset( $a['label'] ) ? trim( (string) $a['label'] ) : '';
+		if ( '' === $text ) {
+			$text = __( 'Formular absenden', 'gutenberg-formbuilder' );
+		}
+		return '<div class="gfb-field gfb-field-submit"><div class="wp-block-button is-style-default"><button type="submit" class="wp-block-button__link wp-element-button">'
 			. esc_html( $text )
-			. '</button></div>';
+			. '</button></div></div>';
 	}
 
 	/**
