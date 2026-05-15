@@ -17,6 +17,7 @@
 	var SelectControl = wp.components.SelectControl;
 	var __experimentalNumberControl = wp.components.__experimentalNumberControl;
 	var Notice = wp.components.Notice;
+	var FormTokenField = wp.components.FormTokenField;
 	var createBlock = wp.blocks.createBlock;
 	var PanelColorSettings = wp.blockEditor.PanelColorSettings;
 	var PanelColorGradientSettings =
@@ -280,6 +281,176 @@
 			}
 		} );
 		return rows;
+	}
+
+	/**
+	 * E-Mail-Felder unter gfb/form (für Absender-Auswahl).
+	 *
+	 * @param {Array} blocks
+	 * @return {Array<{name:string,label:string}>}
+	 */
+	function gfbCollectFormEmailFieldRows( blocks ) {
+		var rows = [];
+		if ( ! blocks || ! blocks.length ) {
+			return rows;
+		}
+		blocks.forEach( function ( b ) {
+			if ( ! b || ! b.name ) {
+				return;
+			}
+			if ( b.name === 'gfb/field-email' ) {
+				var attrs = b.attributes || {};
+				var nm = attrs.name != null ? String( attrs.name ).trim() : '';
+				if ( nm ) {
+					rows.push( {
+						name: nm,
+						label: attrs.label != null ? String( attrs.label ) : '',
+					} );
+				}
+				return;
+			}
+			if ( b.innerBlocks && b.innerBlocks.length ) {
+				rows = rows.concat( gfbCollectFormEmailFieldRows( b.innerBlocks ) );
+			}
+		} );
+		return rows;
+	}
+
+	/**
+	 * @param {string} value
+	 * @return {boolean}
+	 */
+	function gfbIsValidEmailToken( value ) {
+		var s = value == null ? '' : String( value ).trim();
+		if ( s === '' || s.length > 254 ) {
+			return false;
+		}
+		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( s );
+	}
+
+	/**
+	 * @param {*} raw
+	 * @return {Array<string>}
+	 */
+	function gfbNormalizeEmailRecipientsArray( raw ) {
+		var parts = [];
+		if ( Array.isArray( raw ) ) {
+			parts = raw;
+		} else if ( typeof raw === 'string' && raw.trim() !== '' ) {
+			parts = raw.split( /\s*,\s*/ );
+		}
+		var seen = {};
+		var out = [];
+		parts.forEach( function ( part ) {
+			var email = part == null ? '' : String( part ).trim();
+			if ( ! gfbIsValidEmailToken( email ) ) {
+				return;
+			}
+			var key = email.toLowerCase();
+			if ( seen[ key ] ) {
+				return;
+			}
+			seen[ key ] = true;
+			out.push( email );
+		} );
+		return out;
+	}
+
+	/**
+	 * @param {object} attributes
+	 * @param {function} setAttributes
+	 * @param {Array<{name:string,label:string}>} emailFieldRows
+	 * @return {*}
+	 */
+	function renderEmailNotificationControls( attributes, setAttributes, emailFieldRows ) {
+		var enabled = attributes.emailNotificationEnabled === true;
+
+		var fromFieldOptions = [
+			{
+				label: __( 'Admin-E-Mail der Website', 'gutenberg-formbuilder' ),
+				value: '',
+			},
+		];
+		emailFieldRows.forEach( function ( row ) {
+			var optLabel = row.label ? row.label + ' (' + row.name + ')' : row.name;
+			fromFieldOptions.push( { label: optLabel, value: row.name } );
+		} );
+
+
+		return el(
+			PanelBody,
+			{
+				title: __( 'E-Mail-Benachrichtigung', 'gutenberg-formbuilder' ),
+				initialOpen: false,
+			},
+			el( ToggleControl, {
+				label: __( 'E-Mail nach Absenden senden', 'gutenberg-formbuilder' ),
+				checked: enabled,
+				onChange: function ( value ) {
+					setAttributes( { emailNotificationEnabled: value } );
+				},
+			} ),
+			enabled
+				? el(
+						'div',
+						null,
+						el( FormTokenField, {
+							label: __( 'Empfänger', 'gutenberg-formbuilder' ),
+							value: gfbNormalizeEmailRecipientsArray( attributes.emailRecipients ),
+							placeholder: __( 'E-Mail-Adresse eingeben …', 'gutenberg-formbuilder' ),
+							tokenizeOnSpace: true,
+							__nextHasNoMarginBottom: true,
+							__experimentalValidateInput: gfbIsValidEmailToken,
+							messages: {
+								__experimentalInvalid: __(
+									'Keine gültige E-Mail-Adresse.',
+									'gutenberg-formbuilder'
+								),
+							},
+							onChange: function ( tokens ) {
+								setAttributes( {
+									emailRecipients: gfbNormalizeEmailRecipientsArray( tokens ),
+								} );
+							},
+						} ),
+						el(
+							'p',
+							{
+								className: 'components-base-control__help',
+								style: { marginTop: 0 },
+							},
+							__( 'Leer = Admin-E-Mail der Website.', 'gutenberg-formbuilder' )
+						),
+						el( TextControl, {
+							label: __( 'Betreff', 'gutenberg-formbuilder' ),
+							help: __(
+								'Leer = Standardbetreff. Platzhalter: {{feldname}} und {{label_feldname}} (technischer Feldname).',
+								'gutenberg-formbuilder'
+							),
+							value: attributes.emailSubject || '',
+							onChange: function ( v ) {
+								setAttributes( { emailSubject: v == null ? '' : String( v ) } );
+							},
+						} ),
+						el( SelectControl, {
+							label: __( 'Absender', 'gutenberg-formbuilder' ),
+							help:
+								emailFieldRows.length > 0
+									? __(
+											'Bei E-Mail-Feld: From-Adresse aus der Einsendung (falls gültig), sonst Admin-E-Mail.',
+											'gutenberg-formbuilder'
+									  )
+									: __( 'Es wird die Admin-E-Mail der Website verwendet.', 'gutenberg-formbuilder' ),
+							value: attributes.emailFromField || '',
+							options: fromFieldOptions,
+							disabled: emailFieldRows.length === 0,
+							onChange: function ( v ) {
+								setAttributes( { emailFromField: v || '' } );
+							},
+						} )
+				  )
+				: null
+		);
 	}
 
 	/**
@@ -1206,6 +1377,31 @@
 				}
 			}, [] );
 
+			var emailFieldRows = useSelect(
+				function ( select ) {
+					try {
+						var block = select( 'core/block-editor' ).getBlock( props.clientId );
+						if ( ! block ) {
+							return [];
+						}
+						var raw = gfbCollectFormEmailFieldRows( block.innerBlocks || [] );
+						var seen = {};
+						var out = [];
+						raw.forEach( function ( r ) {
+							if ( seen[ r.name ] ) {
+								return;
+							}
+							seen[ r.name ] = true;
+							out.push( r );
+						} );
+						return out;
+					} catch ( err3 ) {
+						return [];
+					}
+				},
+				[ props.clientId ]
+			);
+
 			var thankYouPageOptions = [
 				{
 					label: __( 'Formularseite mit Erfolgshinweis (Standard)', 'gutenberg-formbuilder' ),
@@ -1283,7 +1479,7 @@
 						},
 						el( TextControl, {
 							label: __( 'Anzeigename (optional)', 'gutenberg-formbuilder' ),
-							help: __( 'Nur für die Backend-Übersicht und den E-Mail-Betreff; wird nicht im Formular dargestellt.', 'gutenberg-formbuilder' ),
+							help: __( 'Nur für die Backend-Übersicht und den Standard-E-Mail-Betreff (wenn kein eigener Betreff gesetzt ist); wird nicht im Formular dargestellt.', 'gutenberg-formbuilder' ),
 							value: attributes.formTitle || '',
 							onChange: function ( v ) {
 								setAttributes( { formTitle: v == null ? '' : String( v ) } );
@@ -1354,6 +1550,7 @@
 							},
 						} )
 					),
+					renderEmailNotificationControls( attributes, setAttributes, emailFieldRows || [] ),
 					el( PanelBody, {
 						title: __( 'Erscheinungsbild', 'gutenberg-formbuilder' ),
 						initialOpen: false,

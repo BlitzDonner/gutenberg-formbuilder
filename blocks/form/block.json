@@ -42,6 +42,22 @@
       "type": "number",
       "default": 0
     },
+    "emailNotificationEnabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "emailRecipients": {
+      "type": "array",
+      "default": []
+    },
+    "emailSubject": {
+      "type": "string",
+      "default": ""
+    },
+    "emailFromField": {
+      "type": "string",
+      "default": ""
+    },
     "appearanceMode": {
       "type": "string",
       "default": "theme"

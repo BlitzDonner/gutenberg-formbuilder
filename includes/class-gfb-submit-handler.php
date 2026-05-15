@@ -432,7 +432,7 @@ class GFB_Submit_Handler {
 		 */
 		do_action( 'gfb_after_submission_insert', $submission_id, $payload, $form_attrs, $post_id, $form_id );
 
-		self::send_notification_mail( $post_id, $form_id, $payload, $form_title_stored );
+		self::send_notification_mail( $post_id, $form_id, $payload, $form_title_stored, $form_attrs );
 		self::redirect_with_state(
 			$post_id,
 			$form_id,
@@ -580,41 +580,116 @@ class GFB_Submit_Handler {
 	}
 
 	/**
-	 * Send e-mail notification to admin.
+	 * Send e-mail notification according to gfb/form block settings.
 	 *
 	 * Härte: Subject CRLF-strip, body wp_strip_all_tags + Limit pro Wert,
-	 * explizit text/plain-Header.
+	 * explizit text/plain-Header, Empfänger/Absender nur aus Block-Attributen.
 	 *
-	 * @param int    $post_id Post id.
-	 * @param string $form_id Form id.
-	 * @param array  $payload Form data.
+	 * @param int                 $post_id    Post id.
+	 * @param string              $form_id    Form id.
+	 * @param array<string,mixed> $payload    Form data.
+	 * @param string              $form_title Optional display name.
+	 * @param array<string,mixed> $form_attrs gfb/form block attributes.
 	 * @return void
 	 */
-	private static function send_notification_mail( $post_id, $form_id, $payload, $form_title = '' ) {
-		$to        = get_option( 'admin_email' );
-		$blogname  = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$form_title = is_string( $form_title ) ? trim( $form_title ) : '';
-		if ( '' !== $form_title ) {
-			$subj_base = sprintf(
-				/* translators: 1: sprechender Formularname, 2: technische Formular-ID, 3: Beitrags-ID */
-				__( 'Neues Formular: %1$s (%2$s), Beitrag %3$d', 'gutenberg-formbuilder' ),
-				$form_title,
-				$form_id,
-				$post_id
-			);
-		} else {
-			$subj_base = sprintf(
-				/* translators: 1: form id, 2: post id */
-				__( 'Neues Formular (%1$s) auf Beitrag %2$d', 'gutenberg-formbuilder' ),
-				$form_id,
-				$post_id
-			);
+	private static function send_notification_mail( $post_id, $form_id, $payload, $form_title = '', array $form_attrs = array() ) {
+		$enabled = ! empty( $form_attrs['emailNotificationEnabled'] );
+		if ( ! $enabled ) {
+			return;
 		}
-		$subject = preg_replace( "/[\r\n]+/", ' ', '[' . $blogname . '] ' . $subj_base );
-		$subject = mb_substr( (string) $subject, 0, 250 );
+
+		$recipients = self::resolve_notification_recipients( $form_attrs );
+		if ( empty( $recipients ) ) {
+			return;
+		}
 
 		$labels = isset( $payload['_gfb_labels'] ) && is_array( $payload['_gfb_labels'] ) ? $payload['_gfb_labels'] : array();
+		$subject = self::build_notification_subject( $post_id, $form_id, $form_title, $form_attrs, $payload, $labels );
+		$body    = self::build_notification_body( $payload, $labels );
+		$headers = self::build_notification_headers( $form_attrs, $payload );
 
+		wp_mail( $recipients, $subject, $body, $headers );
+	}
+
+	/**
+	 * @param array<string,mixed> $form_attrs Block attributes.
+	 * @return string Comma-separated valid recipient list for wp_mail.
+	 */
+	private static function resolve_notification_recipients( array $form_attrs ) {
+		$out  = array();
+		$raw  = '';
+		$list = $form_attrs['emailRecipients'] ?? '';
+		if ( is_array( $list ) ) {
+			$raw = implode( ',', array_map( 'strval', $list ) );
+		} elseif ( is_string( $list ) ) {
+			$raw = $list;
+		}
+		$raw = preg_replace( "/[\r\n]+/", ' ', (string) $raw );
+		foreach ( preg_split( '/\s*,\s*/', $raw, -1, PREG_SPLIT_NO_EMPTY ) as $part ) {
+			$email = sanitize_email( (string) $part );
+			if ( '' !== $email && is_email( $email ) ) {
+				$out[ strtolower( $email ) ] = $email;
+			}
+		}
+		if ( empty( $out ) ) {
+			$admin = sanitize_email( (string) get_option( 'admin_email' ) );
+			if ( '' !== $admin && is_email( $admin ) ) {
+				$out[ strtolower( $admin ) ] = $admin;
+			}
+		}
+		$out = array_slice( array_values( $out ), 0, 10 );
+
+		return empty( $out ) ? '' : implode( ',', $out );
+	}
+
+	/**
+	 * @param int                 $post_id    Post id.
+	 * @param string              $form_id    Form id.
+	 * @param string              $form_title Display name.
+	 * @param array<string,mixed> $form_attrs Block attributes.
+	 * @param array<string,mixed> $payload    Submission payload.
+	 * @param array<string,string> $labels    Field labels.
+	 * @return string
+	 */
+	private static function build_notification_subject( $post_id, $form_id, $form_title, array $form_attrs, array $payload, array $labels ) {
+		$blogname = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$custom   = isset( $form_attrs['emailSubject'] ) ? trim( (string) $form_attrs['emailSubject'] ) : '';
+
+		if ( '' !== $custom ) {
+			$subject = self::replace_notification_placeholders( $custom, $payload, $labels );
+		} else {
+			$form_title = is_string( $form_title ) ? trim( $form_title ) : '';
+			if ( '' !== $form_title ) {
+				$subj_base = sprintf(
+					/* translators: 1: sprechender Formularname, 2: technische Formular-ID, 3: Beitrags-ID */
+					__( 'Neues Formular: %1$s (%2$s), Beitrag %3$d', 'gutenberg-formbuilder' ),
+					$form_title,
+					$form_id,
+					$post_id
+				);
+			} else {
+				$subj_base = sprintf(
+					/* translators: 1: form id, 2: post id */
+					__( 'Neues Formular (%1$s) auf Beitrag %2$d', 'gutenberg-formbuilder' ),
+					$form_id,
+					$post_id
+				);
+			}
+			$subject = '[' . $blogname . '] ' . $subj_base;
+		}
+
+		$subject = preg_replace( "/[\r\n]+/", ' ', (string) $subject );
+		$subject = wp_strip_all_tags( (string) $subject );
+
+		return mb_substr( (string) $subject, 0, 250 );
+	}
+
+	/**
+	 * @param array<string,mixed>  $payload Submission payload.
+	 * @param array<string,string> $labels  Field labels.
+	 * @return string
+	 */
+	private static function build_notification_body( array $payload, array $labels ) {
 		$lines = array();
 		foreach ( $payload as $key => $value ) {
 			if ( '_gfb_labels' === $key ) {
@@ -625,25 +700,130 @@ class GFB_Submit_Handler {
 			$display_key = preg_replace( "/[\r\n]+/", ' ', (string) $display_key );
 			$display_key = mb_substr( $display_key, 0, 120 );
 
-			// Verschlüsselte Werte werden in der Mail NICHT entschlüsselt — die
-			// Mail könnte unverschlüsselt zugestellt werden. Stattdessen Hinweis.
-			if ( GFB_Crypto::is_field_envelope( $value ) ) {
-				$value = '[verschlüsselt — bitte im Admin entschlüsseln]';
-			} elseif ( is_array( $value ) && isset( $value['_ref'] ) && 0 === strpos( (string) $value['_ref'], 'gfb-file:' ) ) {
-				$value = '[verschlüsselte Datei #' . (int) $value['file_id'] . ' — Download im Admin]';
-			} elseif ( is_array( $value ) ) {
-				$value = wp_json_encode( $value );
-			}
-			$value = wp_strip_all_tags( (string) $value );
-			$value = preg_replace( "/[\r\n]+/", "\n", (string) $value );
-			$value = mb_substr( $value, 0, 1000 );
-
+			$value = self::format_notification_field_value( $value );
 			$lines[] = $display_key . ': ' . $value;
 		}
 
-		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+		return implode( "\n", $lines );
+	}
 
-		wp_mail( $to, $subject, implode( "\n", $lines ), $headers );
+	/**
+	 * @param mixed $value Raw field value.
+	 * @return string
+	 */
+	private static function format_notification_field_value( $value ) {
+		if ( GFB_Crypto::is_field_envelope( $value ) ) {
+			$value = '[verschlüsselt — bitte im Admin entschlüsseln]';
+		} elseif ( is_array( $value ) && isset( $value['_ref'] ) && 0 === strpos( (string) $value['_ref'], 'gfb-file:' ) ) {
+			$value = '[verschlüsselte Datei #' . (int) $value['file_id'] . ' — Download im Admin]';
+		} elseif ( is_array( $value ) ) {
+			$value = wp_json_encode( $value );
+		}
+		$value = wp_strip_all_tags( (string) $value );
+		$value = preg_replace( "/[\r\n]+/", "\n", (string) $value );
+
+		return mb_substr( (string) $value, 0, 1000 );
+	}
+
+	/**
+	 * @param array<string,mixed> $form_attrs Block attributes.
+	 * @param array<string,mixed> $payload    Submission payload.
+	 * @return array<int,string>
+	 */
+	private static function build_notification_headers( array $form_attrs, array $payload ) {
+		$headers    = array( 'Content-Type: text/plain; charset=UTF-8' );
+		$from_email = self::resolve_notification_from_email( $form_attrs, $payload );
+		$from_name  = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+
+		$from_mailbox = self::format_mailbox_header( $from_name, $from_email );
+		if ( '' !== $from_mailbox ) {
+			$headers[] = 'From: ' . $from_mailbox;
+		}
+
+		return $headers;
+	}
+
+	/**
+	 * From-Adresse: E-Mail-Feld der Einsendung oder Admin-E-Mail.
+	 *
+	 * @param array<string,mixed> $form_attrs Block attributes.
+	 * @param array<string,mixed> $payload    Submission payload.
+	 * @return string
+	 */
+	private static function resolve_notification_from_email( array $form_attrs, array $payload ) {
+		$field = isset( $form_attrs['emailFromField'] ) ? sanitize_key( (string) $form_attrs['emailFromField'] ) : '';
+		if ( '' !== $field && isset( $payload[ $field ] ) ) {
+			$value = $payload[ $field ];
+			if ( ! GFB_Crypto::is_field_envelope( $value ) ) {
+				$email = sanitize_email( (string) $value );
+				if ( '' !== $email && is_email( $email ) ) {
+					return $email;
+				}
+			}
+		}
+
+		$admin = sanitize_email( (string) get_option( 'admin_email' ) );
+
+		return ( '' !== $admin && is_email( $admin ) ) ? $admin : '';
+	}
+
+	/**
+	 * @param string $name  Display name.
+	 * @param string $email E-mail address.
+	 * @return string
+	 */
+	private static function format_mailbox_header( $name, $email ) {
+		$email = sanitize_email( (string) $email );
+		if ( '' === $email || ! is_email( $email ) ) {
+			return '';
+		}
+		$name = sanitize_text_field( (string) $name );
+		$name = preg_replace( "/[\r\n]+/", ' ', $name );
+		$name = trim( $name );
+		if ( '' === $name ) {
+			return $email;
+		}
+
+		return sprintf( '%s <%s>', $name, $email );
+	}
+
+	/**
+	 * Ersetzt {{feldname}} und {{label_feldname}} im Betreff.
+	 *
+	 * @param string               $template Subject template.
+	 * @param array<string,mixed>  $payload  Submission payload.
+	 * @param array<string,string> $labels   Field labels.
+	 * @return string
+	 */
+	private static function replace_notification_placeholders( $template, array $payload, array $labels ) {
+		$template = (string) $template;
+		if ( '' === $template ) {
+			return '';
+		}
+		return (string) preg_replace_callback(
+			'/\{\{\s*(label_)?([a-z0-9_-]+)\s*\}\}/i',
+			static function ( $matches ) use ( $payload, $labels ) {
+				$is_label = ! empty( $matches[1] );
+				$key      = sanitize_key( (string) $matches[2] );
+				if ( '' === $key ) {
+					return '';
+				}
+				if ( $is_label ) {
+					if ( ! isset( $labels[ $key ] ) ) {
+						return '';
+					}
+					$value = (string) $labels[ $key ];
+				} elseif ( ! isset( $payload[ $key ] ) ) {
+					return '';
+				} else {
+					$value = self::format_notification_field_value( $payload[ $key ] );
+				}
+				$value = preg_replace( "/[\r\n]+/", ' ', (string) $value );
+
+				return mb_substr( (string) $value, 0, 120 );
+			},
+			$template
+		);
 	}
 
 	/**
