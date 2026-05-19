@@ -8,6 +8,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class GFB_Plugin {
+
+	/** @var string Option: Safari/WebKit Datums-Fallback (Textfelder statt native Picker). */
+	const OPTION_WEBKIT_DATETIME_FALLBACK = 'gfb_webkit_datetime_fallback';
+
+	/**
+	 * Safari/WebKit: date/time/datetime-local durch Text + pattern ersetzen?
+	 * Standard: an (historisches Verhalten). In Sicherheit → Einstellungen abschaltbar.
+	 *
+	 * @return bool
+	 */
+	public static function is_webkit_datetime_fallback_enabled() {
+		$raw     = get_option( self::OPTION_WEBKIT_DATETIME_FALLBACK, '1' );
+		$enabled = ( '1' === (string) $raw || true === $raw );
+		return (bool) apply_filters( 'gfb_webkit_datetime_fallback', $enabled );
+	}
+
 	/**
 	 * Boot hooks.
 	 *
@@ -86,6 +102,15 @@ class GFB_Plugin {
 			array(),
 			GFB_PLUGIN_VERSION,
 			true
+		);
+
+		// Strings statt bool: wp_localize_script castet Werte zu Strings (false → "").
+		wp_localize_script(
+			'gfb-frontend',
+			'gfbFrontendConfig',
+			array(
+				'webkitDateTimeFallback' => self::is_webkit_datetime_fallback_enabled() ? '1' : '0',
+			)
 		);
 
 		wp_register_style(
@@ -716,7 +741,7 @@ class GFB_Plugin {
 					<?php echo esc_html( $status_msg ); ?>
 				</div>
 			<?php endif; ?>
-			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" lang="<?php echo esc_attr( determine_locale() ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
+			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" data-gfb-webkit-datetime-fallback="<?php echo esc_attr( self::is_webkit_datetime_fallback_enabled() ? '1' : '0' ); ?>" lang="<?php echo esc_attr( determine_locale() ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
 				<input type="hidden" name="gfb_token" value="<?php echo esc_attr( $gfb_token ); ?>" />
 				<input type="hidden" name="gfb_instance_id" value="<?php echo esc_attr( $instance_id ); ?>" />
 				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
@@ -897,6 +922,67 @@ class GFB_Plugin {
 		$html = is_string( $content ) ? $content : '';
 		$safe  = self::ksesed_success_inner_html( $html );
 		return '<section class="gfb-form-success-panel" data-gfb-success-panel="1">' . $safe . '</section>';
+	}
+
+	/**
+	 * Payload einer Einsendung: zuerst form_id der Zeile, dann nur Felder dieses Formularschemas.
+	 *
+	 * Verhindert Vermischung, wenn auf einer Seite mehrere Formulare dieselben Feldnamen hatten
+	 * oder historische Daten ohne eindeutige Zuordnung vorliegen.
+	 *
+	 * @param object|array<string,mixed> $row DB-Zeile (mind. form_id, post_id, payload).
+	 * @return array<string,mixed> Feldwerte ohne _gfb_labels.
+	 */
+	public static function get_submission_payload_for_row( $row ) {
+		$form_id = '';
+		$post_id = 0;
+		$raw     = '';
+
+		if ( is_object( $row ) ) {
+			$form_id = isset( $row->form_id ) ? sanitize_key( (string) $row->form_id ) : '';
+			$post_id = isset( $row->post_id ) ? absint( $row->post_id ) : 0;
+			$raw     = isset( $row->payload ) ? (string) $row->payload : '';
+		} elseif ( is_array( $row ) ) {
+			$form_id = isset( $row['form_id'] ) ? sanitize_key( (string) $row['form_id'] ) : '';
+			$post_id = isset( $row['post_id'] ) ? absint( $row['post_id'] ) : 0;
+			$raw     = isset( $row['payload'] ) ? (string) $row['payload'] : '';
+		}
+
+		if ( '' === $form_id ) {
+			return array();
+		}
+
+		$payload = json_decode( $raw, true );
+		if ( ! is_array( $payload ) ) {
+			return array();
+		}
+
+		$schema_keys = array();
+		if ( $post_id > 0 ) {
+			foreach ( self::get_form_schema_from_post( $post_id, $form_id ) as $field ) {
+				$n = isset( $field['name'] ) ? sanitize_key( (string) $field['name'] ) : '';
+				if ( '' !== $n ) {
+					$schema_keys[ $n ] = true;
+				}
+			}
+		}
+
+		$out = array();
+		foreach ( $payload as $key => $value ) {
+			if ( '_gfb_labels' === $key ) {
+				continue;
+			}
+			$k = sanitize_key( (string) $key );
+			if ( '' === $k ) {
+				continue;
+			}
+			if ( ! empty( $schema_keys ) && ! isset( $schema_keys[ $k ] ) ) {
+				continue;
+			}
+			$out[ $k ] = $value;
+		}
+
+		return $out;
 	}
 
 	/**

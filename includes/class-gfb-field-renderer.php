@@ -154,6 +154,144 @@ class GFB_Field_Renderer {
 	}
 
 	/**
+	 * HTML-pattern (Regex) für date/time/datetime-local aus Einstellungen → Allgemein.
+	 *
+	 * @param string $type date|time|datetime-local
+	 * @return string Regex ohne Delimiter oder leer.
+	 */
+	private static function site_html_pattern_for_input_type( $type ) {
+		if ( 'date' === $type ) {
+			return self::php_date_format_to_html_pattern( (string) get_option( 'date_format', 'Y-m-d' ) );
+		}
+		if ( 'time' === $type ) {
+			return self::php_date_format_to_html_pattern( (string) get_option( 'time_format', 'H:i' ) );
+		}
+		if ( 'datetime-local' === $type ) {
+			$date_f = (string) get_option( 'date_format', 'Y-m-d' );
+			$time_f = (string) get_option( 'time_format', 'H:i' );
+			return self::php_date_format_to_html_pattern( $date_f . ' ' . $time_f );
+		}
+		return '';
+	}
+
+	/**
+	 * Placeholder-Maske passend zum pattern (z. B. d.m.Y → dd.mm.yyyy).
+	 *
+	 * @param string $type date|time|datetime-local
+	 * @return string
+	 */
+	private static function site_html_format_placeholder_for_input_type( $type ) {
+		if ( 'date' === $type ) {
+			return self::php_date_format_to_placeholder_mask( (string) get_option( 'date_format', 'Y-m-d' ) );
+		}
+		if ( 'time' === $type ) {
+			return self::php_date_format_to_placeholder_mask( (string) get_option( 'time_format', 'H:i' ) );
+		}
+		if ( 'datetime-local' === $type ) {
+			$date_f = (string) get_option( 'date_format', 'Y-m-d' );
+			$time_f = (string) get_option( 'time_format', 'H:i' );
+			return self::php_date_format_to_placeholder_mask( $date_f . ' ' . $time_f );
+		}
+		return '';
+	}
+
+	/**
+	 * PHP-Datumsformat (date_format/time_format) in HTML-pattern-Regex.
+	 *
+	 * @param string $php_format Formatzeichenkette aus get_option().
+	 * @return string
+	 */
+	private static function php_date_format_to_html_pattern( $php_format ) {
+		$map = array(
+			'd' => '\\d{2}',
+			'j' => '\\d{1,2}',
+			'D' => '[A-Za-z]{3}',
+			'l' => '[A-Za-z]+',
+			'S' => '(st|nd|rd|th)',
+			'F' => '[A-Za-z]+',
+			'M' => '[A-Za-z]{3}',
+			'm' => '\\d{2}',
+			'n' => '\\d{1,2}',
+			'Y' => '\\d{4}',
+			'y' => '\\d{2}',
+			'a' => '(am|pm)',
+			'A' => '(AM|PM)',
+			'g' => '\\d{1,2}',
+			'G' => '\\d{1,2}',
+			'h' => '\\d{2}',
+			'H' => '\\d{2}',
+			'i' => '\\d{2}',
+			's' => '\\d{2}',
+			'e' => '[A-Za-z_\\/]+',
+			'O' => '[+-]\\d{4}',
+			'P' => '[+-]\\d{2}:\\d{2}',
+			'T' => '[A-Za-z]{1,5}',
+		);
+		return self::php_date_format_map_tokens( $php_format, $map, true );
+	}
+
+	/**
+	 * PHP-Datumsformat in Placeholder-Maske (d→dd, m→mm, Y→yyyy, …).
+	 *
+	 * @param string $php_format Formatzeichenkette aus get_option().
+	 * @return string
+	 */
+	private static function php_date_format_to_placeholder_mask( $php_format ) {
+		$map = array(
+			'd' => 'dd',
+			'j' => 'd',
+			'D' => 'ddd',
+			'l' => 'dddd',
+			'S' => '',
+			'F' => 'MMMM',
+			'M' => 'MMM',
+			'm' => 'mm',
+			'n' => 'm',
+			'Y' => 'yyyy',
+			'y' => 'yy',
+			'a' => 'am',
+			'A' => 'AM',
+			'g' => 'h',
+			'G' => 'H',
+			'h' => 'hh',
+			'H' => 'HH',
+			'i' => 'mm',
+			's' => 'ss',
+			'e' => 'TZ',
+			'O' => '+0000',
+			'P' => '+00:00',
+			'T' => 'TZ',
+		);
+		return self::php_date_format_map_tokens( $php_format, $map, false );
+	}
+
+	/**
+	 * @param string               $php_format PHP-Formatstring.
+	 * @param array<string,string> $map        Zeichen → Ersatz.
+	 * @param bool                 $quote_rest Nicht gemappte Zeichen für Regex escapen.
+	 * @return string
+	 */
+	private static function php_date_format_map_tokens( $php_format, array $map, $quote_rest ) {
+		$out = '';
+		$len = strlen( $php_format );
+		for ( $i = 0; $i < $len; $i++ ) {
+			$ch = $php_format[ $i ];
+			if ( '\\' === $ch && $i + 1 < $len ) {
+				$lit = $php_format[ $i + 1 ];
+				$out .= $quote_rest ? preg_quote( $lit, '/' ) : $lit;
+				++$i;
+				continue;
+			}
+			if ( isset( $map[ $ch ] ) ) {
+				$out .= $map[ $ch ];
+				continue;
+			}
+			$out .= $quote_rest ? preg_quote( $ch, '/' ) : $ch;
+		}
+		return $out;
+	}
+
+	/**
 	 * @param array<string,mixed> $attrs Block-Attribute.
 	 * @param string              $type  HTML-input-type (date, email, …).
 	 * @param string              $field_class CSS-Klasse für das Wrapper-DIV.
@@ -172,8 +310,19 @@ class GFB_Field_Renderer {
 		}
 		if ( in_array( $type, array( 'date', 'time', 'datetime-local' ), true ) ) {
 			$dv = self::sanitize_html_datetime_default( $type, $attrs['defaultValue'] ?? '' );
+			$attr .= ' data-gfb-has-default="' . ( '' !== $dv ? '1' : '0' ) . '"';
 			if ( '' !== $dv ) {
 				$attr .= ' value="' . esc_attr( $dv ) . '"';
+			}
+			$pattern = self::site_html_pattern_for_input_type( $type );
+			if ( '' !== $pattern ) {
+				$attr .= ' pattern="' . esc_attr( $pattern ) . '"';
+			}
+			if ( '' === $c['placeholder'] ) {
+				$format_ph = self::site_html_format_placeholder_for_input_type( $type );
+				if ( '' !== $format_ph ) {
+					$attr .= ' placeholder="' . esc_attr( $format_ph ) . '"';
+				}
 			}
 		}
 		if ( 'date' === $type ) {

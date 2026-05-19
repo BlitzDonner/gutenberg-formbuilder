@@ -2,6 +2,24 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.4.0] – 2026-05-19
+
+### Hinzugefügt
+
+- **Technische Feldnamen:** Im Inspector editierbar (`GfbFieldNameInspector`); bleiben über Speichern stabil (nicht mehr bei jedem Reload neu aus `clientId`). Neues oder dupliziertes Feld → einmaliger Vorschlag aus Label (eindeutig im Formular). Attribut `nameClientId` bindet den Namen an die Block-Instanz; Duplikat im Editor → Hinweis, serverseitig `err_duplicate`.
+- **Formular-ID (`formId`):** Pro Block-Instanz stabil; bei Duplizieren/Einfügen des Formulars vergibt `syncFormInstance` eine neue ID. Submit, Schema, Admin-Filter und Payload-Auswertung (`get_submission_payload_for_row()` nach `form_id`) nutzen diese ID.
+- **Datum / Uhrzeit / Termin (Frontend):** `pattern` (Regex) und `placeholder` (Anzeigemaske, z. B. `d.m.Y` → `dd.mm.yyyy`) aus **Einstellungen → Allgemein** (`date_format`, `time_format`) in `includes/class-gfb-field-renderer.php`; nur wenn kein eigener Block-Platzhalter gesetzt ist.
+- **Admin → Sicherheit → Formular (Frontend):** Option **Safari/WebKit Text-Fallback** (Standard **an**): ersetzt `date` / `time` / `datetime-local` durch Textfelder mit `pattern`/`placeholder` aus den WP-Formaten. Abschaltbar → native Browser-Picker. Option `gfb_webkit_datetime_fallback`; Filter `gfb_webkit_datetime_fallback`; Steuerung per `gfbFrontendConfig.webkitDateTimeFallback` (`'1'`/`'0'`) und `data-gfb-webkit-datetime-fallback` am `<form>`.
+
+### Geändert
+
+- **Safari WebKit-Fallback** (`assets/frontend.js`): übernimmt `pattern` und `placeholder` vom Server; `maxLength` an die Maske angepasst; `title` = `placeholder` für Validierungsmeldungen.
+- Leere Datums-/Zeitfelder ohne serverseitigen Voreinstellungs-Wert: Safaris Anzeige „heute“ wird nicht mehr als `value` in Text-Fallback-Felder übernommen (`data-gfb-has-default` am Input).
+
+### Behoben
+
+- Deaktivierter WebKit-Fallback wirkte nicht: `wp_localize_script` castet Booleans zu Strings (`false` → `""`), der JS-Check auf `=== false` griff nicht — Konfiguration jetzt explizit `'1'`/`'0'`.
+
 ## [2.3.0] – 2026-05-19
 
 ### Hinzugefügt

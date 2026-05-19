@@ -6,12 +6,42 @@
 	var DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 	/**
+	 * Plugin-Option: Safari/WebKit Text-Fallback für Datumsfelder (1/0).
+	 * Formular-Attribut hat Vorrang; Config aus wp_localize_script (nur '1'/'0', kein bool).
+	 *
+	 * @param {HTMLFormElement|null|undefined} form
+	 * @return {boolean}
+	 */
+	function gfbWebKitDateTimeFallbackEnabled( form ) {
+		if ( form ) {
+			var attr = form.getAttribute( 'data-gfb-webkit-datetime-fallback' );
+			if ( attr === '0' ) {
+				return false;
+			}
+			if ( attr === '1' ) {
+				return true;
+			}
+		}
+		var cfg =
+			typeof window.gfbFrontendConfig !== 'undefined' ? window.gfbFrontendConfig : null;
+		if ( cfg && Object.prototype.hasOwnProperty.call( cfg, 'webkitDateTimeFallback' ) ) {
+			var v = cfg.webkitDateTimeFallback;
+			return v === true || v === 1 || v === '1' || v === 'true';
+		}
+		return true;
+	}
+
+	/**
 	 * Safari / reines WebKit: natives date/time/datetime-local ist oft fehleranfällig (12h-Segmente,
 	 * Validierung). Blink- und Gecko-Browser bleiben bei nativen Pickern.
 	 *
+	 * @param {HTMLFormElement|null|undefined} form
 	 * @return {boolean}
 	 */
-	function gfbWebKitNeedsPlainDateTimeInputs() {
+	function gfbWebKitNeedsPlainDateTimeInputs( form ) {
+		if ( ! gfbWebKitDateTimeFallbackEnabled( form ) ) {
+			return false;
+		}
 		var ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
 		if ( ! ua ) {
 			return false;
@@ -26,13 +56,23 @@
 	}
 
 	/**
+	 * Hat der Server einen echten Voreinstellungs-Wert gesetzt (nicht Safaris „heute“-Anzeige)?
+	 *
+	 * @param {HTMLInputElement} el
+	 * @return {boolean}
+	 */
+	function gfbDateTimeHasServerDefault( el ) {
+		return el.getAttribute( 'data-gfb-has-default' ) === '1';
+	}
+
+	/**
 	 * Ersetzt native Datums-/Zeit-Inputs durch formatierte Textfelder (nur WebKit-Pfad).
 	 *
 	 * @param {HTMLFormElement} form
 	 * @return {void}
 	 */
 	function gfbUpgradeWebKitDateTimeInputs( form ) {
-		if ( ! gfbWebKitNeedsPlainDateTimeInputs() || ! form ) {
+		if ( ! form || ! gfbWebKitNeedsPlainDateTimeInputs( form ) ) {
 			return;
 		}
 		var sel = 'input[type="date"], input[type="time"], input[type="datetime-local"]';
@@ -49,11 +89,13 @@
 			neo.setAttribute( 'autocomplete', 'off' );
 			neo.setAttribute( 'spellcheck', 'false' );
 			var t = el.type;
+			var srcPattern = el.getAttribute( 'pattern' );
+			var srcPlaceholder = ( el.getAttribute( 'placeholder' ) || '' ).trim();
 			if ( t === 'date' ) {
 				neo.setAttribute( 'data-gfb-datetime-kind', 'date' );
-				neo.pattern = '\\d{4}-\\d{2}-\\d{2}';
-				neo.placeholder = 'YYYY-MM-DD';
-				neo.maxLength = 10;
+				neo.pattern = srcPattern || '\\d{4}-\\d{2}-\\d{2}';
+				neo.placeholder = srcPlaceholder || 'YYYY-MM-DD';
+				neo.maxLength = srcPlaceholder ? srcPlaceholder.length : 10;
 				neo.inputMode = 'numeric';
 				var dmin = el.getAttribute( 'min' );
 				var dmax = el.getAttribute( 'max' );
@@ -65,22 +107,29 @@
 				}
 			} else if ( t === 'time' ) {
 				neo.setAttribute( 'data-gfb-datetime-kind', 'time' );
-				neo.pattern = '([01]\\d|2[0-3]):[0-5]\\d';
-				neo.placeholder = 'HH:MM';
-				neo.maxLength = 5;
+				neo.pattern = srcPattern || '([01]\\d|2[0-3]):[0-5]\\d';
+				neo.placeholder = srcPlaceholder || 'HH:MM';
+				neo.maxLength = srcPlaceholder ? srcPlaceholder.length : 5;
 				neo.inputMode = 'numeric';
 			} else {
 				neo.setAttribute( 'data-gfb-datetime-kind', 'datetime' );
-				neo.pattern = '\\d{4}-\\d{2}-\\d{2}T([01]\\d|2[0-3]):[0-5]\\d';
-				neo.placeholder = 'YYYY-MM-DDTHH:MM';
-				neo.maxLength = 16;
+				neo.pattern = srcPattern || '\\d{4}-\\d{2}-\\d{2}T([01]\\d|2[0-3]):[0-5]\\d';
+				neo.placeholder = srcPlaceholder || 'YYYY-MM-DDTHH:MM';
+				neo.maxLength = srcPlaceholder ? srcPlaceholder.length : 16;
 				neo.inputMode = 'text';
 			}
 			if ( neo.placeholder ) {
 				neo.title = neo.placeholder;
 			}
-			neo.defaultValue = typeof el.defaultValue === 'string' ? el.defaultValue : '';
-			neo.value = el.value || neo.defaultValue || '';
+			var hasDefault = gfbDateTimeHasServerDefault( el );
+			neo.setAttribute( 'data-gfb-has-default', hasDefault ? '1' : '0' );
+			if ( hasDefault ) {
+				neo.defaultValue = typeof el.defaultValue === 'string' ? el.defaultValue : '';
+				neo.value = el.value || neo.defaultValue || '';
+			} else {
+				neo.defaultValue = '';
+				neo.value = '';
+			}
 			el.parentNode.replaceChild( neo, el );
 		} );
 	}

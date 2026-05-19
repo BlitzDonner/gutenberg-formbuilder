@@ -181,12 +181,13 @@ class GFB_Admin_Submissions {
 			return;
 		}
 
-		$payload = json_decode( (string) $row->payload, true );
-		if ( ! is_array( $payload ) ) {
-			$payload = array();
+		$payload_raw = json_decode( (string) $row->payload, true );
+		if ( ! is_array( $payload_raw ) ) {
+			$payload_raw = array();
 		}
 
-		$labels_snapshot = isset( $payload['_gfb_labels'] ) && is_array( $payload['_gfb_labels'] ) ? $payload['_gfb_labels'] : array();
+		$labels_snapshot = isset( $payload_raw['_gfb_labels'] ) && is_array( $payload_raw['_gfb_labels'] ) ? $payload_raw['_gfb_labels'] : array();
+		$payload         = GFB_Plugin::get_submission_payload_for_row( $row );
 		$labels            = self::field_labels_map( (int) $row->post_id, (string) $row->form_id );
 		foreach ( $labels_snapshot as $k => $v ) {
 			$labels[ $k ] = (string) $v;
@@ -570,7 +571,7 @@ class GFB_Admin_Submissions {
 			if ( '' === $post_title ) {
 				$post_title = '—';
 			}
-			$sender_cell = self::sender_column_from_payload( (string) $row->payload );
+			$sender_cell = self::sender_column_from_payload( (string) $row->payload, (string) $row->form_id, (int) $row->post_id );
 			$row_title = isset( $row->form_title ) ? trim( (string) $row->form_title ) : '';
 
 			echo '<tr>';
@@ -772,10 +773,21 @@ class GFB_Admin_Submissions {
 	 * @param string $json Payload JSON.
 	 * @return string Escaped HTML.
 	 */
-	private static function sender_column_from_payload( $json ) {
-		$data = json_decode( (string) $json, true );
-		if ( ! is_array( $data ) ) {
-			$data = array();
+	private static function sender_column_from_payload( $json, $form_id = '', $post_id = 0 ) {
+		if ( '' !== $form_id ) {
+			$data = GFB_Plugin::get_submission_payload_for_row(
+				array(
+					'form_id'  => $form_id,
+					'post_id'  => $post_id,
+					'payload'  => (string) $json,
+				)
+			);
+		} else {
+			$data = json_decode( (string) $json, true );
+			if ( ! is_array( $data ) ) {
+				$data = array();
+			}
+			unset( $data['_gfb_labels'] );
 		}
 
 		list( , $email_disp ) = self::extract_sender_email_from_payload( $data );

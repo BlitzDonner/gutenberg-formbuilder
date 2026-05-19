@@ -10,7 +10,8 @@
  * 2) ClamAV (Mode, Pfad/Socket, Timeout, EICAR-Test, Pflicht für Uploads)
  * 3) Capability-Mapping (Tabelle Rollen x Plugin-Caps mit Toggles)
  * 4) Audit-Verifikation (Hash-Chain prüfen)
- * 5) Key-Rotation (Re-Wrap-Run starten)
+ * 5) Formular (Frontend): Safari/WebKit Datums-Text-Fallback
+ * 6) Key-Rotation (Re-Wrap-Run starten)
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -190,6 +191,18 @@ class GFB_Admin_Settings {
 						: __( 'Problem gefunden! ', 'gutenberg-formbuilder' ) )
 					. $r['details'];
 				GFB_Audit::record( 'storage_reach_test', 'system', '', $r );
+				break;
+
+			case 'save_webkit_datetime':
+				$enabled = ! empty( $_POST['webkit_datetime_fallback'] );
+				update_option( GFB_Plugin::OPTION_WEBKIT_DATETIME_FALLBACK, $enabled ? '1' : '0', false );
+				GFB_Audit::record(
+					'settings_webkit_datetime_saved',
+					'config',
+					'',
+					array( 'enabled' => $enabled )
+				);
+				$message = __( 'Formular-Einstellungen gespeichert.', 'gutenberg-formbuilder' );
 				break;
 
 			default:
@@ -392,6 +405,20 @@ class GFB_Admin_Settings {
 		echo '<input type="hidden" name="gfb_settings_action" value="storage_reach_test" />';
 		submit_button( __( 'Jetzt prüfen', 'gutenberg-formbuilder' ), 'secondary' );
 		echo ' <span class="description">' . esc_html__( 'Dauert nur wenige Sekunden. Kann beliebig oft wiederholt werden, z. B. nach Änderungen am Webserver.', 'gutenberg-formbuilder' ) . '</span>';
+		echo '</form>';
+
+		// Formular / Frontend
+		$webkit_fallback = GFB_Plugin::is_webkit_datetime_fallback_enabled();
+		echo '<hr/><h2>' . esc_html__( 'Formular (Frontend)', 'gutenberg-formbuilder' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Steuert das Verhalten von Datums-, Zeit- und Datum/Uhrzeit-Feldern im Browser.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '<form method="post">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="save_webkit_datetime" />';
+		echo '<p><label><input type="checkbox" name="webkit_datetime_fallback" value="1" ' . checked( $webkit_fallback, true, false ) . ' /> ';
+		echo esc_html__( 'Safari/WebKit: Datums- und Zeitfelder als Text mit Musterprüfung (statt nativem Picker)', 'gutenberg-formbuilder' );
+		echo '</label></p>';
+		echo '<p class="description">' . esc_html__( 'Aktiviert (Standard): In Safari werden die Felder zu Texteingaben mit pattern aus den WordPress-Datumsformaten umgewandelt — bekannt stabiler bei 12-Stunden-Format und Validierung. Deaktiviert: native Browser-Picker (type="date", "time", "datetime-local") bleiben erhalten.', 'gutenberg-formbuilder' ) . '</p>';
+		submit_button( __( 'Speichern', 'gutenberg-formbuilder' ) );
 		echo '</form>';
 
 		// 5) Key-Rotation

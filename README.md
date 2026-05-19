@@ -68,7 +68,9 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
    - `assets/gfb-editor.css` – **nur** Block-Editor-Canvas: zusammen mit `form.css` per `assets/editor.js` → `gfbSyncEditorFormStylesheet()` in den Canvas-Iframe (Link-IDs `gfb-editor-canvas-form-stylesheet` / `gfb-editor-chrome-stylesheet`), sobald ein `gfb/form`-Block existiert. Die `block.json`-Dateien setzen dafür **kein** `editorStyle`.
    - `assets/admin-submissions.css` – nur Referenz; im Admin wird CSS **inline** aus der Datei gelesen (kein zuverlässiger `plugins_url()` auf manchen Local-Setups)
 4. **Bekannte technische Entscheidungen:**
-   - **Einzigartige technische Feldnamen:** Im Inspector nicht editierbar; `syncAutoFieldName` in `assets/editor.js` setzt `name` aus Label (sonst Platzhalter, sonst Typ-Fallback) plus Kurz-ID aus der Block-`clientId` (ASCII-Slug, Umlaute → ae/oe/ue/ss). Duplizieren von Blöcken oder ganzen Formularen erzeugt neue IDs → neue Namen. `syncFormInstance` vergibt bei neuer Formular-Instanz eine neue `formId`. Sonst kollidieren POST-Keys.
+   - **Formular-ID (`formId`):** Pro Block-Instanz stabil; bei Duplizieren/Einfügen des Formulars vergibt `syncFormInstance` eine neue `formId` (`gfb_…` aus `clientId`). Submit, Schema, Admin-Filter und Payload-Auswertung binden immer zuerst an diese ID.
+   - **Technische Feldnamen:** Im Inspector editierbar (`GfbFieldNameInspector`); bleiben über Speichern stabil (nicht mehr an jedem Reload an `clientId` gekoppelt). Neues Feld oder **Feld-Duplikat** → einmaliger Vorschlag aus Label (eindeutig innerhalb des Formulars, ggf. `_2`). Duplikat im Editor → Fehlerhinweis; serverseitig `err_duplicate`. Attribute `nameClientId` markiert die Block-Instanz.
+   - **Payload im Admin:** `GFB_Plugin::get_submission_payload_for_row()` liefert nur Felder des Schemas der gespeicherten `form_id` (relevant bei mehreren Formularen mit gleichen Feldnamen auf einer Seite).
    - **Editor-Styling:** `enqueue_block_editor_assets` allein reicht für die **Canvas-Vorschau** nicht; deshalb hängt `editor.js` bei vorhandenem `gfb/form`-Block `form.css` und `gfb-editor.css` in den Canvas-Iframe (`gfbSyncEditorFormStylesheet`, URLs aus `gfbEditorAssets` in `includes/class-gfb-plugin.php` → `wp_localize_script`).
    - **Eingabetext vs. Theme:** In `form.css` / `gfb-editor.css` nutzen sichtbare Feld-Texte `color` und `-webkit-text-fill-color` mit `!important`, damit Block-Themes die Plugin-Farben (`--gfb-text` / Hell-Dunkel-Variablen) nicht überschreiben. Bei **Theme + eigene Farben** greifen zusätzliche Regeln auf `.gfb-form-wrapper[data-gfb-appearance="theme"].gfb-form-colors-custom`.
    - **Submit / Schema:** Die Server-Validierung sucht den `gfb/form`-Block per `GFB_Plugin::locate_form_block_for_post()` in Beitragsinhalt, **Bibliotheks-/Musterblöcken** (`core/block` → `wp_block`), **Template-Parts** (`core/template-part`) und typischen **FSE-Templates** (`wp_template`). Fehlermeldung „Formularschema nicht gefunden“ entsteht, wenn der Block dort nicht vorkommt (früher nur `post_content`); zusätzliche Markup-Quellen per Filter `gfb_form_schema_markup_sources`.
@@ -90,7 +92,7 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
 
 ## Funktionsumfang (Kurz)
 
-- Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`)
+- Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`); Frontend **`pattern`** und **`placeholder`** aus **Einstellungen → Allgemein** (`date_format` / `time_format`, z. B. `dd.mm.yyyy`)
 - **Erfolgsbereich** (`gfb/form-success`, nur innerhalb von `gfb/form`): beliebige InnerBlocks, die nach erfolgreichem Absenden **anstelle des Formulars** erscheinen, wenn **keine** Folgeseite gewählt ist. Im Text stehen Platzhalter `{{feldname}}` (technischer Name) und optional `{{label_feldname}}`; die Werte setzt `assets/frontend.js` per `sessionStorage`-Snapshot beim Absenden (Datei-Felder: `[Datei]`). Mit gewählter Folgeseite bleibt das bisherige Verhalten (Hinweiszeile / Redirect-Zielseite). Im Erfolgsbereich kann der Block **Platzhalter-Hilfe** (`gfb/token`) die **technischen Feldnamen** in einem Auswahlfeld anbieten; nach der Wahl wird `{{feldname}}` (übermittelter Wert) an dieser Stelle als Absatz eingefügt (nur Editor). Optional weiterhin `{{label_feldname}}` manuell für die Anzeige-Bezeichnung.
 - Submit über `admin_post` / `admin_post_nopriv` mit Nonce, Honeypot, Timing, Rate-Limit
 - **E-Mail-Benachrichtigung** pro Formular (optional): Empfänger, Betreff, Absender — siehe Abschnitt oben und [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)
@@ -115,7 +117,22 @@ docs/                       # Zusatzdoku (Farben/Verläufe, E-Mail-Benachrichtig
 - Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` sowie in `blocks/form-success/block.json` und `blocks/token/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Skripte/Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
 
-**Zuletzt dokumentiert (Auszug):** **E-Mail-Benachrichtigung** am Block `gfb/form` ([`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)), **Erfolgsbereich** (`gfb/form-success`), **Platzhalter-Hilfe** (`gfb/token`), **sessionStorage**-Snapshot in `assets/frontend.js`, WebKit-Datums-/Zeit-**Text-Fallback**, Locale-Dateien `languages/…`, Entwurfs-**Wiederherstellung** `auto`/`prompt`, Submit-**Detailnotices** (`gfb_detail`), Schema-Suche (`locate_form_block_for_post`).
+**Zuletzt dokumentiert (Auszug):** **Technische Feldnamen** (stabil, editierbar, `nameClientId`), **`formId`** pro Formular-Instanz, **E-Mail-Benachrichtigung** ([`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)), **Erfolgsbereich**, **Platzhalter-Hilfe** (`gfb/token`), **Datum/Zeit** (`pattern`/`placeholder` aus WP-Datumsformat), **Safari/WebKit-Fallback** (Admin-Option), Entwürfe, Submit-**Detailnotices**, Schema-Suche (`locate_form_block_for_post`).
+
+## Datum, Uhrzeit, Termin (Frontend)
+
+Die Blöcke `gfb/field-date`, `gfb/field-time` und `gfb/field-datetime` rendern serverseitig (`includes/class-gfb-field-renderer.php`):
+
+| Ausgabe | Quelle | Beispiel bei `date_format` = `d.m.Y` |
+|--------|--------|--------------------------------------|
+| `pattern` | Regex aus PHP-Formatzeichen | `\d{2}\.\d{2}\.\d{4}` |
+| `placeholder` | Anzeigemaske (nur ohne eigenen Block-Platzhalter) | `dd.mm.yyyy` |
+
+Die **serverseitige Validierung** beim Absenden erwartet weiterhin **ISO-Strings** (`Y-m-d`, `H:i`, `Y-m-d\TH:i` in `includes/class-gfb-submit-handler.php`).
+
+**Safari / WebKit (ohne Blink):** Standardmäßig wandelt `assets/frontend.js` die Felder in **Texteingaben** um (stabiler bei 12h-Format und Validierung). Abschaltbar unter **Formular-Einträge → Sicherheit → Formular (Frontend)**. Deaktiviert bleiben native `type="date"` / `time` / `datetime-local`; Safari kann in leeren Feldern trotzdem das **heutige Datum** als graue Anzeige zeigen — das ist Browser-Verhalten, kein gespeicherter Wert. Mit aktivem Fallback und leerem Feld: `placeholder` aus den WP-Einstellungen, kein Übernehmen von Safaris „heute“ als `value` (`data-gfb-has-default`).
+
+Chrome, Firefox, Edge und Opera nutzen weiterhin die **nativen Picker** (unabhängig von der Admin-Option).
 
 ## Zeitfeld: „Ungültiger Wert“ (Browser)
 
@@ -124,8 +141,6 @@ Die Meldung **„Ungültiger Wert“** bei `<input type="time">` kommt von der *
 Typische Ursache: **System/Browser mit 12-Stunden-UI** — im Stunden-Segment sind oft nur **1–12** erlaubt; eine Eingabe wie **18** für die Stunde wirkt dort ungültig, obwohl **18:30** in einem reinen 24h-Modell korrekt wäre.
 
 Das gerenderte `<form class="gfb-form">` trägt das Attribut **`lang="…"`** (WordPress-Locale via `determine_locale()`), damit Steuerelemente stärker an die **Sprache der Website** gekoppelt sind — in manchen Browser/OS-Kombinationen reduziert das 12h-/24h-Reibungen. Trotzdem kann das Verhalten browser- und systemabhängig bleiben; bei hartnäckigen Fällen helfen **24-Stunden-Anzeige** in den Systemeinstellungen oder ein anderer Browser zum Test.
-
-**Safari / WebKit (ohne Blink):** `assets/frontend.js` ersetzt `date` / `time` / `datetime-local` durch **formatierte Textfelder** (`pattern`, festes `placeholder`, `maxLength`), damit dieselben POST-Strings wie unter Chrome/Firefox entstehen. Blink-/Gecko-Browser (inkl. Chrome, Edge, Firefox, Chrome auf iOS) bleiben bei den nativen Pickern.
 
 **Hinweis nach Absenden:** Die Erfolgs-/Fehlerzeile kommt aus der Redirect-URL (`gfb_status`, …). Nach dem Laden entfernt `frontend.js` diese Parameter mit **`history.replaceState`**, damit ein **Reload** das Formular ohne feststeckenden Hinweis zeigt. **Entwurf löschen** blendet die Notice zusätzlich aus und bereinigt die URL.
 

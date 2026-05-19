@@ -19,6 +19,10 @@
             "type": "string",
             "default": ""
         },
+        "nameClientId": {
+            "type": "string",
+            "default": ""
+        },
         "options": {
             "type": "string",
             "default": "Option 1\nOption 2"

@@ -19,6 +19,10 @@
             "type": "string",
             "default": ""
         },
+        "nameClientId": {
+            "type": "string",
+            "default": ""
+        },
         "placeholder": {
             "type": "string",
             "default": ""

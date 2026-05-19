@@ -165,3 +165,10 @@ Konfiguration am Block **Formular** → Panel **E-Mail-Benachrichtigung** (keine
 5. **Absendername** (optional): leer = Seitentitel; Platzhalter `{{feldname}}` / `{{label_feldname}}` wie beim Betreff.
 
 Ausführlich (Versandlogik, Sicherheit, Attribute): [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md) und [`README.md`](README.md#formular-e-mail-benachrichtigung).
+
+## 13. Datum, Uhrzeit, Termin (Frontend)
+
+- **Formate:** Unter **Einstellungen → Allgemein** legen `date_format` und `time_format` fest, wie Felder im Frontend aussehen sollen. Das Plugin setzt daraus automatisch HTML-`pattern` (Validierung) und `placeholder` (z. B. `dd.mm.yyyy`), sofern am Feldblock kein eigener Platzhalter eingetragen wurde.
+- **Voreinstellung im Editor:** Block-Inspector → **Voreingestellter Wert** (ISO: `JJJJ-MM-TT`, `HH:MM`, `JJJJ-MM-TTTHH:MM`). Leer = Feld startet ohne `value`.
+- **Safari:** Unter **Formular-Einträge → Sicherheit → Formular (Frontend)** kann der **WebKit-Text-Fallback** abgeschaltet werden (dann native Datums-/Zeit-Picker). Standard ist **an** (Textfeld mit Muster aus den WP-Formaten). Nach Änderung der Option die Formularseite neu laden.
+- **Technik:** Renderer `includes/class-gfb-field-renderer.php`; Safari-Umwandlung `assets/frontend.js`. Details: [`README.md`](README.md#datum-uhrzeit-termin-frontend).
