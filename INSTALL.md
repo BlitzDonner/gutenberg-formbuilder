@@ -153,3 +153,15 @@ Keine Server-Konfiguration nötig; Kurzüberblick für Inhalte nach erfolgreiche
 - **Platzhalter:** `{{feldname}}` = übermittelter Wert (technischer Name des Feldes, siehe Block-Inspector unter den Feldern). Optional `{{label_feldname}}` = Bezeichnung aus dem Schema. Datei-Felder im Erfolgstext: Wert erscheint als **`[Datei]`** (kein Dateiname aus dem Snapshot).
 - **Technik:** Werte kommen aus einem **sessionStorage**-Snapshot beim Absenden (gleicher Browser-Tab). Nach einem Reload ohne erneutes Absenden sind die Platzhalter nicht befüllbar.
 - **Platzhalter-Hilfe** (`gfb/token`): Dropdown der **Feldnamen** fügt per Klick einen Absatz mit `{{feldname}}` ein (nur Editor, kein Frontend-Markup).
+
+## 12. E-Mail-Benachrichtigung (Redaktion)
+
+Konfiguration am Block **Formular** → Panel **E-Mail-Benachrichtigung** (keine separate Plugin-Seite).
+
+1. **E-Mail nach Absenden senden** aktivieren (Standard ist aus).
+2. **Empfänger:** Tokens per `FormTokenField`; nur gültige E-Mail-Adressen. Beim neuen Formular und nach Verlassen eines leeren Feldes erscheint die **Admin-E-Mail** der Website als Voreinstellung. Ohne Tokens beim Speichern versendet das System ebenfalls an die Admin-E-Mail.
+3. **Betreff** optional; Platzhalter `{{feldname}}` / `{{label_feldname}}` wie im Erfolgsbereich.
+4. **Absender-E-Mail:** Admin-E-Mail oder ein E-Mail-Feld aus dem Formular.
+5. **Absendername** (optional): leer = Seitentitel; Platzhalter `{{feldname}}` / `{{label_feldname}}` wie beim Betreff.
+
+Ausführlich (Versandlogik, Sicherheit, Attribute): [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md) und [`README.md`](README.md#formular-e-mail-benachrichtigung).

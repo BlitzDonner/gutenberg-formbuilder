@@ -38,13 +38,29 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
 
 ---
 
+## Formular: E-Mail-Benachrichtigung
+
+Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
+
+| Einstellung | Kurz |
+|-------------|------|
+| **E-Mail nach Absenden senden** | Standard **aus**; bei Aktivierung wird nach erfolgreicher Speicherung `wp_mail` ausgelöst. |
+| **Empfänger** | `FormTokenField` mit E-Mail-Validierung pro Token; Standard-Vorschau = **Admin-E-Mail** (beim Anlegen des Formulars und erneut, wenn der Block verlassen wird und das Feld leer ist). Leer gespeichert → Versand an Admin-E-Mail. Max. 10 Empfänger. |
+| **Betreff** | Optional; leer = Standard (`[Seitenname]` + Formularname/ID). Platzhalter: `{{feldname}}`, `{{label_feldname}}`. |
+| **Absender-E-Mail** | **Admin-E-Mail der Website** oder ein **E-Mail-Feld** aus dem Formular als `From`-Adresse (sonst Fallback Admin). |
+| **Absendername** | Optional; leer = Seitentitel. Platzhalter `{{feldname}}`, `{{label_feldname}}` wie beim Betreff. |
+
+**Sicherheit / Inhalt:** Einstellungen kommen nur aus Block-Attributen (nicht aus POST). Verschlüsselte Felder und Dateien erscheinen in der Mail nicht im Klartext. Ausführlich: [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md).
+
+---
+
 ## Für die nächste Person: wo weitermachen?
 
 1. **Plugin-Root:** dieses Verzeichnis ist das gesamte Plugin (`gutenberg-formbuilder.php` ist der Einstieg).
 2. **Version:** bei Releases `GFB_PLUGIN_VERSION` und den Header `Version:` in `gutenberg-formbuilder.php` **gemeinsam** anheben, damit Browser-Caches für `editor.js` / `frontend.js` / CSS greifen.
 3. **Wichtige Pfade:**
    - `includes/class-gfb-plugin.php` – Block-Registrierung, Form-Render (inkl. `data-gfb-appearance`, Farb-Variablen), Schema für Submit
-   - `includes/class-gfb-submit-handler.php` – Validierung, DB-Insert, Mail
+   - `includes/class-gfb-submit-handler.php` – Validierung, DB-Insert, E-Mail-Benachrichtigung (`send_notification_mail`)
    - `includes/class-gfb-admin-submissions.php` – Admin-Seite „Formular-Einträge“, Löschen (Redirect im `load-*`-Hook!)
    - `assets/editor.js` – alle Block-`edit`/`save`-Definitionen
    - `assets/frontend.js` – IndexedDB-Entwürfe, Wiederherstellung (`restoreMode`: Standard **automatisch**), Debounce, Safari-Hacks
@@ -77,6 +93,7 @@ Ausführlicher technischer Abriss: [`docs/FARBEN-UND-VERLAUFE.md`](docs/FARBEN-U
 - Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`)
 - **Erfolgsbereich** (`gfb/form-success`, nur innerhalb von `gfb/form`): beliebige InnerBlocks, die nach erfolgreichem Absenden **anstelle des Formulars** erscheinen, wenn **keine** Folgeseite gewählt ist. Im Text stehen Platzhalter `{{feldname}}` (technischer Name) und optional `{{label_feldname}}`; die Werte setzt `assets/frontend.js` per `sessionStorage`-Snapshot beim Absenden (Datei-Felder: `[Datei]`). Mit gewählter Folgeseite bleibt das bisherige Verhalten (Hinweiszeile / Redirect-Zielseite). Im Erfolgsbereich kann der Block **Platzhalter-Hilfe** (`gfb/token`) die **technischen Feldnamen** in einem Auswahlfeld anbieten; nach der Wahl wird `{{feldname}}` (übermittelter Wert) an dieser Stelle als Absatz eingefügt (nur Editor). Optional weiterhin `{{label_feldname}}` manuell für die Anzeige-Bezeichnung.
 - Submit über `admin_post` / `admin_post_nopriv` mit Nonce, Honeypot, Timing, Rate-Limit
+- **E-Mail-Benachrichtigung** pro Formular (optional): Empfänger, Betreff, Absender — siehe Abschnitt oben und [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen)
 - Lokale Entwürfe (IndexedDB): **Standard** ist automatische Wiederherstellung ohne Browser-Dialog; optional **Nachfragen** (`restoreMode: prompt`) im Block **Formular** → Formulareinstellungen; Button **Entwurf löschen** (abschaltbar)
@@ -89,7 +106,7 @@ includes/                   # PHP: Plugin, Submit, Admin
 assets/                     # editor.js, frontend.js, CSS
 blocks/*/block.json         # Block-Metadaten
 languages/                  # Übersetzungen (*.po / *.mo), siehe INSTALL.md
-docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
+docs/                       # Zusatzdoku (Farben/Verläufe, E-Mail-Benachrichtigung, …)
 ```
 
 ## Entwicklung
@@ -98,7 +115,7 @@ docs/                       # optionale Zusatzdoku (z. B. Farben/Verläufe)
 - Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` sowie in `blocks/form-success/block.json` und `blocks/token/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Skripte/Styles).
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
 
-**Zuletzt dokumentiert (Auszug):** **Erfolgsbereich** (`gfb/form-success`), **Platzhalter-Hilfe** (`gfb/token`), **sessionStorage**-Snapshot und Platzhalter-Ersetzung in `assets/frontend.js`, WebKit-Datums-/Zeit-**Text-Fallback**, Locale-Dateien `languages/…`, Entwurfs-**Wiederherstellung** `auto`/`prompt`, Submit-**Detailnotices** (`gfb_detail`), `defaultValue` für Datum/Uhrzeit/Termin, Schema-Suche (`locate_form_block_for_post`), Redirect `gfb_status` / `gfb_code` / `gfb_detail`.
+**Zuletzt dokumentiert (Auszug):** **E-Mail-Benachrichtigung** am Block `gfb/form` ([`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)), **Erfolgsbereich** (`gfb/form-success`), **Platzhalter-Hilfe** (`gfb/token`), **sessionStorage**-Snapshot in `assets/frontend.js`, WebKit-Datums-/Zeit-**Text-Fallback**, Locale-Dateien `languages/…`, Entwurfs-**Wiederherstellung** `auto`/`prompt`, Submit-**Detailnotices** (`gfb_detail`), Schema-Suche (`locate_form_block_for_post`).
 
 ## Zeitfeld: „Ungültiger Wert“ (Browser)
 

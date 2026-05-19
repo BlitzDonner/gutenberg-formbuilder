@@ -76,6 +76,7 @@ class GFB_Plugin {
 				'editorCanvasFormStylesUrl' => GFB_PLUGIN_URL . 'assets/form.css',
 				'editorChromeStylesUrl'     => GFB_PLUGIN_URL . 'assets/gfb-editor.css',
 				'version'                   => GFB_PLUGIN_VERSION,
+				'adminEmail'                => sanitize_email( (string) get_option( 'admin_email' ) ),
 			)
 		);
 

@@ -53,7 +53,7 @@ Dieses Dokument beschreibt das Bedrohungsmodell, die getroffenen Massnahmen, das
 | Anonymer Bot/Spammer | Spam-Flood | HMAC-Anti-Replay, dynamischer Honeypot, IP-Rate-Limit |
 | Anonymer Angreifer mit File-Feld | RCE durch hochgeladene Datei | Static Validation + optional ClamAV + Speicherung **nicht unter öffentlicher URL** (Default: Dot-Pfad unter `wp-content/`, optional per Filter ausserhalb des Webroots), AES-256-GCM-Verschlüsselung |
 | Anonymer Angreifer | Reflektierte XSS / Open-Redirect | Status-Slug-Whitelist, serverseitige i18n-Texte (inkl. gebündelter `.mo` unter `languages/` für u. a. `en_US`, `fr_FR`, `it_IT`), `wp_safe_redirect` |
-| Anonymer Angreifer | Mail-Header/Body-Injection | CRLF-Strip, `wp_strip_all_tags`, expliziter `Content-Type` |
+| Anonymer Angreifer | Mail-Header/Body-Injection | CRLF-Strip, `wp_strip_all_tags`, expliziter `Content-Type`; Empfänger/Betreff/Absender nur aus gespeicherten `gfb/form`-Attributen (nicht aus POST), `sanitize_email` / max. 10 Empfänger |
 | Editor mit `unfiltered_html` | Stored XSS in Form-Markup | Dynamisches `render_callback` für ALLE Felder (kein vertrauenswürdiger save()-Output), `wp_kses` als zweite Schicht |
 | Site-Admin (DSGVO) | Personenbezug-Mgmt | IP-Pseudonymisierung-Filter, Personal-Data-Exporter/Eraser |
 | Server-Admin/Backup-Operator | Liest Disk/Backup mit Submissions | **Per-File AES-256-GCM-Verschlüsselung**, KEK liegt nicht in der DB |
@@ -108,6 +108,7 @@ Jedes Field-Block-Attribut hat optional `sensitive: true`. Server-Pfad:
 - Beim Submit: `GFB_Crypto::encrypt_field( $value, 'field:<name>' )` → Envelope-Array `{_enc, key_id, iv, tag, ct}` wird im Submission-Payload-JSON abgelegt **statt** des Klartexts.
 - Im Admin: nur Benutzer mit Cap `gfb_decrypt_submissions` sehen Klartext. Sonstige sehen `[verschlüsselt]` + Key-ID. Jede Anzeige eines entschlüsselten Datensatzes erzeugt einen `submission_decrypted`-Audit-Eintrag.
 - E-Mail-Notifications enthalten **niemals** entschlüsselte Werte — die Mail-Strecke ist im Allgemeinen nicht vertrauenswürdig.
+- Pro Formular konfigurierbar (`emailNotificationEnabled`, `emailRecipients`, `emailSubject`, `emailFromField`, `emailFromName`); Versand nur nach erfolgreichem DB-Insert. Siehe [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md).
 
 ### 2.5 Encrypted Files
 

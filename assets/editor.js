@@ -3,6 +3,7 @@
 	var __ = wp.i18n.__;
 	var el = wp.element.createElement;
 	var useEffect = wp.element.useEffect;
+	var useRef = wp.element.useRef;
 	var useState = wp.element.useState;
 	var useSelect = wp.data.useSelect;
 	var InspectorControls = wp.blockEditor.InspectorControls;
@@ -156,14 +157,21 @@
 					setAttributes( { blockInstanceId: clientId } );
 					return;
 				}
-				/* Kopie / Einfügen: fremde blockInstanceId oder leeres Formular → neue formId. */
+				/* Kopie / Einfügen / neu: neue formId; Empfänger-Default nur hier (einmalig). */
 				var generated = 'gfb_' + clientId.replace( /-/g, '' ).slice( 0, 12 );
-				setAttributes( {
+				var patch = {
 					blockInstanceId: clientId,
 					formId: generated,
-				} );
+				};
+				if ( gfbNormalizeEmailRecipientsArray( attributes.emailRecipients ).length === 0 ) {
+					var admin = gfbGetDefaultAdminEmail();
+					if ( admin ) {
+						patch.emailRecipients = [ admin ];
+					}
+				}
+				setAttributes( patch );
 			},
-			[ attributes.blockInstanceId, attributes.formId, clientId, setAttributes ]
+			[ attributes.blockInstanceId, attributes.formId, attributes.emailRecipients, clientId, setAttributes ]
 		);
 	}
 
@@ -357,6 +365,52 @@
 	}
 
 	/**
+	 * @return {string}
+	 */
+	function gfbGetDefaultAdminEmail() {
+		if ( typeof gfbEditorAssets === 'undefined' || ! gfbEditorAssets.adminEmail ) {
+			return '';
+		}
+		var email = String( gfbEditorAssets.adminEmail ).trim();
+		return gfbIsValidEmailToken( email ) ? email : '';
+	}
+
+	/**
+	 * Nach Verlassen des Formularblocks: leeres Empfänger-Feld → Admin-E-Mail wieder setzen.
+	 *
+	 * @param {object} attributes
+	 * @param {function} setAttributes
+	 * @param {string} clientId
+	 */
+	function syncEmailRecipientsOnFormBlur( attributes, setAttributes, clientId ) {
+		var formHasFocus = useSelect(
+			function ( select ) {
+				var blockEditor = select( 'core/block-editor' );
+				return (
+					blockEditor.isBlockSelected( clientId ) ||
+					blockEditor.hasSelectedInnerBlock( clientId, true )
+				);
+			},
+			[ clientId ]
+		);
+		var hadFocus = useRef( false );
+		useEffect(
+			function () {
+				if ( hadFocus.current && ! formHasFocus ) {
+					if ( gfbNormalizeEmailRecipientsArray( attributes.emailRecipients ).length === 0 ) {
+						var admin = gfbGetDefaultAdminEmail();
+						if ( admin ) {
+							setAttributes( { emailRecipients: [ admin ] } );
+						}
+					}
+				}
+				hadFocus.current = formHasFocus;
+			},
+			[ formHasFocus, attributes.emailRecipients, setAttributes ]
+		);
+	}
+
+	/**
 	 * @param {object} attributes
 	 * @param {function} setAttributes
 	 * @param {Array<{name:string,label:string}>} emailFieldRows
@@ -433,7 +487,7 @@
 							},
 						} ),
 						el( SelectControl, {
-							label: __( 'Absender', 'gutenberg-formbuilder' ),
+							label: __( 'Absender-E-Mail', 'gutenberg-formbuilder' ),
 							help:
 								emailFieldRows.length > 0
 									? __(
@@ -446,6 +500,17 @@
 							disabled: emailFieldRows.length === 0,
 							onChange: function ( v ) {
 								setAttributes( { emailFromField: v || '' } );
+							},
+						} ),
+						el( TextControl, {
+							label: __( 'Absendername', 'gutenberg-formbuilder' ),
+							help: __(
+								'Optional. Leer = Name der Website. Platzhalter: {{feldname}} und {{label_feldname}} (technischer Feldname).',
+								'gutenberg-formbuilder'
+							),
+							value: attributes.emailFromName || '',
+							onChange: function ( v ) {
+								setAttributes( { emailFromName: v == null ? '' : String( v ) } );
 							},
 						} )
 				  )
@@ -1416,6 +1481,7 @@
 			}
 
 			syncFormInstance( attributes, setAttributes, props.clientId );
+			syncEmailRecipientsOnFormBlur( attributes, setAttributes, props.clientId );
 
 			var innerBlocksProps = useInnerBlocksProps(
 				{

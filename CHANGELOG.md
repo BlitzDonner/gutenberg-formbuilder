@@ -2,13 +2,18 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.3.0] – 2026-05-19
+
+### Hinzugefügt
+
+- **E-Mail-Benachrichtigung** am Block `gfb/form` (Inspector-Panel): Schalter **E-Mail nach Absenden senden** (Standard aus). **Empfänger** als `FormTokenField` mit E-Mail-Validierung pro Token; Admin-E-Mail als Voreinstellung beim Anlegen des Formulars und erneut nach Verlassen des Blocks bei leerem Feld (`gfbEditorAssets.adminEmail`); ohne Tokens beim Versand Fallback Admin-E-Mail (max. 10 Empfänger). Optionaler **Betreff** und **Absendername** mit Platzhaltern `{{feldname}}` / `{{label_feldname}}`; Standardbetreff nutzt bei leerem Feld den **Anzeigenamen** (`formTitle`), falls gesetzt. **Absender-E-Mail:** Admin oder Wert aus einem `gfb/field-email` der Einsendung. Block-Attribute: `emailNotificationEnabled`, `emailRecipients`, `emailSubject`, `emailFromField`, `emailFromName`. Server: `GFB_Submit_Handler::send_notification_mail()` — nur Block-Attribute, `text/plain`, keine entschlüsselten sensiblen Werte in der Mail. Doku: [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md); Kurzüberblick in [`README.md`](README.md#formular-e-mail-benachrichtigung) und [`INSTALL.md`](INSTALL.md#12-e-mail-benachrichtigung-redaktion).
+
 ## [2.2.0] – 2026-05-10
 
 ### Hinzugefügt
 
 - **Formular-Anzeigename** (`formTitle` am Block `gfb/form`): optional im Editor; wird bei Einsendungen in der Tabelle `form_title` gespeichert (serverseitig aus Block-Attributen, nicht aus POST). Datenbank-Upgrade `gfb_submissions_db_version` 2 inkl. Spalte `form_title`.
 - **Admin „Formular-Einträge“:** Filter nach `form_id`, Sortierung (Datum / Formularname), Spalte **Formular** mit Name und technischer ID; **Absender** statt Kurzüberblick: E-Mail und Vor-/Nachname per Feldnamen-Heuristik (bzw. Platzhalter bei Verschlüsselung).
-- **E-Mail-Benachrichtigung:** Betreff nutzt den Anzeigenamen, falls gesetzt.
 - **Datenexport (DSGVO):** Eintrag enthält Feld **Formularname** (`form_title`).
 
 ## [2.1.4] – 2026-05-10

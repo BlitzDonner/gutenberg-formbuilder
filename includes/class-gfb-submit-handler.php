@@ -606,7 +606,7 @@ class GFB_Submit_Handler {
 		$labels = isset( $payload['_gfb_labels'] ) && is_array( $payload['_gfb_labels'] ) ? $payload['_gfb_labels'] : array();
 		$subject = self::build_notification_subject( $post_id, $form_id, $form_title, $form_attrs, $payload, $labels );
 		$body    = self::build_notification_body( $payload, $labels );
-		$headers = self::build_notification_headers( $form_attrs, $payload );
+		$headers = self::build_notification_headers( $form_attrs, $payload, $labels );
 
 		wp_mail( $recipients, $subject, $body, $headers );
 	}
@@ -726,14 +726,15 @@ class GFB_Submit_Handler {
 	}
 
 	/**
-	 * @param array<string,mixed> $form_attrs Block attributes.
-	 * @param array<string,mixed> $payload    Submission payload.
+	 * @param array<string,mixed>   $form_attrs Block attributes.
+	 * @param array<string,mixed>   $payload    Submission payload.
+	 * @param array<string,string>  $labels     Field labels.
 	 * @return array<int,string>
 	 */
-	private static function build_notification_headers( array $form_attrs, array $payload ) {
+	private static function build_notification_headers( array $form_attrs, array $payload, array $labels = array() ) {
 		$headers    = array( 'Content-Type: text/plain; charset=UTF-8' );
 		$from_email = self::resolve_notification_from_email( $form_attrs, $payload );
-		$from_name  = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$from_name  = self::resolve_notification_from_name( $form_attrs, $payload, $labels );
 
 		$from_mailbox = self::format_mailbox_header( $from_name, $from_email );
 		if ( '' !== $from_mailbox ) {
@@ -768,6 +769,29 @@ class GFB_Submit_Handler {
 	}
 
 	/**
+	 * From-Anzeigename: optional mit Platzhaltern, sonst Seitentitel.
+	 *
+	 * @param array<string,mixed>  $form_attrs Block attributes.
+	 * @param array<string,mixed>  $payload    Submission payload.
+	 * @param array<string,string> $labels     Field labels.
+	 * @return string
+	 */
+	private static function resolve_notification_from_name( array $form_attrs, array $payload, array $labels ) {
+		$custom = isset( $form_attrs['emailFromName'] ) ? trim( (string) $form_attrs['emailFromName'] ) : '';
+		if ( '' !== $custom ) {
+			$name = self::replace_notification_placeholders( $custom, $payload, $labels );
+			$name = wp_strip_all_tags( (string) $name );
+			$name = preg_replace( "/[\r\n]+/", ' ', (string) $name );
+			$name = trim( $name );
+			if ( '' !== $name ) {
+				return mb_substr( $name, 0, 120 );
+			}
+		}
+
+		return wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+	}
+
+	/**
 	 * @param string $name  Display name.
 	 * @param string $email E-mail address.
 	 * @return string
@@ -788,7 +812,7 @@ class GFB_Submit_Handler {
 	}
 
 	/**
-	 * Ersetzt {{feldname}} und {{label_feldname}} im Betreff.
+	 * Ersetzt {{feldname}} und {{label_feldname}} in Betreff- und Absendernamen-Vorlagen.
 	 *
 	 * @param string               $template Subject template.
 	 * @param array<string,mixed>  $payload  Submission payload.
