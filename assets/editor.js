@@ -416,13 +416,21 @@
 	 * @param {Array<{name:string,label:string}>} emailFieldRows
 	 * @return {*}
 	 */
+	var GFB_EMAIL_FROM_CUSTOM_SENDER = 'gfb_custom_sender';
+
 	function renderEmailNotificationControls( attributes, setAttributes, emailFieldRows ) {
 		var enabled = attributes.emailNotificationEnabled === true;
+		var fromMode = attributes.emailFromField || '';
+		var isCustomFrom = fromMode === GFB_EMAIL_FROM_CUSTOM_SENDER;
 
 		var fromFieldOptions = [
 			{
 				label: __( 'Admin-E-Mail der Website', 'gutenberg-formbuilder' ),
 				value: '',
+			},
+			{
+				label: __( 'Eigene E-Mail-Adresse', 'gutenberg-formbuilder' ),
+				value: GFB_EMAIL_FROM_CUSTOM_SENDER,
 			},
 		];
 		emailFieldRows.forEach( function ( row ) {
@@ -488,20 +496,32 @@
 						} ),
 						el( SelectControl, {
 							label: __( 'Absender-E-Mail', 'gutenberg-formbuilder' ),
-							help:
-								emailFieldRows.length > 0
-									? __(
-											'Bei E-Mail-Feld: From-Adresse aus der Einsendung (falls gültig), sonst Admin-E-Mail.',
-											'gutenberg-formbuilder'
-									  )
-									: __( 'Es wird die Admin-E-Mail der Website verwendet.', 'gutenberg-formbuilder' ),
-							value: attributes.emailFromField || '',
+							help: __(
+								'Admin, feste Adresse oder Wert aus einem E-Mail-Feld der Einsendung (sonst Admin-E-Mail).',
+								'gutenberg-formbuilder'
+							),
+							value: isCustomFrom ? GFB_EMAIL_FROM_CUSTOM_SENDER : fromMode,
 							options: fromFieldOptions,
-							disabled: emailFieldRows.length === 0,
 							onChange: function ( v ) {
 								setAttributes( { emailFromField: v || '' } );
 							},
 						} ),
+						isCustomFrom
+							? el( TextControl, {
+									label: __( 'Eigene Absender-E-Mail', 'gutenberg-formbuilder' ),
+									type: 'email',
+									help: __(
+										'Feste From-Adresse für diese Benachrichtigung (nicht aus dem Formular). Ungültig oder leer → Admin-E-Mail.',
+										'gutenberg-formbuilder'
+									),
+									value: attributes.emailFromCustom || '',
+									onChange: function ( v ) {
+										setAttributes( {
+											emailFromCustom: v == null ? '' : String( v ).trim(),
+										} );
+									},
+							  } )
+							: null,
 						el( TextControl, {
 							label: __( 'Absendername', 'gutenberg-formbuilder' ),
 							help: __(

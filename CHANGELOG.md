@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.4.1] – 2026-05-20
+
+### Hinzugefügt
+
+- **E-Mail-Benachrichtigung — eigener Absender:** Neben Admin-E-Mail und E-Mail-Feld der Einsendung kann im Inspector **Eigene E-Mail-Adresse** gewählt werden (`emailFromCustom`, Modus `gfb_custom_sender` in `emailFromField`). Adresse nur aus Block-Attributen, nicht aus POST. Doku: [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md).
+
 ## [2.4.0] – 2026-05-19
 
 ### Hinzugefügt

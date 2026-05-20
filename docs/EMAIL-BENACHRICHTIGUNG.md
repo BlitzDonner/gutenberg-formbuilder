@@ -25,7 +25,7 @@ Das Panel ist nur sichtbar, wenn der Formular-Block (oder ein Inner Block darin)
 | **E-Mail nach Absenden senden** | Aus | Schaltet den Versand nach erfolgreichem Submit ein. |
 | **Empfänger** | Admin-E-Mail (siehe unten) | `FormTokenField`: eine oder mehrere gültige E-Mail-Adressen als Tokens. |
 | **Betreff** | Leer → Standardbetreff | Optional eigener Betreff; Platzhalter `{{feldname}}`, `{{label_feldname}}`. |
-| **Absender-E-Mail** | Admin-E-Mail der Website | Entweder Admin-E-Mail oder **From-Adresse** aus einem `gfb/field-email` der Einsendung. |
+| **Absender-E-Mail** | Admin-E-Mail der Website | Admin-E-Mail, **eigene feste Adresse** oder **From-Adresse** aus einem `gfb/field-email` der Einsendung. |
 | **Absendername** | Leer → Seitentitel | Optional; Platzhalter wie beim Betreff (`{{feldname}}`, `{{label_feldname}}`). |
 
 Zusätzlich in **Formulareinstellungen** (gleicher Inspector, anderes Panel):
@@ -61,13 +61,14 @@ Ist `emailRecipients` beim Speichern des Blocks **leer** (alle Tokens entfernt u
 
 ---
 
-## Absender-E-Mail (`emailFromField`)
+## Absender-E-Mail (`emailFromField`, `emailFromCustom`)
 
 Dropdown **Absender-E-Mail**:
 
 | Option | From-Adresse beim Versand |
 |--------|---------------------------|
 | **Admin-E-Mail der Website** (Wert `""`) | Admin-E-Mail (`get_option( 'admin_email' )`). |
+| **Eigene E-Mail-Adresse** (`emailFromField` = `gfb_custom_sender`) | `emailFromCustom` aus dem Block (serverseitig `sanitize_email`); ungültig oder leer → Fallback Admin-E-Mail. **Nicht** aus POST — Manipulationsschutz wie bei den übrigen Mail-Einstellungen. |
 | **E-Mail-Feld** (z. B. `email_abc123`) | Gültige Adresse aus diesem Feld der Einsendung, falls vorhanden und nicht verschlüsselt; sonst Fallback Admin-E-Mail. |
 
 ## Absendername (`emailFromName`)
@@ -129,7 +130,8 @@ E-Mail-Versand schlägt **nicht** den Submit-Erfolg fehl: Fehler in `wp_mail` ä
 | `emailNotificationEnabled` | `boolean` | `false` | Versand ein/aus |
 | `emailRecipients` | `array` | `[]` | Liste Empfänger-E-Mails |
 | `emailSubject` | `string` | `""` | Eigener Betreff (optional) |
-| `emailFromField` | `string` | `""` | Technischer `name` eines `gfb/field-email` oder leer = Admin |
+| `emailFromField` | `string` | `""` | Leer = Admin; `gfb_custom_sender` = eigene Adresse; sonst technischer `name` eines `gfb/field-email` |
+| `emailFromCustom` | `string` | `""` | Feste From-Adresse, wenn `emailFromField` = `gfb_custom_sender` |
 | `emailFromName` | `string` | `""` | Optionaler From-Anzeigename mit Platzhaltern; leer = Seitentitel |
 
 Verwandt: `formTitle` (Anzeigename) in **Formulareinstellungen**.

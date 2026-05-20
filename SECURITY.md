@@ -108,7 +108,7 @@ Jedes Field-Block-Attribut hat optional `sensitive: true`. Server-Pfad:
 - Beim Submit: `GFB_Crypto::encrypt_field( $value, 'field:<name>' )` → Envelope-Array `{_enc, key_id, iv, tag, ct}` wird im Submission-Payload-JSON abgelegt **statt** des Klartexts.
 - Im Admin: nur Benutzer mit Cap `gfb_decrypt_submissions` sehen Klartext. Sonstige sehen `[verschlüsselt]` + Key-ID. Jede Anzeige eines entschlüsselten Datensatzes erzeugt einen `submission_decrypted`-Audit-Eintrag.
 - E-Mail-Notifications enthalten **niemals** entschlüsselte Werte — die Mail-Strecke ist im Allgemeinen nicht vertrauenswürdig.
-- Pro Formular konfigurierbar (`emailNotificationEnabled`, `emailRecipients`, `emailSubject`, `emailFromField`, `emailFromName`); Versand nur nach erfolgreichem DB-Insert. Siehe [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md).
+- Pro Formular konfigurierbar (`emailNotificationEnabled`, `emailRecipients`, `emailSubject`, `emailFromField`, `emailFromCustom`, `emailFromName`); Versand nur nach erfolgreichem DB-Insert. Siehe [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md).
 
 ### 2.5 Encrypted Files
 

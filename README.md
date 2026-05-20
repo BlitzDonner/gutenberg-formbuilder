@@ -47,7 +47,7 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
 | **E-Mail nach Absenden senden** | Standard **aus**; bei Aktivierung wird nach erfolgreicher Speicherung `wp_mail` ausgelöst. |
 | **Empfänger** | `FormTokenField` mit E-Mail-Validierung pro Token; Standard-Vorschau = **Admin-E-Mail** (beim Anlegen des Formulars und erneut, wenn der Block verlassen wird und das Feld leer ist). Leer gespeichert → Versand an Admin-E-Mail. Max. 10 Empfänger. |
 | **Betreff** | Optional; leer = Standard (`[Seitenname]` + Formularname/ID). Platzhalter: `{{feldname}}`, `{{label_feldname}}`. |
-| **Absender-E-Mail** | **Admin-E-Mail der Website** oder ein **E-Mail-Feld** aus dem Formular als `From`-Adresse (sonst Fallback Admin). |
+| **Absender-E-Mail** | **Admin-E-Mail**, **eigene feste Adresse** oder ein **E-Mail-Feld** aus dem Formular als `From`-Adresse (sonst Fallback Admin). |
 | **Absendername** | Optional; leer = Seitentitel. Platzhalter `{{feldname}}`, `{{label_feldname}}` wie beim Betreff. |
 
 **Sicherheit / Inhalt:** Einstellungen kommen nur aus Block-Attributen (nicht aus POST). Verschlüsselte Felder und Dateien erscheinen in der Mail nicht im Klartext. Ausführlich: [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md).

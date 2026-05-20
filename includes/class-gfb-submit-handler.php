@@ -744,8 +744,11 @@ class GFB_Submit_Handler {
 		return $headers;
 	}
 
+	/** Absender-Modus: feste Adresse im Block (nicht aus POST). */
+	const EMAIL_FROM_CUSTOM_SENDER = 'gfb_custom_sender';
+
 	/**
-	 * From-Adresse: E-Mail-Feld der Einsendung oder Admin-E-Mail.
+	 * From-Adresse: eigene Adresse, E-Mail-Feld der Einsendung oder Admin-E-Mail.
 	 *
 	 * @param array<string,mixed> $form_attrs Block attributes.
 	 * @param array<string,mixed> $payload    Submission payload.
@@ -753,7 +756,12 @@ class GFB_Submit_Handler {
 	 */
 	private static function resolve_notification_from_email( array $form_attrs, array $payload ) {
 		$field = isset( $form_attrs['emailFromField'] ) ? sanitize_key( (string) $form_attrs['emailFromField'] ) : '';
-		if ( '' !== $field && isset( $payload[ $field ] ) ) {
+		if ( self::EMAIL_FROM_CUSTOM_SENDER === $field ) {
+			$custom = isset( $form_attrs['emailFromCustom'] ) ? sanitize_email( (string) $form_attrs['emailFromCustom'] ) : '';
+			if ( '' !== $custom && is_email( $custom ) ) {
+				return $custom;
+			}
+		} elseif ( '' !== $field && isset( $payload[ $field ] ) ) {
 			$value = $payload[ $field ];
 			if ( ! GFB_Crypto::is_field_envelope( $value ) ) {
 				$email = sanitize_email( (string) $value );
