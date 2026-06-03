@@ -2,6 +2,31 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.5.0] – 2026-06-03
+
+### Hinzugefügt
+
+- **CSV-Export der Formular-Einsendungen:** Auf der Admin-Seite «Formular-Einträge» erscheint eine Export-Box, sobald ein einzelnes Formular gefiltert ist. Ein Klick auf «Als CSV exportieren» lädt alle Datensätze des Formulars (ungepaginiert) als CSV-Datei herunter. Trennzeichen ist Semikolon `;` (DACH-Standard für Excel), Zeichensatz UTF-8 mit BOM.
+- **Spalten:** Metaspalten (`id`, `created_at`, `post_id`, `form_id`, `form_title`) plus alle Felder des Formular-Schemas in Schema-Reihenfolge. Spaltenüberschriften sind die Feld-Labels aus dem Schema. Die Spalte `ip_address` erscheint **ausschliesslich**, wenn der Export tatsächlich entschlüsselt wird (Cap `gfb_decrypt_submissions` vorhanden und Option «Entschlüsseln» aktiviert).
+- **Verschlüsselte Felder:** Standardmässig als `[verschlüsselt]` maskiert. Nur Nutzer mit Cap `gfb_decrypt_submissions` sehen die Entschlüsseln-Option; ist sie aktiv, erscheinen Klartextwerte. Schlägt die Entschlüsselung fehl, steht `[Entschlüsselung fehlgeschlagen]`.
+- **Mehrwert-Felder** (Mehrfachauswahl, Arrays) werden als kommaseparierte Liste in einer Zelle ausgegeben.
+- **Datei-Felder** erscheinen im reinen CSV-Export als `Dateiname (Grösse) sha256:<fingerprint>` (keine Binärdaten).
+- **ZIP-Export (CSV + hochgeladene Dateien):** Zweiter Button «CSV + Dateien (ZIP)» neben «Als CSV exportieren». Er erscheint nur, wenn das Formular mindestens ein Datei-Feld hat, der Benutzer die Cap `gfb_download_files` besitzt und die PHP-Erweiterung `ZipArchive` verfügbar ist (sonst dezenter Hinweis). Das Archiv enthält `eintraege.csv` und einen Ordner `dateien/`. Pro Einsendung ein Unterordner, benannt nach der Absender-E-Mail (`dateien/<email>/`); bei mehreren Einsendungen derselben Adresse mit Suffix `-2`, `-3`; ohne lesbare E-Mail `eintrag-<id>`. Jede Datei wird aus dem verschlüsselten Storage in Klartext entpackt und unter ihrem Originalnamen abgelegt; die Datei-Zelle der CSV enthält statt des Fingerprints den relativen ZIP-Pfad, sodass jede Datei eindeutig ihrer Zeile und ihrem Feld zugeordnet ist.
+- **Gemeinsame Export-Box:** Eine einzige «Felder entschlüsseln»-Option (protokolliert) gilt für beide Buttons; beide laufen über die Action `gfb_export` (Parameter `gfb_export_kind` = `csv`|`zip`).
+
+### Geändert
+
+- **Audit-Kontext erweitert:** `submission_exported` enthält jetzt `{count, decrypt_mode, fields_decrypted, format}` (`format` = `csv` oder `zip`, bei ZIP zusätzlich `files_included`) statt des früheren einfachen Decrypt-Flags.
+
+### Sicherheit
+
+- **CSV-Injection-Härtung:** Jede Zelle wird vor dem Schreiben geprüft; beginnt der Wert mit `=`, `+`, `-`, `@`, Tab oder Carriage-Return, wird ein Hochkomma `'` vorangestellt.
+- **Audit-Einträge:** Jeder Export schreibt `submission_exported`. `submission_exported_decrypted` wird geschrieben, sobald der Entschlüsseln-Modus aktiv und berechtigt war – unabhängig davon, ob das Formular verschlüsselte Felder enthält. So ist im Protokoll erkennbar, dass ein Export potenziell Klartext und die IP-Adresse enthielt. ZIP-Exporte schreiben zusätzlich pro Datei einen `file_exported`-Eintrag (Datei-ID, sha256, Formular- und Einsendungs-ID). Abgebrochene Exporte (kein Login, fehlende Cap, ungültige Nonce, kein Formular, fehlendes `ZipArchive`) schreiben `submission_export_denied` mit Grund.
+- **Datei-Inhalte im ZIP:** Entschlüsselter Klartext verlässt das private Storage nur für Nutzer mit `gfb_download_files` und wird nach dem Schreiben aus dem Speicher entfernt. Das temporäre Archiv wird ausserhalb der Web-Wurzel (`.gfb-private`) erzeugt und nach der Auslieferung zwingend gelöscht – auch im Fehlerfall (`register_shutdown_function`).
+- **Pfad-Sicherheit:** Ordner- und Dateinamen im ZIP werden bereinigt (Zeichen-Whitelist, Pfad-Traversal `..`/`/`/`\` ausgeschlossen, Längenbegrenzung, Endungserhalt).
+- **Serverseitige Durchsetzung:** Ist die Decrypt-Option im Request gesetzt, aber die Cap `gfb_decrypt_submissions` fehlt, wird maskiert exportiert – die Option wird ignoriert, kein Fehler.
+- **Export «Alle Formulare» gesperrt:** Verschiedene Formulare haben unterschiedliche Schemas; ein Misch-Export wird nicht unterstützt.
+
 ## [2.4.1] – 2026-05-20
 
 ### Hinzugefügt

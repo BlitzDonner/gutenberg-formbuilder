@@ -146,6 +146,16 @@ Datei-Downloads laufen nur über einen authentifizierten Admin-Endpunkt mit Nonc
 
 Der Browser soll heruntergeladene Inhalte nicht interpretieren. Er soll sie als Anhang behandeln.
 
+## Klartext-Export ist Cap-geschützt und wird protokolliert
+
+Der CSV-Export der Formular-Einsendungen untersteht denselben Regeln wie die Detail-Ansicht. Für den Export braucht ein Nutzer mindestens die Cap `gfb_view_submissions`. Verschlüsselte Felder erscheinen im Export standardmässig als `[verschlüsselt]`.
+
+Nur Nutzer mit der separaten Cap `gfb_decrypt_submissions` können beim Export die Option «Verschlüsselte Felder entschlüsseln» aktivieren. Das Plugin erzwingt diese Prüfung serverseitig – auch wenn die Option im Request mitgesendet wird, aber die Cap fehlt, wird maskiert exportiert.
+
+Jeder Export schreibt einen Audit-Eintrag (`submission_exported`). Exporte mit mindestens einem entschlüsselten Feld schreiben einen zweiten Eintrag (`submission_exported_decrypted`). Abgebrochene Export-Versuche werden ebenfalls protokolliert.
+
+Die Spalte `ip_address` erscheint im CSV ausschliesslich, wenn der Export tatsächlich entschlüsselt wird. Bei maskierten Exporten fehlt die Spalte vollständig.
+
 ## ClamAV als zusätzliche Schutzschicht
 
 ClamAV ist optional. Das ist bewusst so, weil viele Shared-Hosting-Umgebungen keine Installation eines Virenscanners erlauben.

@@ -97,7 +97,7 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
 - Submit über `admin_post` / `admin_post_nopriv` mit Nonce, Honeypot, Timing, Rate-Limit
 - **E-Mail-Benachrichtigung** pro Formular (optional): Empfänger, Betreff, Absender — siehe Abschnitt oben und [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
-- Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen)
+- Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen, **CSV-Export**): Export eines einzelnen Formulars als UTF-8-BOM-CSV (Semikolon, RFC-4180); verschlüsselte Felder maskiert oder – mit Cap `gfb_decrypt_submissions` – im Klartext; IP-Adresse nur bei Klartext-Export; CSV-Injection-Härtung; Audit-Einträge für jeden Export
 - Lokale Entwürfe (IndexedDB): **Standard** ist automatische Wiederherstellung ohne Browser-Dialog; optional **Nachfragen** (`restoreMode: prompt`) im Block **Formular** → Formulareinstellungen; Button **Entwurf löschen** (abschaltbar)
 
 ## Repository-Layout
@@ -170,7 +170,6 @@ Nach dem Absenden leitet WordPress u. a. auf eine URL mit `gfb_status=error`, 
 ## MVP-Grenzen / Ideen für später
 
 - Mehrschritt, bedingte Logik, CRM-Webhooks
-- Export CSV aus Admin
 - Tests (PHPUnit / E2E)
 
 ## Lizenz
