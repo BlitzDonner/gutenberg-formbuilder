@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "gfb/token",
   "version": "2.4.1",
-  "title": "Platzhalter-Hilfe",
+  "title": "Rückmeldungsfelder",
   "category": "gfb-form",
   "ancestor": ["gfb/form-success"],
   "icon": {

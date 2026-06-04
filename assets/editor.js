@@ -256,7 +256,7 @@
 
 	/** Reihenfolge im Formular-Inserter: Felder zuerst (Core nutzt die Reihenfolge von allowedBlocks). */
 	/**
-	 * Felder unter gfb/form für Platzhalter-Hilfe (ohne Erfolgsbereich, ohne Absenden).
+	 * Felder unter gfb/form für die Rückmeldungsfelder (ohne Rückmeldung, ohne Absenden).
 	 *
 	 * @param {Array} blocks
 	 * @return {Array<{name:string,label:string}>}
@@ -894,11 +894,7 @@
 			wp.element.Fragment,
 			null,
 			el( TextControl, {
-				label: __( 'Technischer Feldname', 'gutenberg-formbuilder' ),
-				help: __(
-					'POST-Schlüssel; innerhalb dieses Formulars eindeutig. Bleibt beim Speichern erhalten; bei Feld-Duplikat wird ein neuer Name vorgeschlagen.',
-					'gutenberg-formbuilder'
-				),
+				label: __( 'Eindeutiger Feldname', 'gutenberg-formbuilder' ),
 				value: attributes.name || '',
 				onChange: function ( value ) {
 					var next = gfbSanitizeFieldNameInput( value );
@@ -931,7 +927,7 @@
 		if ( includePlaceholder ) {
 			controls.push(
 				el( TextControl, {
-					label: __( 'Placeholder', 'gutenberg-formbuilder' ),
+					label: __( 'Platzhalter', 'gutenberg-formbuilder' ),
 					value: attributes.placeholder || '',
 					onChange: function ( value ) {
 						setAttributes( { placeholder: value } );
@@ -956,9 +952,9 @@
 				el(
 					ToggleControl,
 					{
-						label: __( 'Vertraulich (verschlüsselt speichern)', 'gutenberg-formbuilder' ),
+						label: __( 'Vertraulich', 'gutenberg-formbuilder' ),
 						help: __(
-							'Wenn aktiv, wird der Feldwert mit AES-256-GCM verschlüsselt in der Datenbank gespeichert. Anzeige im Admin nur für Benutzer mit der Berechtigung "gfb_decrypt_submissions".',
+							'Feldwert kann nur mit entsprechender Berechtigung eingesehen werden. Das gilt nicht für den Versand per Mail, da ist alles zu sehen.',
 							'gutenberg-formbuilder'
 						),
 						checked: !! attributes.sensitive,
@@ -1556,45 +1552,6 @@
 		return rows;
 	}
 
-	function renderFieldColorOverrideControls( attributes, setAttributes ) {
-		return renderGfbColorPanel(
-			__( 'Farben (Feld überschreiben)', 'gutenberg-formbuilder' ),
-			createFormColorSettings( attributes, setAttributes ),
-			{ wrapInPanelBody: true }
-		);
-	}
-
-	/** Nur Absenden-Block: Button- und Fokus-Overrides ohne die übrigen Feld-Farben. */
-	function renderSubmitButtonColorOverrideControls( attributes, setAttributes ) {
-		return renderGfbColorPanel(
-			__( 'Button & Fokus (Feld überschreiben)', 'gutenberg-formbuilder' ),
-			[
-				{
-					label: __( 'Fokus (Rahmen, Schieberegler)', 'gutenberg-formbuilder' ),
-					value: attributes.colorFocus || '',
-					onChange: function ( v ) {
-						setAttributes( { colorFocus: v || '' } );
-					},
-				},
-				{
-					label: __( 'Button-Hintergrund', 'gutenberg-formbuilder' ),
-					value: attributes.colorButtonBg || '',
-					onChange: function ( v ) {
-						setAttributes( { colorButtonBg: v || '' } );
-					},
-				},
-				{
-					label: __( 'Button-Text', 'gutenberg-formbuilder' ),
-					value: attributes.colorButtonText || '',
-					onChange: function ( v ) {
-						setAttributes( { colorButtonText: v || '' } );
-					},
-				},
-			],
-			{ wrapInPanelBody: true }
-		);
-	}
-
 	registerBlockType( 'gfb/form', {
 		edit: function ( props ) {
 			var attributes = props.attributes;
@@ -1836,7 +1793,7 @@
 						el( Notice, {
 							status: 'info',
 							isDismissible: false,
-						}, __( 'Optional den Block „Erfolgsbereich“ einfügen: Bei Erfolg ohne Folgeseite erscheint sein Inhalt statt des Formulars. Platzhalter im Text: {{feldname}} (technischer Feldname).', 'gutenberg-formbuilder' ) ),
+						}, __( 'Optional den Block „Rückmeldung“ einfügen: Bei Erfolg ohne Folgeseite erscheint sein Inhalt statt des Formulars. Platzhalter im Text: {{feldname}} (technischer Feldname).', 'gutenberg-formbuilder' ) ),
 						el( SelectControl, {
 							label: __( 'Folgeseite nach erfolgreichem Absenden', 'gutenberg-formbuilder' ),
 							help: __( 'Öffentlich sichtbare Seite. Ohne Auswahl bleibt die Besucherin auf der Formularseite (Hinweis oben).', 'gutenberg-formbuilder' ),
@@ -1858,7 +1815,7 @@
 						value: appearance,
 						help:
 							appearance === 'theme'
-								? __( 'Farben und Karte kommen aus dem Theme; gesetzte Formularfarben überschreiben nur die betreffenden Werte.', 'gutenberg-formbuilder' )
+								? __( 'Farben und Karte kommen vollständig aus dem Theme. Eigene Formularfarben gibt es nur in den Modi Hell, Dunkel oder Automatisch.', 'gutenberg-formbuilder' )
 								: undefined,
 						options: [
 							{ label: __( 'Theme (Standard)', 'gutenberg-formbuilder' ), value: 'theme' },
@@ -1870,14 +1827,18 @@
 							setAttributes( { appearanceMode: value || 'theme' } );
 						},
 					} ),
-					renderGfbColorPanel(
-						__( 'Formularfarben (Hell)', 'gutenberg-formbuilder' ),
-						createFormColorSettings( attributes, setAttributes )
-					),
-					renderGfbColorPanel(
-						__( 'Formularfarben (Dunkel)', 'gutenberg-formbuilder' ),
-						createDarkFormColorSettings( attributes, setAttributes )
-					)
+					appearance !== 'theme'
+						? renderGfbColorPanel(
+							__( 'Formularfarben (Hell)', 'gutenberg-formbuilder' ),
+							createFormColorSettings( attributes, setAttributes )
+						  )
+						: null,
+					appearance !== 'theme'
+						? renderGfbColorPanel(
+							__( 'Formularfarben (Dunkel)', 'gutenberg-formbuilder' ),
+							createDarkFormColorSettings( attributes, setAttributes )
+						  )
+						: null
 					)
 				),
 				el(
@@ -1962,7 +1923,7 @@
 					el(
 						PanelBody,
 						{
-							title: __( 'Erfolgsbereich', 'gutenberg-formbuilder' ),
+							title: __( 'Rückmeldung', 'gutenberg-formbuilder' ),
 							initialOpen: true,
 						},
 						el( Notice, { status: 'info', isDismissible: false }, __( 'Dieser Inhalt ersetzt nach erfolgreichem Absenden das Formular, sofern keine Folgeseite gewählt ist. Platzhalter: {{feldname}}; optional {{label_feldname}} (z. B. {{label_email}}).', 'gutenberg-formbuilder' ) )
@@ -2016,7 +1977,7 @@
 							Notice,
 							{ status: 'warning', isDismissible: false },
 							__(
-								'Keine Felder gefunden. Lege zuerst Felder im Formular ausserhalb dieses Erfolgsbereichs an.',
+								'Keine Felder gefunden. Lege zuerst Felder im Formular ausserhalb dieser Rückmeldung an.',
 								'gutenberg-formbuilder'
 							)
 					  )
@@ -2064,8 +2025,7 @@
 							clientId: props.clientId,
 						} ),
 						buildFieldControls( attributes, setAttributes, true )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2122,8 +2082,7 @@
 							clientId: props.clientId,
 						} ),
 						buildFieldControls( attributes, setAttributes, true )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2180,8 +2139,7 @@
 							clientId: props.clientId,
 						} ),
 						buildFieldControls( attributes, setAttributes, true )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'textarea', {
@@ -2242,11 +2200,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						el( TextareaControl, {
 							label: __( 'Optionen (eine pro Zeile)', 'gutenberg-formbuilder' ),
@@ -2255,8 +2208,7 @@
 								setAttributes( { options: value } );
 							},
 						} )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el(
@@ -2328,8 +2280,7 @@
 							clientId: props.clientId,
 						} ),
 						buildFieldControls( attributes, setAttributes, false )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				( function () {
 					var lab = gfbTrimmedFieldLabel( attributes.label );
@@ -2397,8 +2348,7 @@
 								setAttributes( { label: value } );
 							},
 						} )
-					),
-					renderSubmitButtonColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				el(
 					'div',
@@ -2463,15 +2413,9 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, true ),
 						buildMinMaxStepInspector( attributes, setAttributes, true )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2534,8 +2478,7 @@
 							clientId: props.clientId,
 						} ),
 						buildFieldControls( attributes, setAttributes, true )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2594,8 +2537,7 @@
 							clientId: props.clientId,
 						} ),
 						buildFieldControls( attributes, setAttributes, true )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2651,11 +2593,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						buildDateMinMaxInspector( attributes, setAttributes ),
 						buildOptionalDefaultValueControl(
@@ -2666,8 +2603,7 @@
 								'gutenberg-formbuilder'
 							)
 						)
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2727,11 +2663,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						buildOptionalDefaultValueControl(
 							attributes,
@@ -2741,8 +2672,7 @@
 								'gutenberg-formbuilder'
 							)
 						)
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2798,11 +2728,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						buildOptionalDefaultValueControl(
 							attributes,
@@ -2812,8 +2737,7 @@
 								'gutenberg-formbuilder'
 							)
 						)
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
@@ -2879,11 +2803,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						el( TextareaControl, {
 							label: __( 'Optionen (eine pro Zeile)', 'gutenberg-formbuilder' ),
@@ -2903,8 +2822,7 @@
 								setAttributes( { optionsLayout: value === 'row' ? 'row' : 'column' } );
 							},
 						} )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 			];
 			if ( radioGroupLabelText ) {
@@ -3105,11 +3023,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						buildMinMaxStepInspector( attributes, setAttributes, true ),
 						el( TextControl, {
@@ -3120,8 +3033,7 @@
 							},
 							help: __( 'Leer lassen für die Mitte zwischen Min und Max.', 'gutenberg-formbuilder' ),
 						} )
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( rangeId ), attributes.label, attributes.required ),
 				el(
@@ -3196,11 +3108,6 @@
 							setAttributes: setAttributes,
 							clientId: props.clientId,
 						} ),
-						el( GfbFieldNameInspector, {
-							attributes: attributes,
-							setAttributes: setAttributes,
-							clientId: props.clientId,
-						} ),
 						buildFieldControls( attributes, setAttributes, false ),
 						el( TextControl, {
 							label: __( 'accept (z. B. .pdf,image/*)', 'gutenberg-formbuilder' ),
@@ -3224,8 +3131,7 @@
 									max: 128,
 							  } )
 							: null
-					),
-					renderFieldColorOverrideControls( attributes, setAttributes )
+					)
 				),
 				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {

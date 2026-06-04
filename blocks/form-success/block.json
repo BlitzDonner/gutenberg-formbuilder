@@ -3,7 +3,7 @@
   "apiVersion": 3,
   "name": "gfb/form-success",
   "version": "2.4.1",
-  "title": "Erfolgsbereich",
+  "title": "Rückmeldung",
   "category": "gfb-form",
   "ancestor": ["gfb/form"],
   "icon": {

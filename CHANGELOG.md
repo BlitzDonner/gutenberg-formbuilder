@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.6.4] – 2026-06-04
+
+### Geändert
+
+- **Sprechendere Feldname-Beschriftung im Block-Editor:** Das Control heisst neu «Eindeutiger Feldname» (vorher «Technischer Feldname»). Der erläuternde Hilfetext («POST-Schlüssel; innerhalb dieses Formulars eindeutig …») entfällt.
+- **Klarere Beschriftung des Vertraulich-Schalters:** Der Schalter heisst neu schlicht «Vertraulich» (vorher «Vertraulich (verschlüsselt speichern)»). Neuer Hilfetext: «Feldwert kann nur mit entsprechender Berechtigung eingesehen werden. Das gilt nicht für den Versand per Mail, da ist alles zu sehen.»
+- **Platzhalter-Feld eingedeutscht:** Das Editor-Control für den Eingabe-Platzhalter trägt neu das deutsche Label «Platzhalter» (vorher englisch «Placeholder») – als übersetzbarer String passend zur Sprache ausgegeben.
+- **Farb-Verwaltung auf Form-Ebene zentralisiert:** Farben werden nur noch am Formular eingestellt («Formularfarben Hell/Dunkel»); alle Felder erben sie. Die beiden frontend-wirkungslosen Farb-/Stil-UIs auf Feldern wurden entfernt: der native «Stil»-Tab (Farbe, Typografie, Abstand, Rahmen – alle Supports aus den `field-*`-Blöcken) und das tote Panel «Farben (Feld überschreiben)». Das verhindert die bisherige doppelte und irreführende Farbeingabe.
+- **Theme-Modus ohne Farb-Controls:** Im Farbmodus «Theme (Standard)» sind die Panels «Formularfarben Hell/Dunkel» ausgeblendet – das Aussehen kommt vollständig aus dem WordPress-Theme. Eigene Formularfarben gibt es nur in den Modi Hell, Dunkel und Automatisch. Hinweistext des Farbmodus-Selects entsprechend angepasst.
+- **Blöcke sprechender benannt:** «Erfolgsbereich» heisst neu «Rückmeldung», «Platzhalter-Hilfe» heisst neu «Rückmeldungsfelder». Die Block-Titel sind in Englisch, Französisch und Italienisch übersetzt (Confirmation / Conferma usw.). Interne Block-Namen, CSS-Klassen und gespeicherte Formulare bleiben unverändert.
+
+### Behoben
+
+- **Doppeltes Feldname-Control im Block-Editor:** Bei acht Feldtypen (Auswahlfeld, Zahl, Datum, Uhrzeit, Datum und Uhrzeit, Radio-Auswahl, Schieberegler, Datei-Upload) erschien das Control «Technischer Feldname» im Inspector zweimal untereinander. Ursache war ein doppelter Aufruf der Komponente `GfbFieldNameInspector` je Block; der überzählige Aufruf wurde entfernt. Das Control erscheint nun – wie bei den übrigen Feldtypen – genau einmal.
+
 ## [2.6.3] – 2026-06-04
 
 ### Hinzugefügt

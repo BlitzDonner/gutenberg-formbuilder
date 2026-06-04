@@ -202,3 +202,9 @@ msgstr "Leave empty for no initial value. Format: HH:MM (24-hour), e.g. 09:30."
 
 msgid "Leer lassen für keinen Startwert. Format: JJJJ-MM-TTTHH:MM (lokal), z. B. 2026-05-10T14:00."
 msgstr "Leave empty for no initial value. Format: YYYY-MM-DDTHH:mm (local), e.g. 2026-05-10T14:00."
+
+msgid "Rückmeldung"
+msgstr "Confirmation"
+
+msgid "Rückmeldungsfelder"
+msgstr "Confirmation fields"

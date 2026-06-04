@@ -41,21 +41,7 @@
         }
     },
     "supports": {
-        "html": false,
-        "spacing": {
-            "margin": true,
-            "padding": true
-        },
-        "color": {
-            "text": true,
-            "background": true
-        },
-        "typography": {
-            "fontSize": true,
-            "lineHeight": true,
-            "fontWeight": true
-        },
-        "border": true
+        "html": false
     },
     "usesContext": [
         "gfb/formId",
