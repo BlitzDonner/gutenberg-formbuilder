@@ -2,6 +2,26 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.6.3] – 2026-06-04
+
+### Hinzugefügt
+
+- **Audit-Log-Ansicht im Admin** (Menü «Formular-Einträge → Audit-Log», Berechtigung `gfb_view_audit`): seitenweise Liste aller Ereignisse mit verständlichen Aktionsnamen (z. B. «Einsendungen exportiert», «Datei heruntergeladen»), Akteur (Login + IP), Ziel und lesbar formatierten Details. Die Hash-Chain-Integritätsprüfung ist integriert. Neue Datei `includes/class-gfb-admin-audit.php`; auf der Sicherheits-Seite ersetzt ein Verweis den bisherigen Prüf-Block.
+- **Pflichtfeld-Kennzeichnung:** Pflichtfelder tragen ein Sternchen «*» in der Akzentfarbe – an Label, Radio-Legende und Checkbox-Label, identisch in Frontend und Block-Editor.
+- **Datei vor dem Versand entfernen:** Sobald eine Datei gewählt ist, erscheint pro Datei-Feld ein «Entfernen»-Link (rechtsbündig in der Hinweiszeile), der nur dieses eine Feld leert.
+
+### Geändert
+
+- **Erscheinungs-Stile vollständig neu aufgebaut.** Die Modi **Hell, Dunkel, Automatik** sind jetzt komplett von Theme- und externem CSS isoliert (harter Reset, feste Apple-artige Paletten, selbst gezeichnete Checkbox/Radio/Range/Select/Datei-Button) und sehen im Block-Editor-Canvas und im Frontend identisch aus (gleiche Abstände, line-height, Borders, Radien). Der Modus **«Theme»** bleibt bewusst ohne Plugin-Stil und übernimmt das Website-Theme. Feldbreiten einheitlich; Block-Auswahl im Editor wieder pro Einzelfeld.
+- **Berechtigungs-Matrix verständlich beschriftet:** Die Spaltenüberschriften zeigen einen Klartext-Titel plus Beschreibung (was die Rolle damit darf), der technische Capability-Name bleibt klein als Referenz.
+- **«verschlüsselt»-Pille** sitzt rechtsbündig auf der Label-Zeile statt darunter.
+- **Audit-Kontext beim Export erweitert** (`decrypt_mode`, `fields_decrypted`, `format`): Ein Export im Entschlüsseln-Modus wird zuverlässig protokolliert, auch wenn das Formular keine verschlüsselten Felder hat.
+
+### Behoben
+
+- Datei-Auswahl-Button: weisse Schrift auf der Akzentfläche (zuvor schwarz/unleserlich).
+- Range-Slider: Knopf vertikal korrekt auf dem Track zentriert.
+
 ## [2.5.0] – 2026-06-03
 
 ### Hinzugefügt

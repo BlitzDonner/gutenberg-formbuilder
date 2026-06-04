@@ -1,6 +1,8 @@
 /**
- * Nur Block-Editor: Block-Listen-Icons, Hinweise, Erfolgsbereich-Chrome.
- * Keine Feld-Skins (form.css stylt Formularfelder nicht); Theme/Browser für Inputs.
+ * Nur Block-Editor-Chrome: Block-Listen-Icons, Hinweise, Erfolgsbereich-Rahmen,
+ * Platzhalter-Hilfe, Canvas-Hintergrund im Theme-Modus.
+ * KEINE Formular-Optik – die liegt vollstaendig in form.css und wird per
+ * gfbSyncEditorFormStylesheet auch in den Canvas-Iframe gehaengt (Parität).
  */
 
 /* Editor-Hinweis bei verstecktem Feld (kein Frontend-Äquivalent). */
@@ -27,7 +29,31 @@
 	fill: currentColor;
 }
 
-/* Theme-Formular ohne Kartenfläche: hinter transparentem Wrapper schimmert der graue Editor-Canvas — wie Seitenfläche (Canvas) wirken lassen, sofern kein Block-Hintergrund gesetzt ist. */
+/* Theme-Formular ohne Kartenfläche: hinter transparentem Wrapper schimmert der graue Editor-Canvas – wie Seitenfläche (Canvas) wirken lassen, sofern kein Block-Hintergrund gesetzt ist. */
 .editor-styles-wrapper .gfb-form-wrapper[data-gfb-appearance="theme"]:not(.has-background) {
 	background-color: Canvas;
+}
+
+/* Editor: Erfolgsbereich-Block (Chrome, kein Frontend-Äquivalent). */
+.block-editor-block-list__block .gfb-form-success-editor {
+	border: 1px dashed color-mix(in srgb, CanvasText 28%, transparent);
+	border-radius: 10px;
+	padding: 0.75rem 1rem;
+}
+
+.gfb-form-success-editor__inner > .block-list-appender {
+	margin-top: 0.5rem;
+}
+
+/* Editor: Platzhalter-Hilfe (gfb/token) im Erfolgsbereich. */
+.gfb-token-hint-editor {
+	padding: 0.35rem 0;
+	max-width: 28rem;
+}
+
+.gfb-token-hint-editor__intro {
+	margin: 0 0 0.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 82%, transparent);
 }

@@ -114,17 +114,22 @@ class GFB_Field_Renderer {
 	/**
 	 * Label-HTML, oder leer wenn label leer/whitespace.
 	 *
-	 * @param string $name  Feldname (id).
-	 * @param string $label Labeltext.
+	 * @param string $name     Feldname (id).
+	 * @param string $label    Labeltext.
+	 * @param bool   $required Pflichtfeld – fügt ein Sternchen-Span ein.
 	 * @return string
 	 */
-	private static function label( $name, $label ) {
+	private static function label( $name, $label, $required = false ) {
 		$txt = trim( (string) $label );
 		if ( '' === $txt || '' === $name ) {
 			return '';
 		}
+		$star = $required
+			? ' <span class="gfb-required" aria-hidden="true">*</span>'
+			: '';
 		return '<label for="' . esc_attr( $name ) . '">'
 			. esc_html( $txt )
+			. $star
 			. '</label>';
 	}
 
@@ -349,7 +354,7 @@ class GFB_Field_Renderer {
 			$attr .= ' maxlength="' . (int) $attrs['maxlength'] . '"';
 		}
 		$inner = '<input' . $attr . ' />';
-		return self::wrap( $field_class, $inner, $c, self::label( $c['name'], $c['label'] ) );
+		return self::wrap( $field_class, $inner, $c, self::label( $c['name'], $c['label'], $c['required'] ) );
 	}
 
 	/* ============================================================== *
@@ -383,7 +388,7 @@ class GFB_Field_Renderer {
 			$attr .= ' maxlength="' . (int) $a['maxlength'] . '"';
 		}
 		$inner = '<textarea' . $attr . '></textarea>';
-		return self::wrap( 'gfb-field-textarea', $inner, $c, self::label( $c['name'], $c['label'] ) );
+		return self::wrap( 'gfb-field-textarea', $inner, $c, self::label( $c['name'], $c['label'], $c['required'] ) );
 	}
 
 	public static function render_select( $a ) {
@@ -405,7 +410,7 @@ class GFB_Field_Renderer {
 			$inner .= '<option value="' . esc_attr( $opt ) . '">' . esc_html( $opt ) . '</option>';
 		}
 		$inner .= '</select>';
-		return self::wrap( 'gfb-field-select', $inner, $c, self::label( $c['name'], $c['label'] ) );
+		return self::wrap( 'gfb-field-select', $inner, $c, self::label( $c['name'], $c['label'], $c['required'] ) );
 	}
 
 	public static function render_radio( $a ) {
@@ -438,8 +443,11 @@ class GFB_Field_Renderer {
 				. esc_html__( 'verschlüsselt', 'gutenberg-formbuilder' )
 				. '</span>'
 			: '';
+		$req_star = $c['required']
+			? ' <span class="gfb-required" aria-hidden="true">*</span>'
+			: '';
 		$legend = '' !== trim( $c['label'] )
-			? '<legend>' . esc_html( trim( $c['label'] ) ) . '</legend>'
+			? '<legend>' . esc_html( trim( $c['label'] ) ) . $req_star . '</legend>'
 			: '';
 
 		return '<fieldset class="gfb-field gfb-field-radio"' . $fs_attrs . '>'
@@ -454,9 +462,13 @@ class GFB_Field_Renderer {
 		if ( '' === $c['name'] ) {
 			return '';
 		}
+		$cb_star = $c['required']
+			? ' <span class="gfb-required" aria-hidden="true">*</span>'
+			: '';
 		$inner = '<label for="' . esc_attr( $c['name'] ) . '">'
 			. '<input type="checkbox" name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '" value="1"' . ( $c['required'] ? ' required' : '' ) . ' />'
 			. ' ' . esc_html( $c['label'] )
+			. $cb_star
 			. '</label>';
 		return self::wrap( 'gfb-field-checkbox', $inner, $c, '' );
 	}
@@ -480,7 +492,7 @@ class GFB_Field_Renderer {
 			$attr .= ' required';
 		}
 		$inner = '<input' . $attr . ' />';
-		return self::wrap( 'gfb-field-number', $inner, $c, self::label( $c['name'], $c['label'] ) );
+		return self::wrap( 'gfb-field-number', $inner, $c, self::label( $c['name'], $c['label'], $c['required'] ) );
 	}
 
 	public static function render_range( $a ) {
@@ -502,7 +514,7 @@ class GFB_Field_Renderer {
 			. '<input' . $attr . ' />'
 			. '<output class="gfb-range-value" for="' . esc_attr( $c['name'] ) . '">' . esc_html( $default ) . '</output>'
 			. '</div>';
-		return self::wrap( 'gfb-field-range', $inner, $c, self::label( $c['name'], $c['label'] ) );
+		return self::wrap( 'gfb-field-range', $inner, $c, self::label( $c['name'], $c['label'], $c['required'] ) );
 	}
 
 	public static function render_hidden( $a ) {
@@ -532,10 +544,13 @@ class GFB_Field_Renderer {
 		}
 		$hint   = sprintf( esc_html__( 'Datei wird verschlüsselt gespeichert (max. %d MB).', 'gutenberg-formbuilder' ), $max_mb );
 		$inner  = '<input' . $attr . ' />'
-			. '<small class="gfb-help">' . $hint . '</small>';
+			. '<div class="gfb-file-meta">'
+			. '<small class="gfb-help">' . $hint . '</small>'
+			. '<button type="button" class="gfb-file-clear" hidden>' . esc_html__( 'Entfernen', 'gutenberg-formbuilder' ) . '</button>'
+			. '</div>';
 		// Bei Files setzen wir das Sensitive-Pill IMMER, weil der Storage immer verschlüsselt.
 		$c['sensitive'] = true;
-		return self::wrap( 'gfb-field-file', $inner, $c, self::label( $c['name'], $c['label'] ) );
+		return self::wrap( 'gfb-field-file', $inner, $c, self::label( $c['name'], $c['label'], $c['required'] ) );
 	}
 
 	public static function render_submit( $a ) {

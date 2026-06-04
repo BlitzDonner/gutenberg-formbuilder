@@ -338,6 +338,9 @@
 									el.defaultValue = '';
 								}
 							} );
+						form.querySelectorAll( '.gfb-file-clear' ).forEach( function ( btn ) {
+							btn.setAttribute( 'hidden', '' );
+						} );
 						initRangeValueDisplays( form );
 						gfbStripSubmitStateFromUrlIfPresent();
 						gfbDismissSubmitNoticeForForm( form );
@@ -355,6 +358,27 @@
 					} );
 			} );
 		}
+
+		form.querySelectorAll( 'input[type="file"]' ).forEach( function ( fileInput ) {
+			var clearBtn = fileInput.closest( '.gfb-field' )
+				? fileInput.closest( '.gfb-field' ).querySelector( '.gfb-file-clear' )
+				: null;
+			if ( ! clearBtn ) {
+				return;
+			}
+			fileInput.addEventListener( 'change', function () {
+				if ( fileInput.files && fileInput.files.length > 0 ) {
+					clearBtn.removeAttribute( 'hidden' );
+				} else {
+					clearBtn.setAttribute( 'hidden', '' );
+				}
+			} );
+			clearBtn.addEventListener( 'click', function () {
+				fileInput.value = '';
+				fileInput.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+				clearBtn.setAttribute( 'hidden', '' );
+			} );
+		} );
 
 		if ( ! draftEnabled ) {
 			removeDraft( db, key ).catch( function () {} );

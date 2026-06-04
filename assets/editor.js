@@ -1257,10 +1257,13 @@
 	 * @param {unknown} labelAttr
 	 * @return {*|null}
 	 */
-	function gfbEditorLabelIfAny( tag, props, labelAttr ) {
+	function gfbEditorLabelIfAny( tag, props, labelAttr, required ) {
 		var t = gfbTrimmedFieldLabel( labelAttr );
 		if ( ! t ) {
 			return null;
+		}
+		if ( required ) {
+			return el( tag, props || null, t, el( 'span', { className: 'gfb-required', 'aria-hidden': 'true' }, ' *' ) );
 		}
 		return el( tag, props || null, t );
 	}
@@ -2064,7 +2067,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'text',
 					disabled: true,
@@ -2122,7 +2125,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'email',
 					disabled: true,
@@ -2180,7 +2183,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'textarea', {
 					disabled: true,
 					id: attributes.name || undefined,
@@ -2255,7 +2258,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el(
 					'select',
 					{
@@ -2339,6 +2342,9 @@
 						value: '1',
 					} );
 					if ( lab ) {
+						if ( attributes.required ) {
+							return el( 'label', { for: nm || undefined }, input, ' ', lab, el( 'span', { className: 'gfb-required', 'aria-hidden': 'true' }, ' *' ) );
+						}
 						return el( 'label', { for: nm || undefined }, input, ' ', lab );
 					}
 					return input;
@@ -2467,7 +2473,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'number',
 					disabled: true,
@@ -2531,7 +2537,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'tel',
 					disabled: true,
@@ -2591,7 +2597,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'url',
 					disabled: true,
@@ -2663,7 +2669,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'date',
 					disabled: true,
@@ -2738,7 +2744,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'time',
 					disabled: true,
@@ -2809,7 +2815,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'datetime-local',
 					disabled: true,
@@ -2902,7 +2908,11 @@
 				),
 			];
 			if ( radioGroupLabelText ) {
-				radioPreviewBody.push( el( 'legend', null, radioGroupLabelText ) );
+				radioPreviewBody.push(
+					attributes.required
+						? el( 'legend', null, radioGroupLabelText, el( 'span', { className: 'gfb-required', 'aria-hidden': 'true' }, ' *' ) )
+						: el( 'legend', null, radioGroupLabelText )
+				);
 			}
 			radioPreviewBody.push(
 				el(
@@ -3113,7 +3123,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( rangeId ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( rangeId ), attributes.label, attributes.required ),
 				el(
 					'div',
 					{ className: 'gfb-range-row' },
@@ -3217,7 +3227,7 @@
 					),
 					renderFieldColorOverrideControls( attributes, setAttributes )
 				),
-				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label ),
+				gfbEditorLabelIfAny( 'label', gfbLabelForProps( attributes.name ), attributes.label, attributes.required ),
 				el( 'input', {
 					type: 'file',
 					disabled: true,

@@ -92,7 +92,7 @@ class GFB_Admin_Settings {
 			return;
 		}
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-		if ( $page !== GFB_Admin_Submissions::PAGE_SLUG && $page !== self::PAGE_SLUG ) {
+		if ( $page !== GFB_Admin_Submissions::PAGE_SLUG && $page !== self::PAGE_SLUG && $page !== GFB_Admin_Audit::PAGE_SLUG ) {
 			return;
 		}
 		header( 'X-Content-Type-Options: nosniff' );
@@ -328,14 +328,19 @@ class GFB_Admin_Settings {
 
 		// 3) Capability-Matrix
 		echo '<hr/><h2>' . esc_html__( 'Berechtigungen', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Wer darf welche Aktion?', 'gutenberg-formbuilder' ) . '</p>';
+		echo '<p>' . esc_html__( 'Legt fest, welche WordPress-Rolle welche Aktion mit den Formular-Einträgen ausführen darf. Häkchen setzen oder entfernen und speichern.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '<form method="post">';
 		wp_nonce_field( 'gfb_settings_action' );
 		echo '<input type="hidden" name="gfb_settings_action" value="save_caps" />';
 		global $wp_roles;
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Rolle', 'gutenberg-formbuilder' ) . '</th>';
+		echo '<table class="widefat striped"><thead><tr><th style="vertical-align:bottom;">' . esc_html__( 'Rolle', 'gutenberg-formbuilder' ) . '</th>';
 		foreach ( GFB_Capabilities::all_caps() as $cap ) {
-			echo '<th><code>' . esc_html( $cap ) . '</code></th>';
+			$meta = GFB_Capabilities::cap_meta( $cap );
+			echo '<th style="vertical-align:top;min-width:10rem;max-width:14rem;white-space:normal;">'
+				. '<span style="display:block;font-weight:600;">' . esc_html( $meta['title'] ) . '</span>'
+				. '<span style="display:block;font-weight:400;font-size:11px;line-height:1.45;color:#50575e;margin:.3rem 0 .35rem;">' . esc_html( $meta['description'] ) . '</span>'
+				. '<code style="font-size:10px;color:#646970;">' . esc_html( $cap ) . '</code>'
+				. '</th>';
 		}
 		echo '</tr></thead><tbody>';
 		foreach ( $wp_roles->roles as $role_slug => $role_data ) {
@@ -351,13 +356,14 @@ class GFB_Admin_Settings {
 		submit_button( __( 'Berechtigungen speichern', 'gutenberg-formbuilder' ) );
 		echo '</form>';
 
-		// 4) Audit-Verifikation
-		echo '<hr/><h2>' . esc_html__( 'Audit-Log Integrität', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<form method="post">';
-		wp_nonce_field( 'gfb_settings_action' );
-		echo '<input type="hidden" name="gfb_settings_action" value="verify_audit" />';
-		submit_button( __( 'Hash-Chain prüfen', 'gutenberg-formbuilder' ), 'secondary' );
-		echo '</form>';
+		// 4) Audit-Log (Verweis auf dedizierte Seite)
+		echo '<hr/><h2>' . esc_html__( 'Audit-Log', 'gutenberg-formbuilder' ) . '</h2>';
+		echo '<p>'
+			. esc_html__( 'Die Einträge und die Integritätsprüfung (Hash-Chain) findest du unter ', 'gutenberg-formbuilder' )
+			. '<a href="' . esc_url( admin_url( 'admin.php?page=' . GFB_Admin_Audit::PAGE_SLUG ) ) . '">'
+			. esc_html__( 'Audit-Log', 'gutenberg-formbuilder' )
+			. '</a>.'
+			. '</p>';
 
 		// 4b) Storage-Erreichbarkeits-Test (Webserver darf private Dateien nicht ausliefern)
 		echo '<hr/><h2>' . esc_html__( 'Sind hochgeladene Dateien wirklich privat?', 'gutenberg-formbuilder' ) . '</h2>';

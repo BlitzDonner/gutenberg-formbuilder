@@ -45,6 +45,47 @@ class GFB_Capabilities {
 	}
 
 	/**
+	 * Verständliche Beschriftung pro Berechtigung: Kurztitel und Beschreibung,
+	 * damit im Admin klar ist, wer was tun darf (statt nur des technischen Namens).
+	 *
+	 * @param string $cap Capability-Slug.
+	 * @return array{title:string,description:string}
+	 */
+	public static function cap_meta( $cap ) {
+		$meta = array(
+			self::CAP_VIEW_SUBMISSIONS => array(
+				'title'       => __( 'Anfragen sehen', 'gutenberg-formbuilder' ),
+				'description' => __( 'Anfragen in der Liste sehen (verschlüsselte Felder maskiert).', 'gutenberg-formbuilder' ),
+			),
+			self::CAP_DECRYPT_SUBMISSIONS => array(
+				'title'       => __( 'Entschlüsseln', 'gutenberg-formbuilder' ),
+				'description' => __( 'Vertrauliche Felder im Detail entschlüsselt lesen (Eintrag im Audit-Log).', 'gutenberg-formbuilder' ),
+			),
+			self::CAP_DELETE_SUBMISSIONS => array(
+				'title'       => __( 'Löschen', 'gutenberg-formbuilder' ),
+				'description' => __( 'Anfragen löschen (Eintrag im Audit-Log).', 'gutenberg-formbuilder' ),
+			),
+			self::CAP_DOWNLOAD_FILES => array(
+				'title'       => __( 'Dateien herunterladen', 'gutenberg-formbuilder' ),
+				'description' => __( 'Datei-Anhänge herunterladen (Eintrag im Audit-Log).', 'gutenberg-formbuilder' ),
+			),
+			self::CAP_VIEW_AUDIT => array(
+				'title'       => __( 'Audit-Log', 'gutenberg-formbuilder' ),
+				'description' => __( 'Audit-Log einsehen und Integrität prüfen.', 'gutenberg-formbuilder' ),
+			),
+			self::CAP_MANAGE_SETTINGS => array(
+				'title'       => __( 'Einstellungen', 'gutenberg-formbuilder' ),
+				'description' => __( 'Plugin-Einstellungen, Verschlüsselung, ClamAV und Berechtigungen ändern.', 'gutenberg-formbuilder' ),
+			),
+		);
+
+		if ( isset( $meta[ $cap ] ) ) {
+			return $meta[ $cap ];
+		}
+		return array( 'title' => $cap, 'description' => '' );
+	}
+
+	/**
 	 * Bei Plugin-Aktivierung initial alle Caps an `administrator` haengen.
 	 *
 	 * @return void
