@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.6.5] – 2026-06-09
+
+### Behoben
+
+- **Block-Validation-Fehler `gfb/field-hidden`:** Die `save()`-Funktion gab statisches HTML mit `value=""` zurück, während PHP den tatsächlichen Wert (`hiddenValue`) dynamisch via `render_callback` einbettete. Der Mismatch löste bei jedem Öffnen eines Posts einen Gutenberg-Validation-Fehler aus. `save()` gibt jetzt `null` zurück (korrektes Verhalten für dynamische Blöcke). Das alte statische HTML ist als `deprecated`-Eintrag registriert, damit bestehende Posts valide bleiben.
+- **Block-Validation-Fehler `gfb/field-radio`:** Die `save()`-Funktion splittete `a.options` nur auf `\n`. Wenn der Block-Comment-Wert korrumpiert war (echte Newlines durch den Buchstaben `n` ersetzt), lieferte das Split ein einzelnes Element, was zu einem langen, zusammengeklebten `value`-Attribut führte. `save()` gibt jetzt ebenfalls `null` zurück. Das deprecated-Objekt splittet robuster auf `\r\n|\r|\n`, um bestehende Posts korrekt zu migrieren.
+
 ## [2.6.4] – 2026-06-04
 
 ### Geändert

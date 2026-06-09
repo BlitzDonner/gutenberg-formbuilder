@@ -2856,48 +2856,66 @@
 			);
 			return el( 'fieldset', blockProps, radioPreviewBody );
 		},
-		save: function ( props ) {
-			var a = props.attributes;
-			var options = ( a.options || '' )
-				.split( /\n/ )
-				.map( function ( item ) {
-					return item.trim();
-				} )
-				.filter( Boolean );
-			var layout = a.optionsLayout === 'row' ? 'row' : 'column';
-			var optionsWrapClass =
-				'gfb-radio-options' + ( layout === 'row' ? ' gfb-radio-options--row' : '' );
-			var saveProps = useBlockPropsSave( {
-				className: 'gfb-field gfb-field-radio',
-				style: buildFieldColorOverrideStyle( a ),
-			} );
-			var groupLab = gfbTrimmedFieldLabel( a.label );
-			return el(
-				'fieldset',
-				saveProps,
-				groupLab ? el( 'legend', null, groupLab ) : null,
-				el(
-					'div',
-					{ className: optionsWrapClass },
-					options.map( function ( opt, idx ) {
-						var id = a.name + '_' + idx;
-						return el(
-							'div',
-							{ key: opt, className: 'gfb-radio-row' },
-							el( 'input', {
-								type: 'radio',
-								name: a.name,
-								id: id,
-								value: opt,
-								required: !! a.required && idx === 0,
-							} ),
-							' ',
-							el( 'label', { for: id }, opt )
-						);
-					} )
-				)
-			);
+		// Dynamischer Block: render_callback in PHP übernimmt das Frontend-HTML.
+		// save() gibt null zurück; das frühere statische HTML lebt in deprecated[].
+		save: function () {
+			return null;
 		},
+		deprecated: [
+			{
+				// v2.6.4 und früher: save() erzeugte statisches HTML.
+				// Split robuster gemacht (auch \r\n und Buchstabe n als Fallback).
+				attributes: {
+					label:         { type: 'string', default: 'Auswahl' },
+					name:          { type: 'string', default: '' },
+					nameClientId:  { type: 'string', default: '' },
+					options:       { type: 'string', default: 'Option A\nOption B\nOption C' },
+					required:      { type: 'boolean', default: false },
+					optionsLayout: { type: 'string', default: 'column' },
+					sensitive:     { type: 'boolean', default: false },
+				},
+				save: function ( props ) {
+					var a = props.attributes;
+					var options = ( a.options || '' )
+						.split( /\r\n|\r|\n/ )
+						.map( function ( item ) { return item.trim(); } )
+						.filter( Boolean );
+					var layout = a.optionsLayout === 'row' ? 'row' : 'column';
+					var optionsWrapClass =
+						'gfb-radio-options' + ( layout === 'row' ? ' gfb-radio-options--row' : '' );
+					var saveProps = useBlockPropsSave( {
+						className: 'gfb-field gfb-field-radio',
+						style: buildFieldColorOverrideStyle( a ),
+					} );
+					var groupLab = gfbTrimmedFieldLabel( a.label );
+					return el(
+						'fieldset',
+						saveProps,
+						groupLab ? el( 'legend', null, groupLab ) : null,
+						el(
+							'div',
+							{ className: optionsWrapClass },
+							options.map( function ( opt, idx ) {
+								var id = a.name + '_' + idx;
+								return el(
+									'div',
+									{ key: opt, className: 'gfb-radio-row' },
+									el( 'input', {
+										type: 'radio',
+										name: a.name,
+										id: id,
+										value: opt,
+										required: !! a.required && idx === 0,
+									} ),
+									' ',
+									el( 'label', { for: id }, opt )
+								);
+							} )
+						)
+					);
+				},
+			},
+		],
 	} );
 
 	registerBlockType( 'gfb/field-hidden', {
@@ -2965,21 +2983,39 @@
 				} )
 			);
 		},
-		save: function ( props ) {
-			var a = props.attributes;
-			var saveProps = useBlockPropsSave( {
-				className: 'gfb-field gfb-field-hidden',
-			} );
-			return el(
-				'div',
-				saveProps,
-				el( 'input', {
-					type: 'hidden',
-					name: a.name,
-					value: a.hiddenValue || '',
-				} )
-			);
+		// Dynamischer Block: render_callback in PHP übernimmt das Frontend-HTML.
+		// save() gibt null zurück; das frühere statische HTML lebt in deprecated[].
+		save: function () {
+			return null;
 		},
+		deprecated: [
+			{
+				// v2.6.4 und früher: save() erzeugte statisches HTML.
+				attributes: {
+					label:        { type: 'string', default: '' },
+					name:         { type: 'string', default: '' },
+					nameClientId: { type: 'string', default: '' },
+					hiddenValue:  { type: 'string', default: '' },
+					lockedValue:  { type: 'boolean', default: false },
+					sensitive:    { type: 'boolean', default: false },
+				},
+				save: function ( props ) {
+					var a = props.attributes;
+					var saveProps = useBlockPropsSave( {
+						className: 'gfb-field gfb-field-hidden',
+					} );
+					return el(
+						'div',
+						saveProps,
+						el( 'input', {
+							type: 'hidden',
+							name: a.name,
+							value: a.hiddenValue || '',
+						} )
+					);
+				},
+			},
+		],
 	} );
 
 	registerBlockType( 'gfb/field-range', {
