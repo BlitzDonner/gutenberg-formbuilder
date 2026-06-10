@@ -380,6 +380,25 @@
 			} );
 		} );
 
+		/* Erfolgs-Platzhalter: Snapshot unabhängig von Entwürfen (auch bei draftEnabled: false). */
+		form.addEventListener(
+			'submit',
+			function () {
+				try {
+					var sk = form.getAttribute( 'data-gfb-key' );
+					if ( sk && window.sessionStorage ) {
+						window.sessionStorage.setItem(
+							'gfb_submit_snapshot:' + sk,
+							JSON.stringify( collectValues( form ) )
+						);
+					}
+				} catch ( snapErr ) {
+					/* sessionStorage kann blockiert sein */
+				}
+			},
+			true
+		);
+
 		if ( ! draftEnabled ) {
 			removeDraft( db, key ).catch( function () {} );
 			return;
@@ -448,25 +467,6 @@
 		document.addEventListener( 'visibilitychange', onVisibilityChange );
 		window.addEventListener( 'pagehide', flushDraft );
 		window.addEventListener( 'beforeunload', flushDraft );
-
-		/* Capture-Phase: vor anderen Handlern und zuverlässig vor der Navigation. */
-		form.addEventListener(
-			'submit',
-			function () {
-				try {
-					var sk = form.getAttribute( 'data-gfb-key' );
-					if ( sk && window.sessionStorage ) {
-						window.sessionStorage.setItem(
-							'gfb_submit_snapshot:' + sk,
-							JSON.stringify( collectValues( form ) )
-						);
-					}
-				} catch ( snapErr ) {
-					/* sessionStorage kann blockiert sein */
-				}
-			},
-			true
-		);
 	}
 
 	/**

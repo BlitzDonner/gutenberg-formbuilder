@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.6.6] – 2026-06-09
+
+### Behoben
+
+- **Erfolgs-Platzhalter bei deaktivierten Entwürfen:** Wenn am Formularblock «Entwürfe speichern» aus war (`draftEnabled: false`), wurde der Submit-Snapshot für `{{feldname}}` in `sessionStorage` nicht angelegt – Platzhalter in `gfb/form-success` blieben nach dem Absenden leer. Der Snapshot-Listener wird jetzt unabhängig von der Entwurf-Einstellung registriert (`assets/frontend.js`).
+
 ## [2.6.5] – 2026-06-09
 
 ### Behoben
