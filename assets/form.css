@@ -865,3 +865,29 @@
 	opacity: 1 !important;
 	-webkit-text-fill-color: var(--gfb-text) !important;
 }
+
+/* ---- Spam-Schutz (CAPTCHA): Widget-Zeile vor dem Absenden ---- */
+.gfb-captcha-row {
+	margin: 1rem 0 0.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.gfb-captcha-row .gfb-captcha-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--gfb-label, inherit);
+}
+
+.gfb-captcha-row .frc-captcha {
+	max-width: 100%;
+}
+
+.gfb-captcha-row .gfb-captcha-hint {
+	margin: 0;
+	font-size: 0.8rem;
+	line-height: 1.4;
+	opacity: 0.8;
+	color: var(--gfb-text, inherit);
+}

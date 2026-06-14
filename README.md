@@ -54,6 +54,21 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
 
 ---
 
+## Spam-Schutz (Friendly Captcha)
+
+Optionaler, **serverseitig geprüfter** Spam-Schutz über [Friendly Captcha](https://friendlycaptcha.com/de/) – einen EU-Anbieter (Deutschland). Statt Bilderrätsel löst der Browser eine **Proof-of-Work**-Aufgabe. Friendly Captcha setzt **keine Cookies**, betreibt **kein Fingerprinting**, **kein Tracking** und führt **keinen Drittlandtransfer** durch.
+
+| Einstellung | Kurz |
+|-------------|------|
+| **Datensparsamkeit** | Im Standardbetrieb braucht es keine Einwilligung – Rechtsgrundlage ist das **berechtigte Interesse** (Spam-Abwehr). Das Captcha-Element lädt **erst bei Formular-Interaktion**, nicht beim Seitenaufbau – kein Vorab-Aufruf des Anbieters. |
+| **Verifikation** | Serverseitig gegen die offizielle **siteverify**-Schnittstelle (Version 2, `global.frcapi.com`). Im Frontend liegt nur der **Site-Key**; das **Secret** bleibt serverseitig. |
+| **Erzwingungsmodus** | **Mit Ausnahme bei Serverausfall:** Captcha Pflicht; nur wenn der Anbieter nicht erreichbar ist, geht der Versand trotzdem durch. **Streng:** auch bei Serverausfall **kein** Versand. |
+| **Admin-Vorlagen** | Mitgeliefert und kopierbar: ein **Textbaustein für die Datenschutzerklärung** und ein **interner Vermerk zur Interessenabwägung** – jeweils als **unverbindliche Vorlage** gekennzeichnet. |
+
+Die Admin-Bereiche **ClamAV-Einstellungen** und **Datenschutz** sind in einklappbaren Akkordeons dargestellt. Ausführlich: [`docs/CAPTCHA-INTEGRATION-SPEC.md`](docs/CAPTCHA-INTEGRATION-SPEC.md).
+
+---
+
 ## Für die nächste Person: wo weitermachen?
 
 1. **Plugin-Root:** dieses Verzeichnis ist das gesamte Plugin (`gutenberg-formbuilder.php` ist der Einstieg).
@@ -94,7 +109,7 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
 
 - Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`); Frontend **`pattern`** und **`placeholder`** aus **Einstellungen → Allgemein** (`date_format` / `time_format`, z. B. `dd.mm.yyyy`)
 - **Erfolgsbereich** (`gfb/form-success`, nur innerhalb von `gfb/form`): beliebige InnerBlocks, die nach erfolgreichem Absenden **anstelle des Formulars** erscheinen, wenn **keine** Folgeseite gewählt ist. Im Text stehen Platzhalter `{{feldname}}` (technischer Name) und optional `{{label_feldname}}`; die Werte setzt `assets/frontend.js` per `sessionStorage`-Snapshot beim Absenden (Datei-Felder: `[Datei]`). Mit gewählter Folgeseite bleibt das bisherige Verhalten (Hinweiszeile / Redirect-Zielseite). Im Erfolgsbereich kann der Block **Platzhalter-Hilfe** (`gfb/token`) die **technischen Feldnamen** in einem Auswahlfeld anbieten; nach der Wahl wird `{{feldname}}` (übermittelter Wert) an dieser Stelle als Absatz eingefügt (nur Editor). Optional weiterhin `{{label_feldname}}` manuell für die Anzeige-Bezeichnung.
-- Submit über `admin_post` / `admin_post_nopriv` mit Nonce, Honeypot, Timing, Rate-Limit
+- Submit über `admin_post` / `admin_post_nopriv` mit gestaffelter Abwehrkette: **Nonce → HMAC-Token → Honeypot → Rate-Limit → Captcha** (Friendly Captcha, optional; siehe Abschnitt **Spam-Schutz** unten)
 - **E-Mail-Benachrichtigung** pro Formular (optional): Empfänger, Betreff, Absender — siehe Abschnitt oben und [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen, **CSV-Export**): Export eines einzelnen Formulars als UTF-8-BOM-CSV (Semikolon, RFC-4180); verschlüsselte Felder maskiert oder – mit Cap `gfb_decrypt_submissions` – im Klartext; IP-Adresse nur bei Klartext-Export; CSV-Injection-Härtung; Audit-Einträge für jeden Export

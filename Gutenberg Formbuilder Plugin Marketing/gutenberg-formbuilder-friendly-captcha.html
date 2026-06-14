@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spam-Schutz mit Friendly Captcha. Fünfte Stufe. EU-Anbieter. Keine Cookies.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #162122;
+      --bg-card:  #1c2c2e;
+      --bg-light: #203335;
+      --text:     #ffffff;
+      --muted:    rgba(255,255,255,0.6);
+      --lime:     #cdff26;
+      --cyan-btn: #e5feff;
+      --dark:     #162122;
+      --border:   rgba(255,255,255,0.12);
+      --red:      rgba(255,80,80,0.14);
+      --red-b:    rgba(255,100,100,0.3);
+      --font:     'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      background: rgba(22,33,34,0.93);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); text-decoration: none; }
+    .nav-brand span { color: var(--lime); }
+    .nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+    .nav-link { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 0.35rem 0.75rem; border-radius: 9000px; border: 1px solid transparent; transition: all .15s; }
+    .nav-link:hover { color: var(--text); border-color: var(--border); }
+    .nav-link.active { color: var(--lime); border-color: rgba(205,255,38,0.3); }
+    .nav-cta { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.5rem 1.2rem; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: opacity .2s; white-space: nowrap; }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── CONTAINER ── */
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 2rem; }
+    section { padding: 5rem 0; }
+    section:nth-child(even) { background: var(--bg-light); }
+
+    .label { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lime); margin-bottom: 0.85rem; }
+
+    /* ── HERO ── */
+    .hero { padding: 6rem 0 5rem; background: var(--bg); }
+    .hero-inner { max-width: 820px; margin: 0 auto; text-align: center; padding: 0 2rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: normal; color: var(--lime); }
+    .hero-lead { font-size: 1.1rem; color: var(--muted); line-height: 1.75; max-width: 660px; margin: 0 auto 2rem; }
+    .hero-lead strong { color: var(--text); }
+
+    /* ── SECTION HEADERS ── */
+    .sec-h2 { font-size: clamp(1.6rem, 3.5vw, 2.5rem); font-weight: 700; color: var(--lime); line-height: 1.15; margin-bottom: 0.75rem; }
+    .sec-lead { font-size: 1rem; color: var(--muted); max-width: 700px; line-height: 1.7; margin-bottom: 2.5rem; }
+    .sec-lead strong { color: var(--text); }
+
+    /* ── FLOW ── */
+    .flow { display: flex; flex-direction: column; gap: 1.5rem; }
+    .flow-step { display: grid; grid-template-columns: 3rem 1fr; gap: 1.25rem; align-items: start; }
+    .flow-num { width: 3rem; height: 3rem; border-radius: 50%; background: var(--lime); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+    .flow-num.optional { background: rgba(205,255,38,0.18); color: var(--lime); border: 1px solid rgba(205,255,38,0.4); }
+    .flow-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .flow-body p { font-size: 0.95rem; color: var(--muted); line-height: 1.65; }
+    .flow-body .note { font-size: 0.82rem; color: rgba(205,255,38,0.75); margin-top: 0.4rem; }
+
+    /* ── HINWEISZEILE ── */
+    .hint { background: rgba(205,255,38,0.07); border: 1px solid rgba(205,255,38,0.3); border-left: 4px solid var(--lime); border-radius: 0.75rem; padding: 1.25rem 1.75rem; font-size: 0.95rem; color: var(--muted); line-height: 1.65; margin-top: 2rem; }
+    .hint strong { color: var(--lime); }
+
+    /* ── VERGLEICH-KASTEN ── */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 2.5rem; }
+    .compare-box { border-radius: 1rem; padding: 1.75rem; }
+    .compare-box.bad { background: rgba(255,80,80,0.07); border: 1px solid rgba(255,100,100,0.22); }
+    .compare-box.good { background: rgba(205,255,38,0.06); border: 1px solid rgba(205,255,38,0.2); }
+    .compare-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+    .compare-box.bad .compare-title { color: rgba(255,120,120,0.9); }
+    .compare-box.good .compare-title { color: var(--lime); }
+    .compare-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .compare-list li { font-size: 0.9rem; color: var(--muted); line-height: 1.55; padding-left: 1.4rem; position: relative; }
+    .compare-list li::before { position: absolute; left: 0; top: 0; }
+    .compare-box.bad .compare-list li::before { content: '✕'; color: rgba(255,100,100,0.7); }
+    .compare-box.good .compare-list li::before { content: '✓'; color: var(--lime); }
+
+    /* ── SEC-ITEMS (grün / rot) ── */
+    .sec-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+
+    /* Grüne Karten */
+    .sec-item { background: rgba(205,255,38,0.05); border: 1px solid rgba(205,255,38,0.15); border-radius: 1rem; padding: 1.5rem; }
+    .sec-item-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .sec-item-icon { font-size: 1.4rem; }
+    .sec-item h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .sec-item p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .sec-item a { color: var(--lime); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-block; margin-top: 0.6rem; }
+    .sec-item a:hover { text-decoration: underline; }
+
+    /* Rote Karten */
+    .sec-item.warn { background: var(--red); border-color: var(--red-b); }
+    .sec-item.warn h3 { color: rgba(255,160,160,0.9); }
+
+    /* ── BETRIEBSARTEN (zwei Spalten) ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 0.5rem; }
+    .mode-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; padding: 1.75rem; }
+    .mode-tag { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime); background: rgba(205,255,38,0.12); border-radius: 4px; padding: 0.1rem 0.5rem; margin-bottom: 0.75rem; }
+    .mode-box h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+    .mode-box p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── BELEGE ── */
+    .belege { display: flex; flex-direction: column; gap: 0.75rem; }
+    .beleg { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; text-decoration: none; transition: border-color .15s; }
+    .beleg:hover { border-color: rgba(205,255,38,0.35); }
+    .beleg-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .beleg-body { flex: 1; }
+    .beleg-title { font-size: 0.92rem; font-weight: 700; color: var(--text); }
+    .beleg-sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+    .beleg-arrow { font-size: 0.85rem; color: var(--lime); flex-shrink: 0; }
+
+    /* ── FINAL CTA ── */
+    .final { text-align: center; padding: 6rem 0; background: var(--bg); }
+    .final-inner { max-width: 640px; margin: 0 auto; padding: 0 2rem; }
+    .final h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1.25rem; }
+    .final h2 em { font-style: normal; color: var(--lime); }
+    .final p { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; line-height: 1.7; }
+    .final-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-p { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 700; font-size: 0.95rem; text-decoration: none; display: inline-block; transition: opacity .2s; }
+    .btn-p:hover { opacity: 0.9; }
+    .btn-g { background: transparent; color: var(--text); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 600; font-size: 0.95rem; text-decoration: none; display: inline-block; border: 1px solid var(--border); transition: all .15s; }
+    .btn-g:hover { border-color: rgba(255,255,255,0.35); }
+    .final-pages { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .page-link { font-size: 0.85rem; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 9000px; padding: 0.4rem 1rem; transition: all .15s; }
+    .page-link:hover { color: var(--text); border-color: rgba(205,255,38,0.3); }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 2rem 0; font-size: 0.82rem; color: var(--muted); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-brand { font-weight: 700; color: var(--text); }
+    .footer-brand span { color: var(--lime); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    code { font-family: 'Menlo','Consolas',monospace; font-size: 0.83em; background: rgba(205,255,38,0.1); color: var(--lime); padding: 0.1em 0.4em; border-radius: 0.25rem; }
+
+    @media (max-width: 700px) {
+      section { padding: 3.5rem 0; }
+      .hero { padding: 4rem 0 3rem; }
+      .nav { padding: 0.85rem 1.25rem; }
+      .compare { grid-template-columns: 1fr; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-brand" href="https://blitzdonner.ch">Blitz <span>&amp;</span> Donner</a>
+  <div class="nav-links">
+    <a class="nav-link" href="gutenberg-formbuilder-landingpage.html">Verbände &amp; Vereine</a>
+    <a class="nav-link" href="gutenberg-formbuilder-kmu.html">KMU</a>
+    <a class="nav-link" href="gutenberg-formbuilder-funktionen.html">Funktionen</a>
+    <a class="nav-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
+    <a class="nav-link" href="gutenberg-formbuilder-datenschutz.html">Datenschutz</a>
+    <a class="nav-link active" href="gutenberg-formbuilder-friendly-captcha.html">Spam-Schutz</a>
+    <a class="nav-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
+    <a class="nav-link" href="gutenberg-formbuilder-export.html">Export</a>
+    <a class="nav-link" href="gutenberg-formbuilder-audit.html">Audit</a>
+    <a class="nav-link" href="gutenberg-formbuilder-uploads.html">Uploads</a>
+  </div>
+  <a class="nav-cta" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin holen</a>
+</nav>
+
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <span class="label">Spam-Schutz · Gutenberg Formbuilder</span>
+    <h1>Bots kommen nicht durch –<br><em>ohne Bilderrätsel, ohne Cookies, ohne USA-Transfer.</em></h1>
+    <p class="hero-lead">
+      Das Plugin schützt Formulare mit <strong>vier eigenen Mechanismen</strong>: Honeypot, HMAC-Token,
+      Nonce und Rate-Limit. Wer noch eine Stufe weiter gehen will, schaltet Friendly Captcha dazu.
+      Der Dienst löst die Aufgabe im Hintergrund – die einsendende Person bemerkt nichts davon.
+      Friendly Captcha ist ein EU-Anbieter mit Sitz in Deutschland. Keine Daten gehen in die USA. Keine Cookies.
+    </p>
+  </div>
+</section>
+
+
+<!-- ABSCHNITT 1: DIE FÜNF STUFEN -->
+<section id="stufen">
+  <div class="container">
+    <span class="label">1 – Die fünf Stufen</span>
+    <h2 class="sec-h2">Vier Schichten kommen vom Plugin. Friendly Captcha ist die fünfte.</h2>
+    <p class="sec-lead">
+      Das Plugin schützt Formulare ohne Drittanbieter – das war von Anfang an die Absicht.
+      Friendly Captcha ändert dieses Prinzip teilweise: es ist ein externer Dienst. Wer ihn
+      einschaltet, bekommt dafür eine zusätzliche Schutzstufe, die Profi-Bots zuverlässig bremst.
+      <strong>Wer den Drittanbieter nicht will, bleibt bei den vier plugin-eigenen Stufen.</strong>
+    </p>
+
+    <div class="flow">
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-body">
+          <h3>Stufe 1 – Honeypot</h3>
+          <p>
+            Ein verstecktes Feld, für Menschen unsichtbar. Bots füllen es aus. Das Plugin
+            verwirft die Einsendung still, ohne Fehlermeldung. Der Feldname wechselt pro
+            Formular-Instanz, damit einfache Bot-Listen nicht greifen.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-body">
+          <h3>Stufe 2 – HMAC-Anti-Replay-Token</h3>
+          <p>
+            Beim Laden des Formulars erzeugt das Plugin einen signierten Einmal-Token mit
+            Ablaufzeit. Mehrfachversand – durch Bot oder manuelles Neuladen – schlägt fehl.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-body">
+          <h3>Stufe 3 – WordPress-Nonce</h3>
+          <p>
+            Jede Einsendung trägt einen WordPress-Nonce. Abgelaufene oder manipulierte
+            Anfragen werden abgelehnt, bevor etwas in die Datenbank geschrieben wird.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-body">
+          <h3>Stufe 4 – Rate-Limit</h3>
+          <p>
+            Pro IP-Adresse sind innerhalb eines konfigurierbaren Zeitfensters nur eine
+            bestimmte Zahl Einsendungen zulässig. Gilt pro Formular, nicht global.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num optional">5</div>
+        <div class="flow-body">
+          <h3>Stufe 5 – Friendly Captcha <span style="font-weight:400;font-size:0.82rem;color:var(--muted);">(optional)</span></h3>
+          <p>
+            Der Browser der einsendenden Person löst im Hintergrund eine kryptografische
+            Proof-of-Work-Aufgabe. Das Resultat schickt das Plugin zur Verifikation an
+            Friendly Captcha. Kein Bilderrätsel. Kein Cookie. Kein Fingerprinting.
+            Der Dienst läuft auf EU-Servern.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hint">
+      Friendly Captcha ist ein optionaler Drittdienst. <strong>Die ersten vier Stufen laufen
+      ohne ihn – vollständig auf dem eigenen Server.</strong>
+    </div>
+  </div>
+</section>
+
+
+<!-- ABSCHNITT 2: ANBIETERVERGLEICH -->
+<section id="vergleich">
+  <div class="container">
+    <span class="label">2 – Anbietervergleich</span>
+    <h2 class="sec-h2">reCAPTCHA gehört Google. Friendly Captcha gehört einem deutschen Unternehmen.</h2>
+    <p class="sec-lead">
+      Der Unterschied ist kein Marketing – er ist datenschutzrechtlich relevant. Wer reCAPTCHA
+      einsetzt, schickt Besucherdaten an US-Server und braucht eine Cookie-Banner-Einwilligung.
+      Mit Friendly Captcha ist das anders.
+    </p>
+
+    <div class="compare">
+      <div class="compare-box bad">
+        <div class="compare-title">reCAPTCHA</div>
+        <ul class="compare-list">
+          <li>Betreiber Google LLC, USA</li>
+          <li>Drittlandtransfer: ja (USA)</li>
+          <li>Cookies und Fingerprinting: ja</li>
+          <li>Einwilligung im Cookie-Banner nötig: ja</li>
+          <li>Bilderrätsel möglich</li>
+          <li>Keine Datensparsamkeit – Google nutzt die Signale für eigene Modelle</li>
+        </ul>
+      </div>
+      <div class="compare-box good">
+        <div class="compare-title">Friendly Captcha</div>
+        <ul class="compare-list">
+          <li>Betreiber Friendly Captcha GmbH, Deutschland</li>
+          <li>Drittlandtransfer: nein, Verarbeitung in der EU</li>
+          <li>Cookies und Fingerprinting: nein</li>
+          <li>Einwilligung im Cookie-Banner im Standardbetrieb: nein</li>
+          <li>Kein Bilderrätsel, Proof-of-Work läuft automatisch</li>
+          <li>Datensparsam, kein Tracking, keine Profilbildung</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ABSCHNITT 3: DATENSCHUTZ -->
+<section id="datenschutz">
+  <div class="container">
+    <span class="label">3 – Datenschutzrechtliche Einordnung</span>
+    <h2 class="sec-h2">Im Standardbetrieb braucht es keine Einwilligung.</h2>
+    <p class="sec-lead">
+      Friendly Captcha verarbeitet beim Lösen des Proof-of-Work eine IP-Adresse und
+      Gerätemetadaten – keine Cookies, kein dauerhaftes Tracking. Das Plugin lädt das
+      Captcha erst, wenn jemand das Formular aktiv benutzt (Datensparsamkeit). Als
+      Rechtsgrundlage kommt das berechtigte Interesse in Betracht. Das Plugin liefert
+      dazu zwei Vorlagen.
+    </p>
+
+    <div class="sec-items">
+
+      <div class="sec-item">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">🧮</span>
+          <h3>Proof-of-Work statt Bilderrätsel</h3>
+        </div>
+        <p>
+          Der Browser löst im Hintergrund eine kryptografische Rechenaufgabe. Das dauert
+          Bruchteile einer Sekunde und ist für die einsendende Person nicht spürbar.
+          Kein «Klicken Sie alle Ampeln an».
+        </p>
+      </div>
+
+      <div class="sec-item">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">⏳</span>
+          <h3>Verzögertes Laden – Captcha lädt erst beim Formular</h3>
+        </div>
+        <p>
+          Das Plugin bindet Friendly Captcha erst ein, wenn jemand das Formular benutzt.
+          Wer die Seite nur liest, hat keinen Kontakt mit dem Dienst.
+        </p>
+      </div>
+
+      <div class="sec-item">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">🇪🇺</span>
+          <h3>EU-Anbieter, EU-Server</h3>
+        </div>
+        <p>
+          Friendly Captcha GmbH hat ihren Sitz in Deutschland. Die Verarbeitung findet
+          auf Servern in der EU statt. Kein Transfer in Drittländer.
+        </p>
+      </div>
+
+      <div class="sec-item">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">📄</span>
+          <h3>Zwei mitgelieferte Vorlagen</h3>
+        </div>
+        <p>
+          Im Plugin-Admin gibt es zwei kopierbare Textbausteine – einen für die
+          Datenschutzerklärung und einen internen Vermerk zur Interessenabwägung.
+          Beide sind als unverbindliche Vorlagen gekennzeichnet. Sie ersetzen keine
+          Rechtsberatung.
+        </p>
+      </div>
+
+      <div class="sec-item">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">📬</span>
+          <h3>Was das im Alltag bedeutet</h3>
+        </div>
+        <p>
+          Weniger Spam im Posteingang heisst: Sie sehen echte Anfragen schneller und verlieren
+          keine mehr im Rauschen. Ein Bilderrätsel hält nicht nur Bots auf – es hält auch
+          Menschen auf. Wer mobil unterwegs ist oder einfach nicht weiss, welche Ampel auf dem
+          Bild gemeint ist, schickt das Formular nicht ab. Friendly Captcha läuft unsichtbar im
+          Hintergrund. Wer einsenden will, sendet ein.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ABSCHNITT 4: BETRIEBSARTEN -->
+<section id="betriebsarten">
+  <div class="container">
+    <span class="label">4 – Konfiguration</span>
+    <h2 class="sec-h2">Wie streng soll das Captcha sein?</h2>
+    <p class="sec-lead">
+      Im Plugin-Admin wählen Sie zwischen zwei Betriebsarten. Die Wahl hängt davon ab,
+      wie hoch das Spam-Aufkommen ist und wie wichtig die Verfügbarkeit des Formulars
+      im Notfall ist.
+    </p>
+
+    <div class="two-col">
+      <div class="mode-box">
+        <span class="mode-tag">empfohlen</span>
+        <h3>«Mit Ausnahme bei Serverausfall»</h3>
+        <p>
+          Friendly Captcha ist Pflicht – ausser der Dienst von Friendly Captcha selbst
+          fällt aus. Dann bleibt das Formular benutzbar, der Schutz durch die vier eigenen
+          Plugin-Stufen bleibt aktiv. Für die meisten Situationen geeignet.
+        </p>
+      </div>
+      <div class="mode-box">
+        <span class="mode-tag">maximal</span>
+        <h3>«Streng»</h3>
+        <p>
+          Ist Friendly Captcha nicht erreichbar, nimmt das Formular keine Einsendungen an.
+          Maximale Sicherheit, auf Kosten der Verfügbarkeit bei einem Ausfall des Drittdienstes.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="font-size:1.15rem;font-weight:700;color:var(--text);margin:2.5rem 0 0.5rem;">Einrichtung: Was zu tun ist</h3>
+    <p class="sec-lead" style="margin-bottom:2rem;">
+      Friendly Captcha aktivieren erfordert ein kostenloses Konto beim Anbieter. Das geht in vier Schritten:
+    </p>
+
+    <div class="flow">
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-body">
+          <h3>Konto bei Friendly Captcha anlegen</h3>
+          <p>
+            Auf <a href="https://friendlycaptcha.com" target="_blank" rel="noopener" style="color:var(--lime);text-decoration:none;">friendlycaptcha.com</a>
+            kostenlos registrieren.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-body">
+          <h3>Application erstellen und Schlüssel abrufen</h3>
+          <p>
+            Dort eine «Application» erstellen und den Site Key sowie den API Key abrufen.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-body">
+          <h3>Schlüssel im Admin eintragen</h3>
+          <p>
+            Beide Schlüssel im Gutenberg Formbuilder Admin unter «Spam-Schutz → Friendly Captcha» eintragen.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-body">
+          <h3>Betriebsart wählen und speichern</h3>
+          <p>
+            Betriebsart wählen («Mit Ausnahme bei Serverausfall» oder «Streng») und speichern.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="sec-lead" style="margin:1.5rem 0 0;">
+      Das Formular zeigt danach sofort das Captcha-Widget. <strong>Kein Programmieren, kein FTP-Zugriff.</strong>
+    </p>
+
+    <div class="hint">
+      Friendly Captcha bietet einen kostenlosen Tarif und bezahlte Stufen für höheres Volumen.
+      Für ein Kontaktformular, ein Anmeldeformular oder die übliche Korrespondenz eines Vereins
+      oder KMU reicht der kostenlose Tarif in der Regel aus. Erst wer viele Formulare mit sehr
+      hohem Einsendungsvolumen betreibt, stösst an die Grenze. <strong>Die aktuellen Mengenangaben
+      legt Friendly Captcha selbst fest</strong> – die jeweils gültigen Limiten stehen auf der
+      Website des Anbieters.
+    </div>
+  </div>
+</section>
+
+
+<!-- ABSCHNITT 5: EHRLICHE GRENZEN -->
+<section id="grenzen">
+  <div class="container">
+    <span class="label">5 – Ehrliche Grenzen</span>
+    <h2 class="sec-h2">Kein Captcha macht Formulare hundertprozentig spamfrei.</h2>
+    <p class="sec-lead">
+      Friendly Captcha ist wirksam gegen automatisierte Bots. Gegen manuellen Spam und
+      gut ausgerüstete Bot-Netze mit gelösten Proof-of-Work-Aufgaben gibt es keine
+      garantierte Schranke. Das ist kein Mangel dieses Plugins – es ist die Natur der Sache.
+    </p>
+
+    <div class="sec-items">
+
+      <div class="sec-item warn">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">✕</span>
+          <h3>Friendly Captcha ist ein Drittdienst</h3>
+        </div>
+        <p>
+          Sie akzeptieren die Geschäfts- und Datenschutzbedingungen der Friendly Captcha GmbH.
+          Das Plugin kann nicht garantieren, dass der Anbieter seine Konditionen nicht ändert.
+          Lesen Sie die Bedingungen, bevor Sie aktivieren.
+        </p>
+      </div>
+
+      <div class="sec-item warn">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">✕</span>
+          <h3>Friendly Captcha ist jederzeit abschaltbar</h3>
+        </div>
+        <p>
+          Wer den Dienst nicht mehr nutzen will, deaktiviert ihn im Plugin-Admin mit einem Klick.
+          Das Formular ist sofort wieder allein durch die vier plugin-eigenen Stufen (Honeypot,
+          HMAC-Token, Nonce, Rate-Limit) geschützt. Keine Abhängigkeit, kein Datenverlust,
+          kein Umbau.
+        </p>
+      </div>
+
+      <div class="sec-item warn">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">✕</span>
+          <h3>Die Vorlagen sind keine Rechtsberatung</h3>
+        </div>
+        <p>
+          Das Plugin liefert Textvorlagen für Datenschutzerklärung und Interessenabwägung.
+          Sie sind ein Ausgangspunkt, kein fertiges Rechtsdokument. Lassen Sie die Texte
+          von einer Datenschutzfachperson prüfen, wenn Sie unsicher sind.
+        </p>
+      </div>
+
+      <div class="sec-item warn">
+        <div class="sec-item-head">
+          <span class="sec-item-icon">✕</span>
+          <h3>Der kostenlose Tarif hat Grenzen</h3>
+        </div>
+        <p>
+          Friendly Captcha bietet einen kostenlosen Einstieg. Bei hohem Formularvolumen
+          reicht er möglicherweise nicht. Prüfen Sie die aktuellen Tarifstufen auf der
+          Website des Anbieters.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ABSCHNITT 6: BELEGE -->
+<section id="belege">
+  <div class="container">
+    <span class="label">6 – Nachvollziehbar im Code</span>
+    <h2 class="sec-h2">Sie müssen uns nicht beim Wort nehmen.</h2>
+    <p class="sec-lead">
+      Die Integration ist im Quellcode einsehbar. Friendly Captcha dokumentiert seine
+      Datenschutzpraxis öffentlich.
+    </p>
+
+    <div class="belege">
+      <a class="beleg" href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-captcha.php" target="_blank" rel="noopener">
+        <span class="beleg-icon">🧩</span>
+        <div class="beleg-body">
+          <div class="beleg-title">class-gfb-captcha.php</div>
+          <div class="beleg-sub">PHP-Klasse, die den Friendly-Captcha-Proof-of-Work-Token entgegennimmt und serverseitig verifiziert</div>
+        </div>
+        <span class="beleg-arrow">↗</span>
+      </a>
+      <a class="beleg" href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-security.php" target="_blank" rel="noopener">
+        <span class="beleg-icon">🛡️</span>
+        <div class="beleg-body">
+          <div class="beleg-title">class-gfb-security.php</div>
+          <div class="beleg-sub">Die vier plugin-eigenen Schutzmechanismen: Honeypot, HMAC-Token, Nonce, Rate-Limit</div>
+        </div>
+        <span class="beleg-arrow">↗</span>
+      </a>
+      <a class="beleg" href="https://friendlycaptcha.com" target="_blank" rel="noopener">
+        <span class="beleg-icon">🔒</span>
+        <div class="beleg-body">
+          <div class="beleg-title">Friendly Captcha – Datenschutzerklärung des Anbieters</div>
+          <div class="beleg-sub">friendlycaptcha.com</div>
+        </div>
+        <span class="beleg-arrow">↗</span>
+      </a>
+      <a class="beleg" href="https://developer.friendlycaptcha.com" target="_blank" rel="noopener">
+        <span class="beleg-icon">📘</span>
+        <div class="beleg-body">
+          <div class="beleg-title">Friendly Captcha – technische Dokumentation</div>
+          <div class="beleg-sub">developer.friendlycaptcha.com</div>
+        </div>
+        <span class="beleg-arrow">↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="final-inner">
+    <span class="label">Plugin holen</span>
+    <h2>Spam-Schutz in fünf Stufen.<br><em>Gratis. Open Source.</em></h2>
+    <p>
+      Das Plugin ist kostenlos auf GitHub verfügbar. Friendly Captcha aktivieren Sie im
+      Admin – API-Key eintragen, Betriebsart wählen, fertig. Für Fragen zur Einrichtung
+      oder zur datenschutzrechtlichen Einordnung: Blitz &amp; Donner, unverbindlich.
+    </p>
+    <div class="final-btns">
+      <a class="btn-p" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases" target="_blank" rel="noopener">Plugin holen (gratis)</a>
+      <a class="btn-g" href="https://blitzdonner.ch/kontakt" target="_blank" rel="noopener">Erstgespräch anfragen</a>
+    </div>
+
+    <div class="final-pages">
+      <a class="page-link" href="gutenberg-formbuilder-landingpage.html">Verbände &amp; Vereine</a>
+      <a class="page-link" href="gutenberg-formbuilder-kmu.html">KMU</a>
+      <a class="page-link" href="gutenberg-formbuilder-funktionen.html">Funktionen</a>
+      <a class="page-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
+      <a class="page-link" href="gutenberg-formbuilder-datenschutz.html">Datenschutz</a>
+      <a class="page-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
+      <a class="page-link" href="gutenberg-formbuilder-export.html">Export</a>
+      <a class="page-link" href="gutenberg-formbuilder-audit.html">Audit</a>
+      <a class="page-link" href="gutenberg-formbuilder-uploads.html">Uploads</a>
+      <a class="page-link" href="https://github.com/BlitzDonner/gutenberg-formbuilder" target="_blank" rel="noopener">GitHub-Repo</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-brand">Blitz <span>&amp;</span> Donner</span>
+      <span>Gutenberg Formbuilder – Open Source WordPress-Plugin</span>
+      <a href="https://blitzdonner.ch" target="_blank" rel="noopener">blitzdonner.ch</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

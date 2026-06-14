@@ -208,3 +208,151 @@ msgstr "Confirmation"
 
 msgid "Rückmeldungsfelder"
 msgstr "Confirmation fields"
+
+# --- CAPTCHA-Integration (v2.7.0) ---
+
+msgid "Spam-Schutz"
+msgstr "Spam protection"
+
+msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgstr "Please complete the spam protection before submitting the form."
+
+msgid "Spam-Schutz mit Friendly Captcha\n\nZum Schutz unserer Formulare vor automatisiertem Missbrauch setzen wir den Dienst Friendly Captcha (Friendly Captcha GmbH, Deutschland) ein. Das Verfahren beruht auf einem rechnerischen Nachweis (Proof-of-Work) im Browser. Es verwendet keine Cookies, erstellt keinen Geraete-Fingerabdruck und verfolgt das Nutzungsverhalten nicht. Zur Durchfuehrung der Pruefung wird die IP-Adresse innerhalb der EU verarbeitet; eine Uebermittlung in Drittlaender findet nicht statt. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag. Rechtsgrundlage ist unser berechtigtes Interesse an der Abwehr von Spam (Art. 6 Abs. 1 lit. f DSGVO bzw. die entsprechende Bestimmung des revidierten Schweizer Datenschutzgesetzes)."
+msgstr "Spam protection with Friendly Captcha\n\nTo protect our forms against automated abuse we use the Friendly Captcha service (Friendly Captcha GmbH, Germany). The method relies on a computational proof of work in the browser. It uses no cookies, creates no device fingerprint and does not track usage behaviour. To run the check, the IP address is processed within the EU; no transfer to third countries takes place. A data processing agreement is in place with the provider. The legal basis is our legitimate interest in fending off spam (Art. 6(1)(f) GDPR or the corresponding provision of the revised Swiss Data Protection Act)."
+
+msgid "CAPTCHA-Einstellungen gespeichert."
+msgstr "CAPTCHA settings saved."
+
+msgid "Spam-Schutz (CAPTCHA) – Friendly Captcha"
+msgstr "Spam protection (CAPTCHA) – Friendly Captcha"
+
+msgid "CAPTCHA ist aktiv, aber unvollständig konfiguriert – es wird vorerst kein Widget angezeigt. Bitte Site-Key und API-Key eintragen."
+msgstr "CAPTCHA is active but not fully configured – no widget is shown for now. Please enter the site key and API key."
+
+msgid "CAPTCHA aktiv (global)"
+msgstr "CAPTCHA active (global)"
+
+msgid "Steuert, ob auf Formularen ein CAPTCHA erscheinen kann. Pro Formular zusätzlich im Block überschreibbar."
+msgstr "Controls whether a CAPTCHA can appear on forms. Can additionally be overridden per form in the block."
+
+msgid "Anbieter"
+msgstr "Provider"
+
+msgid "Friendly Captcha"
+msgstr "Friendly Captcha"
+
+msgid "(EU, Proof-of-Work, kein Drittlandtransfer)"
+msgstr "(EU, proof of work, no third-country transfer)"
+
+msgid "Site-Key"
+msgstr "Site key"
+
+msgid "API-Key (Secret)"
+msgstr "API key (secret)"
+
+msgid "Erzwingung"
+msgstr "Enforcement"
+
+msgid "Mit Ausnahme bei Serverausfall"
+msgstr "With exception on server outage"
+
+msgid "Das Formular verlangt ein bestandenes Captcha. Nur wenn Friendly Captcha einmal nicht erreichbar ist, lässt sich das Formular trotzdem absenden – damit eine seltene Störung beim Dienst Ihre Formulare nicht blockiert."
+msgstr "The form requires a passed captcha. Only if Friendly Captcha is temporarily unreachable can the form still be submitted – so that a rare outage of the service does not block your forms."
+
+msgid "Streng"
+msgstr "Strict"
+
+msgid "Ohne bestandenes Captcha wird nicht abgesendet – auch dann nicht, wenn Friendly Captcha gerade gestört ist."
+msgstr "Without a passed captcha, nothing is submitted – not even when Friendly Captcha is currently disrupted."
+
+msgid "CAPTCHA-Einstellungen speichern"
+msgstr "Save CAPTCHA settings"
+
+msgid "Datenschutz-Hinweis (Friendly Captcha)"
+msgstr "Privacy note (Friendly Captcha)"
+
+msgid "IP-Verarbeitung in der EU, kein Drittlandtransfer"
+msgstr "IP processing in the EU, no third-country transfer"
+
+msgid "Kein Fingerprint, keine Cookies (Proof-of-Work)"
+msgstr "No fingerprint, no cookies (proof of work)"
+
+msgid "AVV im Tarif enthalten"
+msgstr "Data processing agreement included in the plan"
+
+msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
+msgstr "(non-binding template, not legal advice)"
+
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgstr "Spam protection was not confirmed. Please complete the spam check in the form and submit again."
+
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgstr "Spam protection is currently unavailable. Please try again in a few minutes."
+
+msgid "API-Key"
+msgstr "API key"
+
+msgid "Aktuell gesetzt – zum Ändern neuen Wert eintragen, sonst leer lassen."
+msgstr "Currently set – enter a new value to change it, otherwise leave empty."
+
+msgid "Wird serverseitig gehalten und nie an das Frontend ausgegeben. Aus Sicherheitsgründen leer dargestellt."
+msgstr "Kept server-side and never output to the front end. Shown empty for security reasons."
+
+msgid "Nein"
+msgstr "No"
+
+msgid "Ja"
+msgstr "Yes"
+
+# E-neu: erweiterte Datenschutz-Bausteine (v2.7.0)
+msgid "Spam-Schutz durch Friendly Captcha\n\nWir setzen auf unseren Formularen den Dienst Friendly Captcha ein, einen Dienst der Friendly Captcha GmbH, Deutschland. [Firmenbezeichnung und Adresse]\n\nZweck. Friendly Captcha schützt unsere Formulare vor Spam und automatisiertem Missbrauch (etwa durch Bots).\n\nVerarbeitete Daten. Verarbeitet werden Ihre IP-Adresse sowie technische Angaben Ihres Geräts, die für den Berechnungsnachweis (Proof-of-Work) nötig sind. Friendly Captcha setzt dabei keine Cookies, nutzt kein Fingerprinting und kein Tracking.\n\nFunktionsweise. Statt Ihr Verhalten zu beobachten, lässt Friendly Captcha Ihren Browser im Hintergrund eine kleine Rechenaufgabe lösen (Proof-of-Work). Diese Aufgabe ist für Menschen unbemerkbar, für massenhaft automatisierte Anfragen aber aufwendig – so werden Bots ausgebremst, ohne dass Sie verfolgt werden.\n\nRechtsgrundlage. Die Verarbeitung stützt sich auf unser berechtigtes Interesse am Schutz unserer Formulare vor Missbrauch (Art. 6 Abs. 1 lit. f DSGVO; für die Schweiz Art. 31 revDSG).\n\nSpeicherort. Die Verarbeitung erfolgt auf Servern in der Europäischen Union. Eine Übermittlung in Drittländer findet nicht statt.\n\nAuftragsverarbeitung. Mit der Friendly Captcha GmbH besteht ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO (bzw. Art. 9 revDSG).\n\nSpeicherdauer. Die Daten werden nur zur Verifikation der Anfrage verarbeitet und nicht zur Profilbildung genutzt. [Konkrete Speicherdauer aus der Dokumentation von Friendly Captcha]\n\nWiderspruchsrecht. Sie haben das Recht, aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit gegen diese auf berechtigtem Interesse beruhende Verarbeitung Widerspruch einzulegen (Art. 21 DSGVO).\n\nIhre Rechte. Ihnen stehen die Rechte auf Auskunft, Berichtigung und Löschung zu sowie ein Beschwerderecht bei der zuständigen Aufsichtsbehörde.\n\n(Unverbindliche Vorlage, keine Rechtsberatung. Bitte an Ihre konkrete Situation anpassen und im Zweifel rechtlich prüfen lassen.)"
+msgstr "Spam protection by Friendly Captcha\n\nOn our forms we use the service Friendly Captcha, a service of Friendly Captcha GmbH, Germany. [Please add the full company name and address from your data processing agreement.]\n\nPurpose. Friendly Captcha protects our forms against spam and automated misuse (for example by bots).\n\nData processed. We process your IP address as well as technical details of your device that are required for the proof of work. Friendly Captcha sets no cookies and uses no fingerprinting and no tracking.\n\nHow it works. Instead of observing your behaviour, Friendly Captcha has your browser solve a small computation in the background (proof of work). This task is imperceptible for humans but costly for mass automated requests – so bots are slowed down without you being tracked.\n\nLegal basis. The processing is based on our legitimate interest in protecting our forms against misuse (Art. 6 (1) (f) GDPR; for Switzerland Art. 31 revFADP).\n\nStorage location. Processing takes place on servers within the European Union. No transfer to third countries occurs.\n\nData processing agreement. A data processing agreement under Art. 28 GDPR (or Art. 9 revFADP) is in place with Friendly Captcha GmbH.\n\nRetention period. The data is processed solely to verify the request and is not used for profiling. [Please add the specific retention period from the Friendly Captcha documentation.]\n\nRight to object. You have the right, on grounds relating to your particular situation, to object at any time to this processing based on legitimate interest (Art. 21 GDPR).\n\nYour rights. You have the rights to access, rectification and erasure as well as a right to lodge a complaint with the competent supervisory authority.\n\n(Non-binding template, not legal advice. Please adapt it to your specific situation and have it reviewed legally if in doubt.)"
+
+msgid "Interessenabwägung – Einsatz von Friendly Captcha\n\nInternes Dokument zur Dokumentation des berechtigten Interesses (Art. 6 Abs. 1 lit. f DSGVO / Art. 31 revDSG).\n\n1. Zweck / berechtigtes Interesse\nWir schützen unsere Web-Formulare vor Spam und automatisiertem Missbrauch. Funktionierende Formulare ohne Bot-Flut sind die Grundlage für die Kommunikation mit unseren Besucherinnen und Besuchern.\n\n2. Erforderlichkeit / kein milderes Mittel\nReine serverseitige Massnahmen (Honeypot, Rate-Limit) fangen einfache Bots ab, aber nicht gezielten automatisierten Missbrauch. Ein Proof-of-Work-Captcha ohne Cookies und ohne Tracking ist das mildeste Mittel, das den Schutz spürbar erhöht, ohne das Verhalten der Besucher zu beobachten.\n\n3. Interessenabwägung\nDer Eingriff ist gering: Verarbeitet wird allein die IP-Adresse, es findet kein Profiling statt, die Verarbeitung erfolgt in der EU und nur kurz zur Verifikation. Besucherinnen und Besucher erwarten, dass Formulare gegen Spam geschützt sind. Dem geringen Eingriff steht ein legitimer Schutzbedarf gegenüber. Die Interessen der Betroffenen überwiegen nicht.\n\n4. Ergebnis\nDer Einsatz von Friendly Captcha auf berechtigtem Interesse ist zulässig.\nDatum: [TT.MM.JJJJ]\nVerantwortliche Person: [Name / Funktion]\n\n(Unverbindliche Vorlage, keine Rechtsberatung. Bitte an Ihre konkrete Situation anpassen und im Zweifel rechtlich prüfen lassen.)"
+msgstr "Legitimate interest assessment (LIA) – use of Friendly Captcha\n\nInternal note documenting the legitimate interest (Art. 6 (1) (f) GDPR / Art. 31 revFADP).\n\n1. Purpose / legitimate interest\nWe protect our web forms against spam and automated misuse. Working forms without a flood of bots are the basis for communicating with our visitors.\n\n2. Necessity / no milder means\nPurely server-side measures (honeypot, rate limit) catch simple bots but not targeted automated misuse. A proof-of-work captcha without cookies and without tracking is the mildest means that noticeably raises protection without observing visitor behaviour.\n\n3. Balancing of interests\nThe intrusion is minor: only the IP address is processed, no profiling takes place, processing occurs in the EU and only briefly for verification. Visitors expect forms to be protected against spam. The minor intrusion is offset by a legitimate need for protection. The interests of the data subjects do not prevail.\n\n4. Result\nThe use of Friendly Captcha on the basis of legitimate interest is permissible.\nDate: [DD.MM.YYYY]\nResponsible person: [Name / role]\n\n(Non-binding template, not legal advice. Please adapt it to your specific situation and have it reviewed legally if in doubt.)"
+
+msgid "Was Sie zum Datenschutz wissen sollten"
+msgstr "What you should know about data protection"
+
+msgid "Die IP-Adresse wird nur in der EU verarbeitet, nichts geht ins Ausland."
+msgstr "The IP address is processed only within the EU, nothing leaves the country."
+
+msgid "Kein Tracking: keine Cookies, kein Wiedererkennen des Geräts. Stattdessen löst Ihr Browser im Hintergrund eine kleine Rechenaufgabe («Proof-of-Work»). Das bremst Bots, ohne Sie zu beobachten."
+msgstr "No tracking: no cookies, no device recognition (a computation instead of observation, «proof of work»)."
+
+msgid "Pflicht: Sie müssen mit Friendly Captcha einen Auftragsverarbeitungsvertrag (AVV) abschliessen. Diesen erhalten Sie direkt bei Friendly Captcha. Ohne AVV ist der Einsatz nicht rechtmässig."
+msgstr "Mandatory: conclude a data processing agreement with Friendly Captcha (DPA – the contract that governs processing carried out on your behalf)."
+
+msgid "Im Normalbetrieb müssen Besucher nicht zustimmen (berechtigtes Interesse). Dafür muss Ihre Datenschutzerklärung den vollständigen Textbaustein unten enthalten."
+msgstr "In normal operation visitors do not need to consent (legitimate interest). In return, your privacy policy must contain the full text block below."
+
+msgid "Empfehlung: Halten Sie den internen Vermerk zur Rechtsgrundlage (Interessenabwägung) ausgefüllt bereit – als Nachweis bei einer Prüfung."
+msgstr "Recommendation: keep the internal note on the legal basis (balancing of interests) filled in and ready – as evidence in case of an audit."
+
+msgid "Datenschutz-Hinweise und Textbausteine anzeigen"
+msgstr "Show privacy notes and text blocks"
+
+msgid "Textbaustein für Ihre Datenschutzerklärung (öffentlich) anzeigen"
+msgstr "Show template for the privacy policy"
+
+msgid "Diesen Text kopieren Sie in Ihre öffentliche Datenschutzerklärung auf der Website."
+msgstr "A ready-made text block you can copy into your privacy policy."
+
+msgid "Internes Dokument zur Rechtsgrundlage (Interessenabwägung) anzeigen"
+msgstr "Show internal note on the legal basis (balancing of interests)"
+
+msgid "Kurzes internes Dokument als Nachweis, warum der Spam-Schutz erlaubt ist. Bleibt bei Ihnen, nicht öffentlich."
+msgstr "A short internal document showing why the spam protection is permitted. Stays with you, not public."
+
+msgid "In die Zwischenablage kopieren"
+msgstr "Copy to clipboard"
+
+msgid "Kopiert!"
+msgstr "Copied!"
+
+msgid "Vor dem Einfügen ausfüllen:"
+msgstr "Fill in before pasting:"
+
+msgid "Vor dem Veröffentlichen die beiden Platzhalter in eckigen Klammern ersetzen: «[Firmenbezeichnung und Adresse]» aus Ihrem Auftragsverarbeitungsvertrag, «[Konkrete Speicherdauer aus der Dokumentation von Friendly Captcha]» aus der Anbieter-Dokumentation."
+msgstr "Before publishing, replace the two placeholders in square brackets: «[company name and address]» from your data processing agreement, «[specific retention period from the Friendly Captcha documentation]» from the provider documentation."
+

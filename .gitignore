@@ -9,3 +9,4 @@ vendor/
 .env
 .env.*
 *.zip
+graphify-out/

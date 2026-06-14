@@ -1807,6 +1807,23 @@
 					),
 					renderEmailNotificationControls( attributes, setAttributes, emailFieldRows || [] ),
 					el( PanelBody, {
+						title: __( 'Spam-Schutz (CAPTCHA)', 'gutenberg-formbuilder' ),
+						initialOpen: false,
+					},
+					el( SelectControl, {
+						label: __( 'CAPTCHA für dieses Formular', 'gutenberg-formbuilder' ),
+						help: __( 'Steuert, ob auf diesem Formular ein CAPTCHA erscheint. Voraussetzung: CAPTCHA ist unter «Sicherheit & Einstellungen» global aktiviert und konfiguriert.', 'gutenberg-formbuilder' ),
+						value: attributes.captchaMode || 'inherit',
+						options: [
+							{ label: __( 'Von globaler Einstellung übernehmen', 'gutenberg-formbuilder' ), value: 'inherit' },
+							{ label: __( 'Immer an', 'gutenberg-formbuilder' ), value: 'on' },
+							{ label: __( 'Immer aus', 'gutenberg-formbuilder' ), value: 'off' },
+						],
+						onChange: function ( value ) {
+							setAttributes( { captchaMode: value || 'inherit' } );
+						},
+					} ) ),
+					el( PanelBody, {
 						title: __( 'Erscheinungsbild', 'gutenberg-formbuilder' ),
 						initialOpen: false,
 					},

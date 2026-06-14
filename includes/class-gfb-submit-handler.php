@@ -26,6 +26,8 @@ class GFB_Submit_Handler {
 	const STATUS_ERR_EXTERNAL    = 'err_external';
 	const STATUS_ERR_CRYPTO      = 'err_crypto';
 	const STATUS_ERR_VIRUS       = 'err_virus';
+	const STATUS_ERR_CAPTCHA             = 'err_captcha';
+	const STATUS_ERR_CAPTCHA_UNREACHABLE = 'err_captcha_unreachable';
 
 	/**
 	 * Create storage tables, directories and capability mapping on activation.
@@ -142,6 +144,8 @@ class GFB_Submit_Handler {
 			self::STATUS_ERR_EXTERNAL   => __( 'Die Anfrage konnte nicht verarbeitet werden.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_CRYPTO     => __( 'Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren.', 'gutenberg-formbuilder' ),
 			self::STATUS_ERR_VIRUS      => __( 'Eine hochgeladene Datei wurde vom Virenscanner als schädlich erkannt.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_CAPTCHA             => __( 'Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut.', 'gutenberg-formbuilder' ),
+			self::STATUS_ERR_CAPTCHA_UNREACHABLE => __( 'Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut.', 'gutenberg-formbuilder' ),
 		);
 	}
 
@@ -210,6 +214,11 @@ class GFB_Submit_Handler {
 
 		$form_attrs        = GFB_Plugin::get_form_block_attributes_from_post( $post_id, $form_id );
 		$thank_you_page_id = isset( $form_attrs['thankYouPageId'] ) ? absint( $form_attrs['thankYouPageId'] ) : 0;
+
+		// 5. Stufe der Abwehrkette: CAPTCHA (Friendly Captcha), NACH Rate-Limit,
+		// VOR Schema-/Feldverarbeitung. Greift nur, wenn fuer dieses Formular
+		// aktiv (global an + vollstaendig konfiguriert + captchaMode).
+		self::maybe_enforce_captcha( $post_id, $form_id, $form_attrs, $ip_address );
 
 		/** Nur aus Block-Attributen (nicht aus POST), damit der Name nicht manipulierbar ist. */
 		$form_title_stored = '';
@@ -1147,6 +1156,85 @@ class GFB_Submit_Handler {
 			'storage_id' => (string) $store['storage_id'],
 			'_ref'       => 'gfb-file:' . (int) $store['file_id'],
 		);
+	}
+
+	/**
+	 * CAPTCHA-Stufe (Friendly Captcha). Prueft das vom Frontend gelieferte
+	 * Token serverseitig. Beide Erzwingungsmodi verlangen grundsaetzlich ein
+	 * bestandenes CAPTCHA – fehlendes oder ungueltiges Token wird in beiden
+	 * Faellen abgelehnt. Der einzige Unterschied liegt beim nicht erreichbaren
+	 * Anbieter:
+	 *   - soft (Default, «Mit Ausnahme bei Serverausfall»): Ist Friendly
+	 *     Captcha nicht erreichbar, laesst der Submit trotzdem durch
+	 *     (Ausfallsicherung), damit eine seltene Stoerung die Formulare nicht
+	 *     blockiert.
+	 *   - strict («Streng»): Auch bei nicht erreichbarem Anbieter wird
+	 *     abgelehnt (fail-closed).
+	 *
+	 * Greift nur, wenn CAPTCHA fuer dieses Formular aktiv und konfiguriert ist.
+	 * Bei Abweisung wird ueber redirect_with_state(...) mit feldnaher,
+	 * mehrsprachiger Meldung zurueckgeleitet. Das rohe Token wird nicht geloggt.
+	 *
+	 * @param int                 $post_id    Post-ID.
+	 * @param string              $form_id    Form-ID.
+	 * @param array<string,mixed> $form_attrs gfb/form-Block-Attribute.
+	 * @param string              $ip_address Bereits ermittelte Client-IP.
+	 * @return void
+	 */
+	private static function maybe_enforce_captcha( $post_id, $form_id, array $form_attrs, $ip_address ) {
+		if ( ! class_exists( 'GFB_Captcha' ) || ! GFB_Captcha::is_active_for_form( $form_attrs ) ) {
+			return;
+		}
+
+		$settings      = GFB_Captcha::get_settings();
+		$strict        = ( 'strict' === $settings['mode'] );
+		$response_field = GFB_Captcha::RESPONSE_FIELD;
+		$token         = isset( $_POST[ $response_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $response_field ] ) ) : '';
+
+		// Gemeinsamer Kontext fuer Events/Audit – ohne rohes Token, ohne Secret.
+		$base_ctx = array(
+			'form_id' => $form_id,
+			'post_id' => $post_id,
+			'mode'    => $strict ? 'strict' : 'soft',
+		);
+
+		// Kein Token vorhanden (Widget nicht geladen / nicht geloest / kein Skript).
+		// Beide Modi lehnen ab – ein bestandenes CAPTCHA ist Pflicht.
+		if ( '' === $token ) {
+			GFB_Security::log_event( 'captcha_fail', array_merge( $base_ctx, array( 'detail' => 'no_token' ) ) );
+			GFB_Audit::record( 'captcha_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'fail', 'detail' => 'no_token' ) ) );
+			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CAPTCHA );
+		}
+
+		$verify = GFB_Captcha::verify( $token, $ip_address );
+		$result = $verify['result'];
+		$detail = $verify['detail'];
+
+		if ( 'pass' === $result ) {
+			GFB_Security::log_event( 'captcha_pass', $base_ctx );
+			// Audit-Rechenschaft auch im Erfolgsfall (C6/E6/US-6): $base_ctx
+			// enthaelt nur Form-/Modus-Status, kein rohes Token, kein Secret.
+			GFB_Audit::record( 'captcha_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'pass' ) ) );
+			return;
+		}
+
+		if ( 'unreachable' === $result ) {
+			GFB_Security::log_event( 'captcha_unreachable', array_merge( $base_ctx, array( 'detail' => $detail ) ) );
+			GFB_Audit::record( 'captcha_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'unreachable', 'detail' => $detail ) ) );
+			if ( $strict ) {
+				// strict: fail-closed – auch bei gestoertem Anbieter abgelehnt.
+				self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CAPTCHA_UNREACHABLE );
+			}
+			// soft: Ausfallsicherung – Submit geht bei nicht erreichbarem
+			// Anbieter ausnahmsweise ueber die uebrige Kette weiter.
+			return;
+		}
+
+		// result === 'fail' (ungueltiges/abgelaufenes/dupliziertes Token).
+		// Beide Modi lehnen ab – ein bestandenes CAPTCHA ist Pflicht.
+		GFB_Security::log_event( 'captcha_fail', array_merge( $base_ctx, array( 'detail' => $detail ) ) );
+		GFB_Audit::record( 'captcha_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'fail', 'detail' => $detail ) ) );
+		self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CAPTCHA );
 	}
 
 	/**

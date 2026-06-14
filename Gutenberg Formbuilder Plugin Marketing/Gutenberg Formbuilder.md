@@ -1,7 +1,7 @@
 # Gutenberg Formbuilder – Marketing-Paket
 
 **Erstellt:** 12. Mai 2026
-**Aktualisiert:** 3. Juni 2026 (Stand Version 2.5.0)
+**Aktualisiert:** 15. Juni 2026 (Stand Version 2.7.0 – Spam-Schutz mit Friendly Captcha ergänzt)
 **Auftragnehmerin:** Blitz & Donner (Schweiz)
 **Produkt:** Gutenberg Formbuilder – sicheres WordPress-Formularsystem nur mit Gutenberg-Blöcken
 **Aktuelle Version:** 2.5.0 ([Releases auf GitHub](https://github.com/BlitzDonner/gutenberg-formbuilder/releases))
@@ -256,6 +256,12 @@
 >
 > **Gültig bis:** dauerhaft (seit Version 2.5.0; `class-gfb-admin-submissions.php`)
 
+### BELEG 10
+
+> **Der Beleg:** «Der Spam-Schutz arbeitet mit vier plugin-eigenen Stufen ohne Drittanbieter: Honeypot, HMAC-Anti-Replay-Token, WordPress-Nonce und Rate-Limit. Optional lässt sich als fünfte Stufe Friendly Captcha zuschalten – ein EU-Anbieter (Friendly Captcha GmbH, Deutschland) mit Proof-of-Work statt Bilderrätsel, ohne Cookies, ohne USA-Transfer. Friendly Captcha ist eine Ergänzung, kein Ersatz: Wer den Drittdienst nicht will, bleibt bei den vier eigenen Stufen.»
+>
+> **Gültig bis:** dauerhaft (seit Version 2.7.0; `class-gfb-captcha.php` für die fünfte Stufe, `class-gfb-security.php` für die vier eigenen Stufen)
+
 ---
 
 <a id="landingpage"></a>
@@ -445,7 +451,7 @@
 
 **Belege**
 > - DSGVO-Hooks: [`includes/class-gfb-security.php`](https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-security.php) (`export_personal_data`, `erase_personal_data`)
-> - Spam-Schutz ohne externes Captcha: Honeypot pro Formular-Instanz, HMAC-Anti-Replay-Token, Rate-Limit
+> - Spam-Schutz ohne externes Captcha: Honeypot pro Formular-Instanz, HMAC-Anti-Replay-Token, Rate-Limit – optional als fünfte Stufe Friendly Captcha (EU-Anbieter, ohne Cookies, ohne USA-Transfer; siehe Folgeseite 3.9)
 
 **CTA**
 > [Sicherheitskonzept lesen](https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/SECURITY.md) · [Zur Landingpage](#)
@@ -607,6 +613,43 @@
 
 **CTA**
 > [Zur Landingpage](#) · [Doku zur E-Mail-Benachrichtigung](https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/docs/EMAIL-BENACHRICHTIGUNG.md)
+
+---
+
+## 3.9 Spam-Schutz mit Friendly Captcha
+
+**URL-Slug:** `/friendly-captcha`
+
+**H1**
+> Bots kommen nicht durch – ohne Bilderrätsel, ohne Cookies, ohne USA-Transfer.
+
+**Was es löst**
+> Formulare ziehen Bots an. reCAPTCHA hält viele ab, schickt dafür Besucherdaten an Google in die USA und braucht eine Cookie-Banner-Einwilligung. Das Plugin schützt zuerst mit vier eigenen Mechanismen ohne Drittanbieter. Wer eine fünfte Stufe gegen Profi-Bots will, schaltet Friendly Captcha dazu – einen EU-Anbieter ohne diese Nachteile.
+
+**Wie es funktioniert (fünf Stufen)**
+> 1. **Honeypot** – verstecktes Feld, für Menschen unsichtbar; Bots füllen es aus, die Einsendung wird still verworfen. Feldname wechselt pro Formular-Instanz.
+> 2. **HMAC-Anti-Replay-Token** – signierter Einmal-Token mit Ablaufzeit; Mehrfachversand schlägt fehl.
+> 3. **WordPress-Nonce** – abgelaufene oder manipulierte Anfragen werden abgelehnt, bevor etwas gespeichert wird.
+> 4. **Rate-Limit** – pro IP-Adresse nur eine bestimmte Zahl Einsendungen im konfigurierbaren Zeitfenster, pro Formular.
+> 5. **Friendly Captcha (optional)** – der Browser löst im Hintergrund eine kryptografische Proof-of-Work-Aufgabe; das Plugin verifiziert das Resultat bei Friendly Captcha. Kein Bilderrätsel, kein Cookie, kein Fingerprinting, EU-Server.
+
+**Datenschutz**
+> Friendly Captcha (Friendly Captcha GmbH, Deutschland) verarbeitet beim Proof-of-Work eine IP-Adresse und Gerätemetadaten – ohne Cookies, ohne dauerhaftes Tracking. Das Captcha lädt erst, wenn jemand das Formular aktiv benutzt (Datensparsamkeit). Im Standardbetrieb braucht es keine Einwilligung; als Rechtsgrundlage kommt das berechtigte Interesse in Betracht. Das Plugin liefert zwei unverbindliche Vorlagen (Datenschutzerklärung, Interessenabwägung) – sie ersetzen keine Rechtsberatung.
+
+**Zwei Betriebsarten**
+> - **«Mit Ausnahme bei Serverausfall»** (empfohlen): Fällt Friendly Captcha aus, bleibt das Formular benutzbar; die vier eigenen Stufen schützen weiter.
+> - **«Streng»**: Ist Friendly Captcha nicht erreichbar, nimmt das Formular keine Einsendungen an – maximale Sicherheit auf Kosten der Verfügbarkeit.
+
+**Was wir nicht versprechen**
+> Kein Captcha macht Formulare hundertprozentig spamfrei. Friendly Captcha ist ein Drittdienst mit eigenen Bedingungen; der kostenlose Tarif hat Mengengrenzen. Die mitgelieferten Vorlagen sind ein Ausgangspunkt, kein fertiges Rechtsdokument. Die vier plugin-eigenen Stufen bleiben das Hauptargument – Friendly Captcha ist die optionale Ergänzung, kein Ersatz.
+
+**Belege**
+> - Code (fünfte Stufe): [`includes/class-gfb-captcha.php`](https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-captcha.php)
+> - Code (vier eigene Stufen): [`includes/class-gfb-security.php`](https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-security.php)
+> - Anbieter: [friendlycaptcha.com](https://friendlycaptcha.com) · [developer.friendlycaptcha.com](https://developer.friendlycaptcha.com)
+
+**CTA**
+> [Zur Landingpage](#) · [Plugin holen](https://github.com/BlitzDonner/gutenberg-formbuilder/releases)
 
 ---
 

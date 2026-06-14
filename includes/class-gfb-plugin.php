@@ -119,6 +119,25 @@ class GFB_Plugin {
 			array(),
 			GFB_PLUGIN_VERSION
 		);
+
+		// CAPTCHA-Lazy-Loader: laedt das Friendly-Captcha-SDK erst nach der ersten
+		// Formular-Interaktion (verzoegertes Laden zur Datensparsamkeit). Wird nur
+		// enqueued, wenn CAPTCHA fuer ein gerendertes Formular aktiv ist (siehe
+		// render_form_block).
+		wp_register_script(
+			'gfb-captcha',
+			GFB_PLUGIN_URL . 'assets/captcha.js',
+			array(),
+			GFB_PLUGIN_VERSION,
+			true
+		);
+		wp_localize_script(
+			'gfb-captcha',
+			'gfbCaptchaConfig',
+			array(
+				'scriptUrl' => GFB_Captcha::widget_script_url(),
+			)
+		);
 	}
 
 	/**
@@ -654,6 +673,13 @@ class GFB_Plugin {
 
 		$has_file_field = self::parsed_blocks_contain_block( $field_only_blocks, 'gfb/field-file' );
 
+		// CAPTCHA-Wirksamkeit pro Formular (global aktiv + vollstaendig
+		// konfiguriert + captchaMode). Nur dann Widget + Lazy-Loader.
+		$captcha_active = GFB_Captcha::is_active_for_form( $attributes );
+		if ( $captcha_active ) {
+			wp_enqueue_script( 'gfb-captcha' );
+		}
+
 		$wrapper_classes   = array( 'gfb-form-wrapper' );
 		$form_color_style = self::build_form_inline_color_style( $attributes );
 		/* Theme + eigene Farben: form.css bindet --gfb-light-* / --gfb-dark-* an die Felder (siehe .gfb-form-colors-custom). */
@@ -764,6 +790,13 @@ class GFB_Plugin {
 				<div class="<?php echo esc_attr( $inner_class ); ?>">
 					<?php echo $safe_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- über wp_kses() vorgefiltert ?>
 				</div>
+				<?php
+				// CAPTCHA-Widget als letztes Element vor dem Absenden (B1).
+				// Nur Site-Key im Markup; das Skript laedt lazy ueber gfb-captcha.
+				if ( $captcha_active ) {
+					echo GFB_Captcha::render_widget( $instance_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_widget escaped intern
+				}
+				?>
 			</form>
 		</div>
 			<?php

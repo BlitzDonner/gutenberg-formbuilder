@@ -162,6 +162,7 @@
     <a class="nav-link" href="gutenberg-formbuilder-funktionen.html">Funktionen</a>
     <a class="nav-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
     <a class="nav-link active" href="gutenberg-formbuilder-datenschutz.html">Datenschutz</a>
+    <a class="nav-link" href="gutenberg-formbuilder-friendly-captcha.html">Spam-Schutz</a>
     <a class="nav-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
     <a class="nav-link" href="gutenberg-formbuilder-export.html">Export</a>
     <a class="nav-link" href="gutenberg-formbuilder-audit.html">Audit</a>
@@ -261,10 +262,14 @@
 <section id="spam-schutz">
   <div class="container">
     <span class="label">Spam-Schutz ohne externes Captcha</span>
-    <h2 class="sec-h2">Drei Schutzmechanismen – kein reCAPTCHA, kein Drittdienst.</h2>
+    <h2 class="sec-h2">Vier plugin-eigene Schutzmechanismen – kein reCAPTCHA nötig.</h2>
     <p class="sec-lead">
       reCAPTCHA schickt Nutzerdaten an Google. Das Plugin schützt Formulare ohne diesen Umweg –
       und ohne dass Ihre Besucherinnen Ampeln oder Fussgängerstreifen anklicken müssen.
+      Wer noch eine Stufe weiter gehen will, schaltet als optionale Ergänzung
+      <a href="gutenberg-formbuilder-friendly-captcha.html" style="color:var(--lime);text-decoration:none;">Friendly Captcha</a>
+      als fünfte Stufe dazu – ein EU-Anbieter ohne Cookies, ohne USA-Transfer. Die vier eigenen
+      Stufen bleiben das Fundament; Friendly Captcha kommt obendrauf, nicht an ihre Stelle.
     </p>
 
     <div class="sec-items">
@@ -277,8 +282,16 @@
         <p>Beim Laden des Formulars erzeugt das Plugin einen HMAC-signierten Einmal-Token mit Ablaufzeit. Die Einsendung ist nur gültig, wenn der Token stimmt und noch nicht verwendet wurde. Mehrfachversand desselben Formulars – ob durch Bot oder manuelles Reload – wird abgewiesen.</p>
       </div>
       <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🎫</span><h3>WordPress-Nonce</h3></div>
+        <p>Jede Einsendung trägt einen WordPress-Nonce. Abgelaufene oder manipulierte Anfragen lehnt das Plugin ab, bevor etwas in die Datenbank geschrieben wird. So greift der Schutz schon vor der Speicherung.</p>
+      </div>
+      <div class="sec-item">
         <div class="sec-item-head"><span class="sec-item-icon">⏱</span><h3>Rate-Limit</h3></div>
         <p>Pro IP-Adresse lässt das Plugin innerhalb eines konfigurierbaren Zeitfensters nur eine bestimmte Anzahl Einsendungen durch. Das Limit gilt pro Formular, nicht global. Wer das Limit erreicht, erhält eine neutrale Fehlermeldung – kein Hinweis darauf, dass ein Rate-Limit aktiv ist.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🧮</span><h3>Optional: Friendly Captcha</h3></div>
+        <p>Wer eine weitere Stufe will, schaltet Friendly Captcha dazu – ein optionaler Drittdienst aus Deutschland. Der Browser löst im Hintergrund eine Proof-of-Work-Aufgabe. Kein Bilderrätsel, kein Cookie, kein USA-Transfer. Die plugin-eigenen Stufen bleiben das Fundament; Friendly Captcha ist die Ergänzung, kein Ersatz. <a href="gutenberg-formbuilder-friendly-captcha.html" style="color:var(--lime);text-decoration:none;font-weight:600;">Zur Spam-Schutz-Seite &rarr;</a></p>
       </div>
     </div>
   </div>
@@ -328,7 +341,7 @@
         <span class="beleg-icon">📄</span>
         <div class="beleg-body">
           <div class="beleg-title">class-gfb-security.php</div>
-          <div class="beleg-sub">Honeypot, HMAC-Token, Rate-Limit, IP-Pseudonymisierung – alle Schutzmechanismen an einem Ort</div>
+          <div class="beleg-sub">Honeypot, HMAC-Token, Nonce, Rate-Limit, IP-Pseudonymisierung – alle Schutzmechanismen an einem Ort</div>
         </div>
         <span class="beleg-arrow">↗</span>
       </a>
@@ -375,6 +388,7 @@
       <a class="page-link" href="gutenberg-formbuilder-kmu.html">KMU</a>
       <a class="page-link" href="gutenberg-formbuilder-funktionen.html">Funktionen</a>
       <a class="page-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
+      <a class="page-link" href="gutenberg-formbuilder-friendly-captcha.html">Spam-Schutz</a>
       <a class="page-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
       <a class="page-link" href="gutenberg-formbuilder-export.html">Export</a>
       <a class="page-link" href="gutenberg-formbuilder-audit.html">Audit</a>
