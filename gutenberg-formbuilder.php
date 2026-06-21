@@ -2,8 +2,10 @@
 /**
  * Plugin Name: Gutenberg Formbuilder
  * Description: Sicherheitszentrierter Formular-Builder für Gutenberg mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
- * Version: 2.7.0
- * Author: ClaudeStation
+ * Version: 2.7.2
+ * Plugin URI: https://plugins.blitzdonner.ch
+ * Author: Blitz & Donner
+ * Author URI: https://plugins.blitzdonner.ch
  * Requires at least: 6.6
  * Requires PHP: 7.4
  * Text Domain: gutenberg-formbuilder
@@ -17,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GFB_PLUGIN_FILE', __FILE__ );
 define( 'GFB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GFB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'GFB_PLUGIN_VERSION', '2.7.0' );
+define( 'GFB_PLUGIN_VERSION', '2.7.2' );
 
 // Reihenfolge wichtig: Crypto + Capabilities + Audit zuerst, dann alles, was sie nutzt.
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-crypto.php';
