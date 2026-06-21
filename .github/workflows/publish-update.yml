@@ -1,21 +1,24 @@
-# Auto-Publish: GitHub-Release -> plugins.blitzdonner.ch
+# Release-Qualitaetsgate (kein Auto-Publish mehr)
 #
-# Loest bei einem veroeffentlichten, regulaeren Release aus, baut das Plugin-ZIP
-# nach der bestehenden Konvention und schickt es an den Auto-Publish-Endpunkt
-# des Update-Servers. Bei jedem fehlgeschlagenen Gate oder einem HTTP-Status
-# != 2xx vom Server bricht der Lauf ab und wird rot – es wird dann NICHT gepostet.
+# Loest bei einem veroeffentlichten, regulaeren Release aus und prueft das
+# Plugin gegen die Release-Konvention: php -l, Header-Version == Tag, SemVer
+# X.Y.Z und ZIP-Strukturcheck (inkl. Ausschluss von bin/ und .sh). Bei jedem
+# fehlgeschlagenen Gate bricht der Lauf ab und wird rot.
+#
+# WICHTIG – kein automatisches Veroeffentlichen mehr:
+# Der Update-Server verlangt seit v1.4.0 eine gueltige Ed25519-Signatur und
+# lehnt unsignierte Pakete mit HTTP 422 ab. Ein automatischer POST aus der CI
+# waere unsigniert und wuerde scheitern. Das signierte Veroeffentlichen ist
+# darum jetzt ein manueller Schritt (lokal bauen, mit tools/bd-sign.php
+# signieren, per Deploy-Token hochladen). Details in docs/AUTO-PUBLISH.md.
 #
 # Sicherheit:
 # - Trigger nur on: release: published, kein pull_request / pull_request_target.
 # - Pre-Releases werden explizit ausgeschlossen.
 # - permissions: contents: read (kein Schreibzugriff auf das Repo noetig).
-# - Das Deploy-Token kommt aus dem Environment-Secret BD_DEPLOY_TOKEN und wird
-#   nie geechoet oder in Zwischenvariablen geloggt.
-#
-# Naechster verbindlicher Schritt (bewusst noch nicht enthalten, Mittelweg):
-# Ed25519-Signatur des ZIP und serverseitige Signaturpruefung.
+# - Kein Deploy-Token, kein Netzwerkzugriff auf den Update-Server.
 
-name: Publish update to plugins.blitzdonner.ch
+name: Release-Qualitaetsgate
 
 on:
   release:
@@ -25,12 +28,11 @@ permissions:
   contents: read
 
 jobs:
-  publish:
+  quality-gate:
     # Nur regulaere Releases. Pre-Releases (und Drafts, die ohnehin kein
     # published-Event ausloesen) werden hart ausgeschlossen.
     if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
-    environment: production
 
     env:
       SLUG: gutenberg-formbuilder
@@ -105,7 +107,7 @@ jobs:
           echo "ZIP gebaut: ${SLUG}.zip"
 
       # G-3: ZIP-Strukturcheck. Top-Level muss genau gutenberg-formbuilder/ sein,
-      # kein Marketing-Ordner, kein graphify-out.
+      # kein Marketing-Ordner, kein graphify-out, kein bin/ oder .sh.
       - name: "Gate G-3: ZIP-Strukturcheck"
         run: |
           LIST="$(unzip -Z1 "${SLUG}.zip")"
@@ -119,35 +121,33 @@ jobs:
             echo "::error::ZIP enthaelt Marketing- oder graphify-out-Inhalte."
             exit 1
           fi
+          # bin/ und .sh duerfen nie im Paket landen (Release-Konvention).
+          if echo "$LIST" | grep -qE "^${SLUG}/bin/"; then
+            echo "::error::ZIP enthaelt einen bin/-Ordner."
+            exit 1
+          fi
+          if echo "$LIST" | grep -qiE "\.sh$"; then
+            echo "::error::ZIP enthaelt Shell-Skripte (.sh)."
+            exit 1
+          fi
           # Hauptdatei muss vorhanden sein.
           if ! echo "$LIST" | grep -qE "^${SLUG}/${SLUG}\.php$"; then
             echo "::error::Plugin-Hauptdatei ${SLUG}/${SLUG}.php fehlt im ZIP."
             exit 1
           fi
 
-      - name: An Update-Server publizieren
-        env:
-          BD_DEPLOY_TOKEN: ${{ secrets.BD_DEPLOY_TOKEN }}
+      - name: "Hinweis: signiertes Veroeffentlichen erfolgt manuell"
         run: |
-          VERSION="${{ steps.ver.outputs.version }}"
-          # Release-Body in eine Datei schreiben (kein Token, kein Echo).
-          cat > release-body.txt <<'RELEASE_BODY_EOF'
-          ${{ github.event.release.body }}
-          RELEASE_BODY_EOF
-
-          HTTP_CODE="$(curl -sS -o response.json -w '%{http_code}' \
-            -X POST "https://plugins.blitzdonner.ch/wp-json/bd-updater/publish/${SLUG}" \
-            -H "Authorization: Bearer ${BD_DEPLOY_TOKEN}" \
-            -F "zip=@${SLUG}.zip;type=application/zip" \
-            -F "version=${VERSION}" \
-            -F "changelog=<release-body.txt")"
-
-          echo "Server-Antwort (HTTP $HTTP_CODE):"
-          cat response.json || true
+          echo "Alle Qualitaetsgates bestanden fuer Version ${{ steps.ver.outputs.version }}."
           echo
-
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-            echo "::error::Update-Server antwortete mit HTTP $HTTP_CODE – Publish fehlgeschlagen."
-            exit 1
-          fi
-          echo "Publish erfolgreich: Version ${VERSION}."
+          echo "Dieser Workflow veroeffentlicht NICHT mehr automatisch."
+          echo "Der Update-Server verlangt seit v1.4.0 eine gueltige Signatur und"
+          echo "lehnt unsignierte Pakete mit HTTP 422 ab."
+          echo
+          echo "Signiertes Veroeffentlichen – manueller Schritt (lokal):"
+          echo "  1. Version im Plugin-Header heben."
+          echo "  2. ZIP nach der Release-Konvention bauen."
+          echo "  3. ZIP mit tools/bd-sign.php signieren."
+          echo "  4. ZIP samt Signatur und key_id per Deploy-Token hochladen."
+          echo
+          echo "Schrittfolge im Detail: siehe docs/AUTO-PUBLISH.md."
