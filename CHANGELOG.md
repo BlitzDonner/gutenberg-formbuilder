@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [Unveröffentlicht]
+
+### Neu
+
+- **Update-Client für den selbst gehosteten Update-Server angebunden:** Neue Klasse `BD_Update_Client` (`includes/class-bd-update-client.php`) und Initialisierung in `gutenberg-formbuilder.php`. Das Plugin bezieht Updates ab sofort über die WordPress-Standard-Update-API vom Server `plugins.blitzdonner.ch` (Hooks `pre_set_site_transient_update_plugins`, `plugins_api`, `upgrader_pre_download` mit SHA-256-Prüfung). Das Token wird pro Installation als wp-config-Konstante `GFB_UPDATE_TOKEN` gesetzt; bei abgelaufenem oder gesperrtem Token werden nur Updates verweigert (kein Killswitch, GPL-konform). Details siehe `docs/UPDATE-SERVER-INTEGRATION.md`. Die Versionsnummer bleibt unverändert bei 2.7.0.
+
 ## [2.7.0] – 2026-06-14
 
 ### Neu

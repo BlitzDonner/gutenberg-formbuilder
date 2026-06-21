@@ -66,3 +66,26 @@ GFB_File_Storage::boot();
 GFB_Plugin::boot();
 GFB_Admin_Settings::boot();
 GFB_Admin_Audit::boot();
+
+/**
+ * BD Update Client: bezieht Updates vom Self-hosted Server plugins.blitzdonner.ch.
+ *
+ * Das Token kommt aus der wp-config-Konstante GFB_UPDATE_TOKEN. In der jeweiligen
+ * Kundeninstallation wird sie in wp-config.php gesetzt:
+ *   define( 'GFB_UPDATE_TOKEN', 'xxxxxxxx' );
+ * Kein Token im Plugin-Code. Ohne gültiges Token werden nur keine Updates
+ * angeboten – das Plugin bleibt voll funktionsfähig (GPL-Grenze, kein Killswitch).
+ */
+add_action( 'init', static function () {
+	if ( ! class_exists( 'BD_Update_Client' ) ) {
+		require_once GFB_PLUGIN_DIR . 'includes/class-bd-update-client.php';
+	}
+
+	new BD_Update_Client( array(
+		'plugin_file' => GFB_PLUGIN_FILE,
+		'slug'        => 'gutenberg-formbuilder',
+		'server_url'  => 'https://plugins.blitzdonner.ch',
+		'version'     => GFB_PLUGIN_VERSION,
+		'const_key'   => 'GFB_UPDATE_TOKEN',
+	) );
+}, 20 );
