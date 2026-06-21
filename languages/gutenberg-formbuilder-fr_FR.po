@@ -355,3 +355,95 @@ msgstr "À compléter avant de coller :"
 msgid "Vor dem Veröffentlichen die beiden Platzhalter in eckigen Klammern ersetzen: «[Firmenbezeichnung und Adresse]» aus Ihrem Auftragsverarbeitungsvertrag, «[Konkrete Speicherdauer aus der Dokumentation von Friendly Captcha]» aus der Anbieter-Dokumentation."
 msgstr "Avant la publication, remplacez les deux espaces réservés entre crochets : «[raison sociale et adresse]» figurant dans votre contrat de sous-traitance, «[durée de conservation concrète issue de la documentation de Friendly Captcha]» tirée de la documentation du fournisseur."
 
+
+# Lizenz / Updates – Backend-Token (hinzugefügt 2026-06-21)
+msgid "Lizenz / Updates"
+msgstr "Licence / mises à jour"
+
+msgid "Mit einem gültigen Lizenz-Token bezieht das Plugin automatische Updates vom Server plugins.blitzdonner.ch. Ohne Token läuft das Plugin ganz normal weiter – es werden lediglich keine automatischen Updates angeboten (kein Abschalten, kein Funktionsverlust)."
+msgstr "Avec un jeton de licence valide, l’extension reçoit des mises à jour automatiques depuis le serveur plugins.blitzdonner.ch. Sans jeton, l’extension continue de fonctionner normalement – elle ne reçoit simplement aucune mise à jour automatique (rien n’est désactivé, aucune perte de fonction)."
+
+msgid "Lizenz-Token"
+msgstr "Jeton de licence"
+
+msgid "•••••••••• (gespeichert – leer lassen, um beizubehalten)"
+msgstr "•••••••••• (enregistré – laisser vide pour conserver)"
+
+msgid "per wp-config gesetzt"
+msgstr "défini via wp-config"
+
+msgid "Das Token ist per wp-config (Konstante GFB_UPDATE_TOKEN) gesetzt und hat Vorrang."
+msgstr "Le jeton est défini via wp-config (constante GFB_UPDATE_TOKEN) et a la priorité."
+
+msgid "Eingaben in diesem Feld werden ignoriert. Um das Token zu ändern, passe die Konstante in der wp-config.php an."
+msgstr "Les saisies dans ce champ sont ignorées. Pour modifier le jeton, ajustez la constante dans wp-config.php."
+
+msgid "Empfehlung: das Token stattdessen als Konstante GFB_UPDATE_TOKEN in der wp-config.php setzen – das ist robuster und hat Vorrang."
+msgstr "Recommandation : définissez plutôt le jeton comme constante GFB_UPDATE_TOKEN dans wp-config.php – c’est plus robuste et prioritaire."
+
+msgid "Lizenz-Token speichern"
+msgstr "Enregistrer le jeton de licence"
+
+msgid "Token testen"
+msgstr "Tester le jeton"
+
+msgid "Prüft das hinterlegte Token sofort gegen den Update-Server, unabhängig vom üblichen Update-Takt."
+msgstr "Vérifie immédiatement le jeton enregistré auprès du serveur de mises à jour, indépendamment de l’intervalle habituel."
+
+msgid "Token gültig – automatische Updates aktiv."
+msgstr "Jeton valide – mises à jour automatiques actives."
+
+msgid "Installiert: Version %1$s. Auf dem Server verfügbar: Version %2$s."
+msgstr "Installé : version %1$s. Disponible sur le serveur : version %2$s."
+
+msgid "Installierte Version: %s. Aktuell – kein Update verfügbar."
+msgstr "Version installée : %s. À jour – aucune mise à jour disponible."
+
+msgid "Token per wp-config gesetzt (Vorrang)."
+msgstr "Jeton défini via wp-config (priorité)."
+
+msgid "Das Token stammt aus der Konstante GFB_UPDATE_TOKEN. Eingaben im Backend werden ignoriert."
+msgstr "Le jeton provient de la constante GFB_UPDATE_TOKEN. Les saisies dans l’administration sont ignorées."
+
+msgid "Token abgelaufen oder ungültig – keine Updates."
+msgstr "Jeton expiré ou invalide – aucune mise à jour."
+
+msgid "Der Server hat das Token abgelehnt. Das Plugin funktioniert weiterhin normal, es werden nur keine Updates angeboten."
+msgstr "Le serveur a refusé le jeton. L’extension continue de fonctionner normalement, seules les mises à jour ne sont pas proposées."
+
+msgid "Update-Server nicht erreichbar."
+msgstr "Serveur de mises à jour injoignable."
+
+msgid "Der Server konnte gerade nicht erreicht werden. Das ist meist vorübergehend – später erneut «Token testen»."
+msgstr "Le serveur n’a pas pu être joint pour le moment. C’est généralement temporaire – réessayez «Tester le jeton» plus tard."
+
+msgid "Kein Token hinterlegt."
+msgstr "Aucun jeton enregistré."
+
+msgid "Trage unten ein Lizenz-Token ein, um automatische Updates zu aktivieren. Ohne Token läuft das Plugin normal weiter."
+msgstr "Saisissez ci-dessous un jeton de licence pour activer les mises à jour automatiques. Sans jeton, l’extension continue de fonctionner normalement."
+
+msgid "Lizenz-Token wird per wp-config gesetzt (Vorrang). Eingaben im Backend werden ignoriert."
+msgstr "Le jeton de licence est défini via wp-config (priorité). Les saisies dans l’administration sont ignorées."
+
+msgid "Update-Client nicht verfügbar."
+msgstr "Client de mise à jour indisponible."
+
+msgid "Lizenz-Token gespeichert."
+msgstr "Jeton de licence enregistré."
+
+msgid "Token testen: Token gültig – automatische Updates aktiv."
+msgstr "Tester le jeton : jeton valide – mises à jour automatiques actives."
+
+msgid "Token testen: Token per wp-config gesetzt (Vorrang)."
+msgstr "Tester le jeton : jeton défini via wp-config (priorité)."
+
+msgid "Token testen: Token abgelaufen oder ungültig – keine Updates."
+msgstr "Tester le jeton : jeton expiré ou invalide – aucune mise à jour."
+
+msgid "Token testen: Update-Server nicht erreichbar – bitte später erneut versuchen."
+msgstr "Tester le jeton : serveur de mises à jour injoignable – veuillez réessayer plus tard."
+
+msgid "Token testen: Kein Token hinterlegt."
+msgstr "Tester le jeton : aucun jeton enregistré."
+

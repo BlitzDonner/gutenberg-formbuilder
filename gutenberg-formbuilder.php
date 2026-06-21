@@ -70,22 +70,42 @@ GFB_Admin_Audit::boot();
 /**
  * BD Update Client: bezieht Updates vom Self-hosted Server plugins.blitzdonner.ch.
  *
- * Das Token kommt aus der wp-config-Konstante GFB_UPDATE_TOKEN. In der jeweiligen
- * Kundeninstallation wird sie in wp-config.php gesetzt:
+ * Das Token kommt entweder aus der wp-config-Konstante GFB_UPDATE_TOKEN
+ * (empfohlen, mit Vorrang) ODER aus der im Backend hinterlegten Option
+ * gfb_update_token. In der Kundeninstallation lässt sich die Konstante in
+ * wp-config.php setzen:
  *   define( 'GFB_UPDATE_TOKEN', 'xxxxxxxx' );
  * Kein Token im Plugin-Code. Ohne gültiges Token werden nur keine Updates
  * angeboten – das Plugin bleibt voll funktionsfähig (GPL-Grenze, kein Killswitch).
  */
-add_action( 'init', static function () {
+// Frueh auf plugins_loaded instanziieren: Der Filter
+// pre_set_site_transient_update_plugins muss registriert sein, BEVOR WordPress
+// den update_plugins-Transient befuellt (auch im Cron-Loopback). Sonst fehlt
+// das Plugin im Transient, WP setzt update-supported = false und blendet die
+// Auto-Update-Schaltung in der Plugin-Liste aus.
+add_action( 'plugins_loaded', static function () {
 	if ( ! class_exists( 'BD_Update_Client' ) ) {
 		require_once GFB_PLUGIN_DIR . 'includes/class-bd-update-client.php';
 	}
 
-	new BD_Update_Client( array(
+	$GLOBALS['gfb_update_client'] = new BD_Update_Client( array(
 		'plugin_file' => GFB_PLUGIN_FILE,
 		'slug'        => 'gutenberg-formbuilder',
 		'server_url'  => 'https://plugins.blitzdonner.ch',
 		'version'     => GFB_PLUGIN_VERSION,
+		'option_key'  => 'gfb_update_token',
 		'const_key'   => 'GFB_UPDATE_TOKEN',
 	) );
-}, 20 );
+}, 1 );
+
+/**
+ * Zugriff auf die laufende Update-Client-Instanz (z.B. für die Status-Box
+ * im Backend). Gibt null zurück, falls der Client noch nicht initialisiert ist.
+ *
+ * @return BD_Update_Client|null
+ */
+function gfb_update_client() {
+	return isset( $GLOBALS['gfb_update_client'] ) && $GLOBALS['gfb_update_client'] instanceof BD_Update_Client
+		? $GLOBALS['gfb_update_client']
+		: null;
+}

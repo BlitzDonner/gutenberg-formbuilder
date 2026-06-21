@@ -46,7 +46,15 @@ Das Token gehört **nicht** in den Plugin-Code. Es wird pro Kundeninstallation i
 define( 'GFB_UPDATE_TOKEN', 'das-token-vom-server' );
 ```
 
-Der Client liest das Token ausschliesslich aus dieser Konstante (`const_key` => `GFB_UPDATE_TOKEN`). Übertragen wird es immer im `Authorization`-Header, nie als URL-Parameter. Das Token erzeugt der Update-Server; es wird dort nur einmal im Klartext angezeigt.
+Der Client liest das Token aus dieser Konstante (`const_key` => `GFB_UPDATE_TOKEN`). Übertragen wird es immer im `Authorization`-Header, nie als URL-Parameter. Das Token erzeugt der Update-Server; es wird dort nur einmal im Klartext angezeigt.
+
+## Token im Backend hinterlegen (Alternative)
+
+Wer keinen Zugriff auf `wp-config.php` hat, trägt das Token im Backend ein: unter **Formular-Einträge → Sicherheit** im Abschnitt **«Lizenz / Updates»**. Der Client liest es dann aus der Option `gfb_update_token` (`option_key` => `gfb_update_token`, gespeichert mit `autoload=false`).
+
+**Vorrang:** Die Konstante `GFB_UPDATE_TOKEN` hat immer Vorrang. Ist sie gesetzt, ignoriert der Handler jede Backend-Eingabe, das Feld erscheint deaktiviert und der DB-Wert wird durch ein Speichern nicht überschrieben. Die Konstante bleibt der empfohlene Weg, weil sie nicht in der Datenbank liegt.
+
+Das Feld ist ein Passwort-Feld; das gespeicherte Token wird nie im Klartext ausgegeben. Leeres Absenden behält den vorhandenen Wert. Der Knopf **«Token testen»** prüft das hinterlegte Token sofort gegen den Server, unabhängig vom Update-Takt; das Token steht dabei nie in der URL, sondern nur im `Authorization`-Header. Im Audit-Log wird beim Speichern nur das Flag `token_set: yes/no` festgehalten, nie das Token selbst.
 
 ## Verhalten bei ungültigem Token (GPL-Grenze)
 
@@ -57,6 +65,7 @@ Bei abgelaufenem, gesperrtem oder fehlendem Token verweigert der Client **nur di
 - Token nur im `Authorization: Bearer`-Header, nie in der URL.
 - SHA-256-Prüfung nach dem Download; bei Abweichung keine Installation.
 - HTTP 403 vom Server bei ungültigem Token führt nur zur Update-Verweigerung, nicht zur Funktionssperre.
+- Backend-Token in Option `gfb_update_token` mit `autoload=false`; nie im Klartext gerendert; Konstanten-Vorrang serverseitig im Handler erzwungen; Audit nur mit `token_set`-Flag.
 
 ## Verweis auf den Server
 

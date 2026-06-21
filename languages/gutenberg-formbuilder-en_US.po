@@ -356,3 +356,95 @@ msgstr "Fill in before pasting:"
 msgid "Vor dem Veröffentlichen die beiden Platzhalter in eckigen Klammern ersetzen: «[Firmenbezeichnung und Adresse]» aus Ihrem Auftragsverarbeitungsvertrag, «[Konkrete Speicherdauer aus der Dokumentation von Friendly Captcha]» aus der Anbieter-Dokumentation."
 msgstr "Before publishing, replace the two placeholders in square brackets: «[company name and address]» from your data processing agreement, «[specific retention period from the Friendly Captcha documentation]» from the provider documentation."
 
+
+# Lizenz / Updates – Backend-Token (hinzugefügt 2026-06-21)
+msgid "Lizenz / Updates"
+msgstr "License / Updates"
+
+msgid "Mit einem gültigen Lizenz-Token bezieht das Plugin automatische Updates vom Server plugins.blitzdonner.ch. Ohne Token läuft das Plugin ganz normal weiter – es werden lediglich keine automatischen Updates angeboten (kein Abschalten, kein Funktionsverlust)."
+msgstr "With a valid license token, the plugin receives automatic updates from the server plugins.blitzdonner.ch. Without a token the plugin keeps working normally – it simply receives no automatic updates (nothing is switched off, no loss of features)."
+
+msgid "Lizenz-Token"
+msgstr "License token"
+
+msgid "•••••••••• (gespeichert – leer lassen, um beizubehalten)"
+msgstr "•••••••••• (saved – leave empty to keep)"
+
+msgid "per wp-config gesetzt"
+msgstr "set via wp-config"
+
+msgid "Das Token ist per wp-config (Konstante GFB_UPDATE_TOKEN) gesetzt und hat Vorrang."
+msgstr "The token is set via wp-config (constant GFB_UPDATE_TOKEN) and takes precedence."
+
+msgid "Eingaben in diesem Feld werden ignoriert. Um das Token zu ändern, passe die Konstante in der wp-config.php an."
+msgstr "Input in this field is ignored. To change the token, adjust the constant in wp-config.php."
+
+msgid "Empfehlung: das Token stattdessen als Konstante GFB_UPDATE_TOKEN in der wp-config.php setzen – das ist robuster und hat Vorrang."
+msgstr "Recommendation: instead set the token as the constant GFB_UPDATE_TOKEN in wp-config.php – that is more robust and takes precedence."
+
+msgid "Lizenz-Token speichern"
+msgstr "Save license token"
+
+msgid "Token testen"
+msgstr "Test token"
+
+msgid "Prüft das hinterlegte Token sofort gegen den Update-Server, unabhängig vom üblichen Update-Takt."
+msgstr "Checks the stored token against the update server immediately, regardless of the usual update interval."
+
+msgid "Token gültig – automatische Updates aktiv."
+msgstr "Token valid – automatic updates active."
+
+msgid "Installiert: Version %1$s. Auf dem Server verfügbar: Version %2$s."
+msgstr "Installed: version %1$s. Available on the server: version %2$s."
+
+msgid "Installierte Version: %s. Aktuell – kein Update verfügbar."
+msgstr "Installed version: %s. Up to date – no update available."
+
+msgid "Token per wp-config gesetzt (Vorrang)."
+msgstr "Token set via wp-config (precedence)."
+
+msgid "Das Token stammt aus der Konstante GFB_UPDATE_TOKEN. Eingaben im Backend werden ignoriert."
+msgstr "The token comes from the constant GFB_UPDATE_TOKEN. Backend input is ignored."
+
+msgid "Token abgelaufen oder ungültig – keine Updates."
+msgstr "Token expired or invalid – no updates."
+
+msgid "Der Server hat das Token abgelehnt. Das Plugin funktioniert weiterhin normal, es werden nur keine Updates angeboten."
+msgstr "The server rejected the token. The plugin keeps working normally, only no updates are offered."
+
+msgid "Update-Server nicht erreichbar."
+msgstr "Update server unreachable."
+
+msgid "Der Server konnte gerade nicht erreicht werden. Das ist meist vorübergehend – später erneut «Token testen»."
+msgstr "The server could not be reached right now. This is usually temporary – try «Test token» again later."
+
+msgid "Kein Token hinterlegt."
+msgstr "No token stored."
+
+msgid "Trage unten ein Lizenz-Token ein, um automatische Updates zu aktivieren. Ohne Token läuft das Plugin normal weiter."
+msgstr "Enter a license token below to activate automatic updates. Without a token the plugin keeps working normally."
+
+msgid "Lizenz-Token wird per wp-config gesetzt (Vorrang). Eingaben im Backend werden ignoriert."
+msgstr "The license token is set via wp-config (precedence). Backend input is ignored."
+
+msgid "Update-Client nicht verfügbar."
+msgstr "Update client not available."
+
+msgid "Lizenz-Token gespeichert."
+msgstr "License token saved."
+
+msgid "Token testen: Token gültig – automatische Updates aktiv."
+msgstr "Test token: token valid – automatic updates active."
+
+msgid "Token testen: Token per wp-config gesetzt (Vorrang)."
+msgstr "Test token: token set via wp-config (precedence)."
+
+msgid "Token testen: Token abgelaufen oder ungültig – keine Updates."
+msgstr "Test token: token expired or invalid – no updates."
+
+msgid "Token testen: Update-Server nicht erreichbar – bitte später erneut versuchen."
+msgstr "Test token: update server unreachable – please try again later."
+
+msgid "Token testen: Kein Token hinterlegt."
+msgstr "Test token: no token stored."
+

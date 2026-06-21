@@ -187,6 +187,59 @@ class GFB_Admin_Settings {
 				);
 				break;
 
+			case 'save_license':
+				// Konstanten-Vorrang serverseitig hart durchsetzen: Ist die
+				// wp-config-Konstante gesetzt, ignorieren wir jede Eingabe und
+				// fassen den DB-Wert NICHT an. Der POST darf den Wert nicht ueberschreiben.
+				if ( defined( 'GFB_UPDATE_TOKEN' ) ) {
+					$message = __( 'Lizenz-Token wird per wp-config gesetzt (Vorrang). Eingaben im Backend werden ignoriert.', 'gutenberg-formbuilder' );
+					break;
+				}
+
+				// Token wird leer gerendert. Leer abgeschickt = bestehenden Wert
+				// beibehalten (analog captcha_api_key), nicht versehentlich loeschen.
+				$prev_token = (string) get_option( 'gfb_update_token', '' );
+				$token_in   = isset( $_POST['gfb_update_token'] ) ? trim( (string) wp_unslash( $_POST['gfb_update_token'] ) ) : '';
+
+				// Konservative Sanitisierung: nur sichere Token-Zeichen, Laenge cappen.
+				$token_in = preg_replace( '/[^A-Za-z0-9._\-]/', '', $token_in );
+				if ( strlen( $token_in ) > 512 ) {
+					$token_in = substr( $token_in, 0, 512 );
+				}
+
+				$token_to_store = ( '' === $token_in ) ? $prev_token : $token_in;
+
+				// autoload=false: Token nicht in den globalen Options-Cache laden.
+				update_option( 'gfb_update_token', $token_to_store, false );
+
+				// Audit ohne Klartext: nur das Gesetzt-Flag.
+				GFB_Audit::record(
+					'settings_license_saved',
+					'config',
+					'',
+					array( 'token_set' => '' !== $token_to_store ? 'yes' : 'no' )
+				);
+				$message = __( 'Lizenz-Token gespeichert.', 'gutenberg-formbuilder' );
+				break;
+
+			case 'test_license':
+				$client = function_exists( 'gfb_update_client' ) ? gfb_update_client() : null;
+				if ( ! $client ) {
+					$message = __( 'Update-Client nicht verfügbar.', 'gutenberg-formbuilder' );
+					break;
+				}
+				// Live-Check am Transient-Takt vorbei (Token kommt aus DB/Konstante,
+				// nie aus der URL; der Client sendet es per Bearer-Header).
+				$st      = $client->status( true );
+				$message = self::license_status_message( $st );
+				GFB_Audit::record(
+					'settings_license_tested',
+					'config',
+					'',
+					array( 'result' => $st['code'] )
+				);
+				break;
+
 			case 'save_caps':
 				$matrix = isset( $_POST['caps'] ) && is_array( $_POST['caps'] ) ? wp_unslash( $_POST['caps'] ) : array();
 				global $wp_roles;
@@ -292,6 +345,9 @@ class GFB_Admin_Settings {
 				. '</pre>';
 			echo '<p><em>' . esc_html__( 'Der vorgeschlagene Schlüssel wurde frisch erzeugt. Speichere ihn an einem sicheren Ort. Geht der Schlüssel verloren, sind verschlüsselte Daten unwiederbringlich verloren.', 'gutenberg-formbuilder' ) . '</em></p>';
 		}
+
+		// 1b) Lizenz / Updates – Token fuer den Auto-Update-Bezug.
+		self::render_license_section();
 
 		// 2) ClamAV
 		echo '<hr/><h2>' . esc_html__( 'ClamAV (Virenscan beim Upload)', 'gutenberg-formbuilder' ) . '</h2>';
@@ -484,6 +540,157 @@ class GFB_Admin_Settings {
 		echo '</form>';
 
 		echo '</div>';
+	}
+
+	/**
+	 * Rendert den Abschnitt «Lizenz / Updates».
+	 *
+	 * Erlaubt das Hinterlegen des Update-Lizenz-Tokens im Backend (Option
+	 * gfb_update_token), als kundenfreundliche Alternative zur wp-config-
+	 * Konstante GFB_UPDATE_TOKEN. Die Konstante hat Vorrang: Ist sie gesetzt,
+	 * wird das Feld deaktiviert und ein POST aendert den DB-Wert nicht.
+	 *
+	 * Das Token wird als password-Feld behandelt, nie im Klartext gerendert
+	 * (gleiches Muster wie der Captcha-API-Key).
+	 *
+	 * @return void
+	 */
+	private static function render_license_section() {
+		$by_const  = defined( 'GFB_UPDATE_TOKEN' );
+		$has_token = '' !== (string) get_option( 'gfb_update_token', '' );
+
+		// Status-Box aus dem laufenden Update-Client ableiten.
+		$client = function_exists( 'gfb_update_client' ) ? gfb_update_client() : null;
+		$status = $client ? $client->status( false ) : array(
+			'code'           => $by_const ? 'const_set' : ( $has_token ? 'valid' : 'no_token' ),
+			'version'        => defined( 'GFB_PLUGIN_VERSION' ) ? GFB_PLUGIN_VERSION : '',
+			'remote_version' => '',
+			'by_const'       => $by_const,
+		);
+
+		echo '<hr/><h2>' . esc_html__( 'Lizenz / Updates', 'gutenberg-formbuilder' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Mit einem gültigen Lizenz-Token bezieht das Plugin automatische Updates vom Server plugins.blitzdonner.ch. Ohne Token läuft das Plugin ganz normal weiter – es werden lediglich keine automatischen Updates angeboten (kein Abschalten, kein Funktionsverlust).', 'gutenberg-formbuilder' ) . '</p>';
+
+		// Status-Box oberhalb des Felds.
+		self::render_license_status_box( $status );
+
+		echo '<form method="post">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="save_license" />';
+		echo '<table class="form-table" role="presentation"><tbody>';
+
+		echo '<tr><th scope="row"><label for="gfb_update_token">' . esc_html__( 'Lizenz-Token', 'gutenberg-formbuilder' ) . '</label></th><td>';
+
+		if ( $by_const ) {
+			// Konstante gesetzt: Feld deaktiviert, Eingaben werden serverseitig ignoriert.
+			echo '<input type="password" id="gfb_update_token" name="gfb_update_token" value="" class="regular-text" autocomplete="off" spellcheck="false" disabled="disabled" placeholder="' . esc_attr__( 'per wp-config gesetzt', 'gutenberg-formbuilder' ) . '" />';
+			echo '<p class="description"><strong>' . esc_html__( 'Das Token ist per wp-config (Konstante GFB_UPDATE_TOKEN) gesetzt und hat Vorrang.', 'gutenberg-formbuilder' ) . '</strong> '
+				. esc_html__( 'Eingaben in diesem Feld werden ignoriert. Um das Token zu ändern, passe die Konstante in der wp-config.php an.', 'gutenberg-formbuilder' ) . '</p>';
+		} else {
+			// Token nie im Klartext rendern; Platzhalter signalisiert «gespeichert».
+			$ph = $has_token
+				? esc_attr__( '•••••••••• (gespeichert – leer lassen, um beizubehalten)', 'gutenberg-formbuilder' )
+				: '';
+			echo '<input type="password" id="gfb_update_token" name="gfb_update_token" value="" class="regular-text" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" />';
+			echo '<p class="description">' . esc_html__( 'Wird serverseitig gehalten und nie an das Frontend ausgegeben. Aus Sicherheitsgründen leer dargestellt.', 'gutenberg-formbuilder' );
+			if ( $has_token ) {
+				echo ' ' . esc_html__( 'Aktuell gesetzt – zum Ändern neuen Wert eintragen, sonst leer lassen.', 'gutenberg-formbuilder' );
+			}
+			echo ' ' . esc_html__( 'Empfehlung: das Token stattdessen als Konstante GFB_UPDATE_TOKEN in der wp-config.php setzen – das ist robuster und hat Vorrang.', 'gutenberg-formbuilder' );
+			echo '</p>';
+		}
+
+		echo '</td></tr>';
+		echo '</tbody></table>';
+
+		if ( ! $by_const ) {
+			submit_button( __( 'Lizenz-Token speichern', 'gutenberg-formbuilder' ) );
+		}
+		echo '</form>';
+
+		// «Token testen» – Live-Check am Transient-Takt vorbei.
+		echo '<form method="post" style="margin-top:0.5rem">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="test_license" />';
+		submit_button( __( 'Token testen', 'gutenberg-formbuilder' ), 'secondary', 'submit', false );
+		echo ' <span class="description">' . esc_html__( 'Prüft das hinterlegte Token sofort gegen den Update-Server, unabhängig vom üblichen Update-Takt.', 'gutenberg-formbuilder' ) . '</span>';
+		echo '</form>';
+	}
+
+	/**
+	 * Rendert die farbige Status-Box für die Lizenz-Sektion.
+	 *
+	 * Zustaende: const_set (per wp-config), no_token (kein Token),
+	 * valid (gueltig, mit installierter Version), forbidden (abgelaufen/ungueltig),
+	 * unreachable (Server nicht erreichbar).
+	 *
+	 * @param array $status Ergebnis von BD_Update_Client::status().
+	 * @return void
+	 */
+	private static function render_license_status_box( $status ) {
+		$code    = isset( $status['code'] ) ? $status['code'] : 'no_token';
+		$version = isset( $status['version'] ) ? (string) $status['version'] : '';
+		$remote  = isset( $status['remote_version'] ) ? (string) $status['remote_version'] : '';
+
+		// Farbschema je Zustand (gleiche Palette wie der Storage-Reach-Block).
+		switch ( $code ) {
+			case 'valid':
+				$bg = '#edfaef'; $border = '#1a7f37'; $icon = '✓';
+				$head = __( 'Token gültig – automatische Updates aktiv.', 'gutenberg-formbuilder' );
+				$body = '' !== $remote && version_compare( $remote, $version, '>' )
+					? sprintf( __( 'Installiert: Version %1$s. Auf dem Server verfügbar: Version %2$s.', 'gutenberg-formbuilder' ), $version, $remote )
+					: sprintf( __( 'Installierte Version: %s. Aktuell – kein Update verfügbar.', 'gutenberg-formbuilder' ), $version );
+				break;
+			case 'const_set':
+				$bg = '#eef4fb'; $border = '#2271b1'; $icon = 'ℹ';
+				$head = __( 'Token per wp-config gesetzt (Vorrang).', 'gutenberg-formbuilder' );
+				$body = __( 'Das Token stammt aus der Konstante GFB_UPDATE_TOKEN. Eingaben im Backend werden ignoriert.', 'gutenberg-formbuilder' );
+				break;
+			case 'forbidden':
+				$bg = '#fcebec'; $border = '#a32016'; $icon = '✗';
+				$head = __( 'Token abgelaufen oder ungültig – keine Updates.', 'gutenberg-formbuilder' );
+				$body = __( 'Der Server hat das Token abgelehnt. Das Plugin funktioniert weiterhin normal, es werden nur keine Updates angeboten.', 'gutenberg-formbuilder' );
+				break;
+			case 'unreachable':
+				$bg = '#fcf9e8'; $border = '#dba617'; $icon = '!';
+				$head = __( 'Update-Server nicht erreichbar.', 'gutenberg-formbuilder' );
+				$body = __( 'Der Server konnte gerade nicht erreicht werden. Das ist meist vorübergehend – später erneut «Token testen».', 'gutenberg-formbuilder' );
+				break;
+			case 'no_token':
+			default:
+				$bg = '#f6f7f7'; $border = '#646970'; $icon = 'ℹ';
+				$head = __( 'Kein Token hinterlegt.', 'gutenberg-formbuilder' );
+				$body = __( 'Trage unten ein Lizenz-Token ein, um automatische Updates zu aktivieren. Ohne Token läuft das Plugin normal weiter.', 'gutenberg-formbuilder' );
+				break;
+		}
+
+		echo '<div style="background:' . esc_attr( $bg ) . ';border-left:4px solid ' . esc_attr( $border ) . ';padding:0.8rem 1rem;margin:0.6rem 0;border-radius:3px">';
+		echo '<p style="margin:0;font-size:1.05em"><strong>' . esc_html( $icon . ' ' . $head ) . '</strong></p>';
+		echo '<p style="margin:0.4rem 0 0">' . esc_html( $body ) . '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * Kurze Klartext-Statusmeldung (für die Redirect-Notiz nach «Token testen»).
+	 *
+	 * @param array $status Ergebnis von BD_Update_Client::status().
+	 * @return string
+	 */
+	private static function license_status_message( $status ) {
+		$code = isset( $status['code'] ) ? $status['code'] : 'no_token';
+		switch ( $code ) {
+			case 'valid':
+				return __( 'Token testen: Token gültig – automatische Updates aktiv.', 'gutenberg-formbuilder' );
+			case 'const_set':
+				return __( 'Token testen: Token per wp-config gesetzt (Vorrang).', 'gutenberg-formbuilder' );
+			case 'forbidden':
+				return __( 'Token testen: Token abgelaufen oder ungültig – keine Updates.', 'gutenberg-formbuilder' );
+			case 'unreachable':
+				return __( 'Token testen: Update-Server nicht erreichbar – bitte später erneut versuchen.', 'gutenberg-formbuilder' );
+			case 'no_token':
+			default:
+				return __( 'Token testen: Kein Token hinterlegt.', 'gutenberg-formbuilder' );
+		}
 	}
 
 	/**
