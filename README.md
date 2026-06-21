@@ -126,6 +126,15 @@ languages/                  # Übersetzungen (*.po / *.mo), siehe INSTALL.md
 docs/                       # Zusatzdoku (Farben/Verläufe, E-Mail-Benachrichtigung, …)
 ```
 
+## Auto-Publish (Release → Update-Server)
+
+Ein veröffentlichtes reguläres GitHub-Release wird automatisch auf
+`plugins.blitzdonner.ch` publiziert. Der Workflow
+`.github/workflows/publish-update.yml` baut das ZIP, durchläuft vier Gates
+(php -l, Header-Version === Tag, ZIP-Struktur, SemVer) und postet es mit einem
+Deploy-Token. Einrichtung und Nutzung: [`docs/AUTO-PUBLISH.md`](docs/AUTO-PUBLISH.md).
+**Nächster Schritt (Mittelweg):** Ed25519-Signatur des ZIP – noch nicht enthalten.
+
 ## Entwicklung
 
 - Kein npm-Build: JS/CSS sind Quelldateien.

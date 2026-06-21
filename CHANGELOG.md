@@ -7,6 +7,7 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 ### Neu
 
 - **Update-Client für den selbst gehosteten Update-Server angebunden:** Neue Klasse `BD_Update_Client` (`includes/class-bd-update-client.php`) und Initialisierung in `gutenberg-formbuilder.php`. Das Plugin bezieht Updates ab sofort über die WordPress-Standard-Update-API vom Server `plugins.blitzdonner.ch` (Hooks `pre_set_site_transient_update_plugins`, `plugins_api`, `upgrader_pre_download` mit SHA-256-Prüfung). Das Token wird pro Installation als wp-config-Konstante `GFB_UPDATE_TOKEN` gesetzt; bei abgelaufenem oder gesperrtem Token werden nur Updates verweigert (kein Killswitch, GPL-konform). Details siehe `docs/UPDATE-SERVER-INTEGRATION.md`. Die Versionsnummer bleibt unverändert bei 2.7.0.
+- **Auto-Publish via GitHub Actions:** Neuer Workflow `.github/workflows/publish-update.yml`. Ein veröffentlichtes reguläres Release (kein Pre-Release/Draft) baut das Plugin-ZIP nach Konvention und postet es an den Auto-Publish-Endpunkt von `plugins.blitzdonner.ch`. Vier Gates laufen vorab (php -l, Header-Version === Tag, ZIP-Struktur, SemVer); bei Fehler oder Server-Status ungleich 2xx bricht der Lauf ab. Das Deploy-Token kommt aus dem GitHub-Environment-Secret `BD_DEPLOY_TOKEN` und wird nie geloggt. Anleitung: `docs/AUTO-PUBLISH.md`. **Nächster Schritt (Mittelweg):** Ed25519-Signatur des ZIP – noch nicht enthalten.
 
 ## [2.7.0] – 2026-06-14
 
