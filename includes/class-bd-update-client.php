@@ -15,6 +15,12 @@
  * - Token wird per Authorization-Header (Bearer) gesendet, nie als URL-Parameter.
  * - Nach dem Download prueft der Client die SHA-256-Pruefsumme. Bei Abweichung
  *   wird NICHT installiert.
+ * - Ed25519-Signatur (PFLICHT): Jedes Paket muss eine gueltige Ed25519-Signatur
+ *   mitliefern. Der Client prueft sie gegen die eingebettete Liste akzeptierter
+ *   Public Keys (ACCEPTED_KEYS). Fehlt die Signatur, ist sie ungueltig oder fehlt
+ *   libsodium, wird NICHT installiert. Das Plugin bleibt dabei voll funktions-
+ *   faehig – verweigert wird nur das Update, kein Killswitch. Fehlt libsodium,
+ *   zeigt der Client zusaetzlich eine Admin-Notice.
  *
  * Einbinden im Hauptplugin (Beispiel):
  *
@@ -39,6 +45,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'BD_Update_Client' ) ) :
 
 class BD_Update_Client {
+
+	/**
+	 * Akzeptierte Ed25519-Public-Keys (Hex), eingebettet und versioniert.
+	 *
+	 * Muss mit der Server-Liste (class-bdpus-keys.php) konsistent gehalten werden.
+	 * Format: key_id => public_key_hex (key_id = erste 16 Hex des Public Keys).
+	 */
+	const ACCEPTED_KEYS = array(
+		// Inhaber: Blitz & Donner / Stefan (Produktiv) – erzeugt 2026-06-21.
+		'8337dfb76e01b82d' => '8337dfb76e01b82da07e39df711d72f758f33a372932db268bb505b0bdea4860',
+	);
+
+	/**
+	 * Pflicht-Schalter fuer die Signaturpruefung.
+	 *
+	 * true = Pflicht-Modus (aktiv): eine fehlende oder ungueltige Signatur
+	 *        verhindert die Installation. Auch ein fehlendes libsodium verhindert
+	 *        die Installation (zusaetzlich Admin-Notice). Das Plugin laeuft in
+	 *        allen Faellen normal weiter – es wird nur das Update verweigert, es
+	 *        gibt keinen Killswitch (GPL-Grenze, Harvey).
+	 *
+	 * Voraussetzung: Jede ausgelieferte Version muss bereits signiert sein.
+	 */
+	const REQUIRE_SIGNATURE = true;
 
 	/** @var string Absolute Hauptdatei des Plugins. */
 	private $plugin_file;
@@ -84,6 +114,34 @@ class BD_Update_Client {
 
 		// Hinweis bei abgelaufenem/gesperrtem Token (KEIN Killswitch).
 		add_action( 'admin_notices', array( $this, 'maybe_license_notice' ) );
+
+		// Pflicht-Vorbedingung (Chloe): fehlt libsodium, koennen Updates nicht
+		// geprueft und damit nicht installiert werden. Statt still zu blockieren,
+		// macht eine Admin-Notice die Ursache sichtbar.
+		if ( ! function_exists( 'sodium_crypto_sign_verify_detached' ) ) {
+			add_action( 'admin_notices', array( $this, 'sodium_missing_notice' ) );
+		}
+	}
+
+	/**
+	 * Admin-Notice, wenn libsodium auf dem Server fehlt.
+	 *
+	 * Im Pflicht-Modus kann der Client ohne libsodium keine Signatur pruefen und
+	 * verweigert daher die Installation. Diese Notice erklaert die Ursache, statt
+	 * die Updates kommentarlos auszublenden. Das Plugin bleibt funktionsfaehig.
+	 */
+	public function sodium_missing_notice() {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( $screen && ! in_array( $screen->id, array( 'plugins', 'update-core', 'dashboard' ), true ) ) {
+			return;
+		}
+		echo '<div class="notice notice-error"><p>';
+		echo '<strong>' . esc_html( $this->slug ) . ':</strong> ';
+		echo esc_html__( 'Automatische Updates fuer dieses Plugin sind deaktiviert, weil die PHP-Erweiterung libsodium fehlt. Bitte den Hoster kontaktieren.', 'bd-update-client' );
+		echo '</p></div>';
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -275,6 +333,9 @@ class BD_Update_Client {
 				'requires_php' => isset( $remote['requires_php'] ) ? $remote['requires_php'] : '',
 				// Eigene Pruefsumme fuer guard_download().
 				'bd_sha256'    => isset( $remote['sha256'] ) ? $remote['sha256'] : '',
+				// Ed25519-Signatur (base64) fuer guard_download(); Pflicht.
+				'bd_signature' => isset( $remote['signature'] ) ? $remote['signature'] : '',
+				'bd_key_id'    => isset( $remote['key_id'] ) ? $remote['key_id'] : '',
 			);
 			$transient->response[ $this->basename ] = (object) $item;
 		} else {
@@ -367,7 +428,102 @@ class BD_Update_Client {
 			}
 		}
 
+		// Ed25519-Signatur pruefen (Pflicht: muss vorhanden und gueltig sein).
+		$sig_check = $this->verify_signature( $tmp );
+		if ( is_wp_error( $sig_check ) ) {
+			@unlink( $tmp );
+			return $sig_check;
+		}
+
 		return $tmp;
+	}
+
+	/**
+	 * Signatur der heruntergeladenen Datei gegen ACCEPTED_KEYS pruefen.
+	 *
+	 * Pflicht-Modus (REQUIRE_SIGNATURE = true, aktiv):
+	 *   - Signatur fehlt                 -> WP_Error (Installation bricht ab).
+	 *   - libsodium fehlt                -> WP_Error (zusaetzlich Admin-Notice).
+	 *   - Signatur ungueltig/unbekannt   -> WP_Error.
+	 *   - Signatur gueltig               -> true.
+	 *
+	 * In allen Fehlerfaellen wird nur das Update verweigert; das Plugin laeuft
+	 * normal weiter (GPL-Grenze, kein Killswitch).
+	 *
+	 * @param string $file Pfad zur heruntergeladenen ZIP-Datei.
+	 * @return true|WP_Error
+	 */
+	private function verify_signature( $file ) {
+		$signature = $this->expected_signature();
+
+		if ( '' === $signature ) {
+			// Keine Signatur geliefert.
+			if ( self::REQUIRE_SIGNATURE ) {
+				return new WP_Error(
+					'signature_required',
+					__( 'Paket ist nicht signiert – Installation abgebrochen.', 'bd-update-client' )
+				);
+			}
+			return true; // Pflicht-Modus aktiv: hier nie erreicht.
+		}
+
+		if ( ! function_exists( 'sodium_crypto_sign_verify_detached' ) ) {
+			// libsodium fehlt. Im Pflicht-Modus blockieren (Admin-Notice zeigt
+			// die Ursache, siehe sodium_missing_notice()).
+			if ( self::REQUIRE_SIGNATURE ) {
+				return new WP_Error(
+					'no_sodium',
+					__( 'Signaturpruefung nicht moeglich (libsodium fehlt) – Installation abgebrochen.', 'bd-update-client' )
+				);
+			}
+			return true;
+		}
+
+		$sig_raw = base64_decode( $signature, true );
+		if ( false === $sig_raw || SODIUM_CRYPTO_SIGN_BYTES !== strlen( $sig_raw ) ) {
+			return new WP_Error(
+				'bad_signature',
+				__( 'Signaturformat ungueltig – Installation abgebrochen.', 'bd-update-client' )
+			);
+		}
+
+		$data = file_get_contents( $file );
+		if ( false === $data ) {
+			return new WP_Error(
+				'file_unreadable',
+				__( 'Paket konnte fuer die Signaturpruefung nicht gelesen werden.', 'bd-update-client' )
+			);
+		}
+
+		foreach ( self::ACCEPTED_KEYS as $pub_hex ) {
+			$pub_raw = @hex2bin( $pub_hex );
+			if ( false === $pub_raw || SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES !== strlen( $pub_raw ) ) {
+				continue;
+			}
+			if ( sodium_crypto_sign_verify_detached( $sig_raw, $data, $pub_raw ) ) {
+				return true;
+			}
+		}
+
+		return new WP_Error(
+			'signature_mismatch',
+			__( 'Signatur passt zu keinem vertrauten Schluessel – Installation abgebrochen.', 'bd-update-client' )
+		);
+	}
+
+	/**
+	 * Erwartete Signatur (base64) aus dem Update-Transient lesen.
+	 */
+	private function expected_signature() {
+		$transient = get_site_transient( 'update_plugins' );
+		if ( $transient && isset( $transient->response[ $this->basename ]->bd_signature ) ) {
+			return (string) $transient->response[ $this->basename ]->bd_signature;
+		}
+		$remote = $this->fetch_remote();
+		if ( ! is_wp_error( $remote ) && isset( $remote['signature'] ) ) {
+			return (string) $remote['signature'];
+		}
+		return '';
 	}
 
 	/**

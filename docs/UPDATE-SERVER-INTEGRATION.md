@@ -10,7 +10,7 @@ Der Server selbst lebt im separaten Projekt `bd-plugin-updater` (Server-Plugin p
 
 ## Initialisierung
 
-Die Hauptdatei `gutenberg-formbuilder.php` lädt und startet den Client auf dem `init`-Hook (Priorität 20):
+Die Hauptdatei `gutenberg-formbuilder.php` lädt und startet den Client auf dem `plugins_loaded`-Hook (Priorität 1, damit der Filter `pre_set_site_transient_update_plugins` registriert ist, bevor WordPress den Transient befüllt):
 
 ```php
 new BD_Update_Client( array(
@@ -18,6 +18,7 @@ new BD_Update_Client( array(
     'slug'        => 'gutenberg-formbuilder',
     'server_url'  => 'https://plugins.blitzdonner.ch',
     'version'     => GFB_PLUGIN_VERSION,
+    'option_key'  => 'gfb_update_token',
     'const_key'   => 'GFB_UPDATE_TOKEN',
 ) );
 ```
@@ -32,9 +33,9 @@ Der Client hängt sich in drei WordPress-Filter und einen Admin-Hook:
 
 2. **`plugins_api`** – Liefert das Detail-Popup («Details anzeigen») mit Name, Version, Mindest-WP/-PHP und Changelog. Die Daten stammen aus derselben Server-Antwort.
 
-3. **`upgrader_pre_download`** – Greift beim eigentlichen Download ein. Der Client lädt das ZIP über `POST /bd-updater/download/{slug}` mit dem Token im `Authorization: Bearer`-Header in eine Temp-Datei. Danach prüft er die **SHA-256-Prüfsumme** gegen den Wert aus dem Update-Transient. Stimmt sie nicht überein, bricht er die Installation ab (`WP_Error`, kein Eintrag ins Dateisystem).
+3. **`upgrader_pre_download`** – Greift beim eigentlichen Download ein. Der Client lädt das ZIP über `POST /bd-updater/download/{slug}` mit dem Token im `Authorization: Bearer`-Header in eine Temp-Datei. Danach prüft er zuerst die **SHA-256-Prüfsumme** gegen den Wert aus dem Update-Transient, anschliessend die **Ed25519-Signatur** (siehe Abschnitt «Signaturprüfung»). Schlägt eine der beiden Prüfungen fehl, bricht er die Installation ab (`WP_Error`, kein Eintrag ins Dateisystem).
 
-4. **`admin_notices`** – Zeigt bei abgelaufenem oder gesperrtem Token einen dezenten Hinweis: «Lizenz abgelaufen – keine Updates. Das Plugin funktioniert weiterhin normal.»
+4. **`admin_notices`** – Zeigt bei abgelaufenem oder gesperrtem Token einen dezenten Hinweis: «Lizenz abgelaufen – keine Updates. Das Plugin funktioniert weiterhin normal.» Fehlt die PHP-Erweiterung libsodium, erscheint zusätzlich eine Notice, die erklärt, warum automatische Updates deaktiviert sind.
 
 Innerhalb eines Requests cacht der Client die Server-Antwort, um Mehrfach-Abfragen zu vermeiden.
 
@@ -60,13 +61,34 @@ Das Feld ist ein Passwort-Feld; das gespeicherte Token wird nie im Klartext ausg
 
 Bei abgelaufenem, gesperrtem oder fehlendem Token verweigert der Client **nur die Updates** und zeigt einen Hinweis. Er deaktiviert das Plugin **niemals** und schaltet keine Funktion ab. Es gibt **keinen Killswitch**. Das Plugin bleibt unter der GPL voll funktionsfähig. Diese Grenze ist bewusst gesetzt und darf nicht aufgeweicht werden.
 
+## Signaturprüfung (Pflicht)
+
+Seit Version 2.7.3 prüft der eingebettete Client **verpflichtend** eine Ed25519-Signatur jedes Pakets. Der Schalter `REQUIRE_SIGNATURE` in `class-bd-update-client.php` steht fest auf `true` (Pflicht-Modus).
+
+Ablauf: Nach der SHA-256-Prüfung liest der Client die mitgelieferte Signatur (base64) aus dem Update-Transient und prüft sie mit `sodium_crypto_sign_verify_detached` gegen die eingebettete Liste akzeptierter Public Keys (`ACCEPTED_KEYS`). Stimmt die Signatur mit einem vertrauten Schlüssel überein, läuft die Installation weiter; sonst bricht sie ab.
+
+Verweigert wird das Update in folgenden Fällen – jeweils nur das Update, **kein Killswitch**, das Plugin bleibt voll funktionsfähig:
+
+- Das Paket liefert keine Signatur.
+- Die Signatur ist im Format ungültig oder passt zu keinem vertrauten Schlüssel.
+- Die PHP-Erweiterung libsodium fehlt (zusätzlich erscheint eine Admin-Notice).
+
+**Schlüssel-Inhaber:** Der Produktiv-Key gehört Blitz & Donner / Stefan (erzeugt am 21.06.2026), Key-ID `8337dfb76e01b82d`. Die eingebettete Liste `ACCEPTED_KEYS` muss mit der Server-Liste (`class-bdpus-keys.php` im Projekt `bd-plugin-updater`) konsistent bleiben.
+
+**Folge für die Veröffentlichung:** Ab 2.7.3 muss **jede** neue Version signiert publiziert werden. Ein unsigniertes Paket lässt sich auf einer 2.7.3-Installation nicht mehr installieren. Das Signieren und Publizieren ist Aufgabe des Update-Servers (Projekt `bd-plugin-updater`).
+
 ## Sicherheit auf einen Blick
 
 - Token nur im `Authorization: Bearer`-Header, nie in der URL.
 - SHA-256-Prüfung nach dem Download; bei Abweichung keine Installation.
+- Ed25519-Signaturprüfung (Pflicht) nach der SHA-256-Prüfung; bei fehlender oder ungültiger Signatur sowie bei fehlendem libsodium keine Installation.
 - HTTP 403 vom Server bei ungültigem Token führt nur zur Update-Verweigerung, nicht zur Funktionssperre.
 - Backend-Token in Option `gfb_update_token` mit `autoload=false`; nie im Klartext gerendert; Konstanten-Vorrang serverseitig im Handler erzwungen; Audit nur mit `token_set`-Flag.
 
 ## Verweis auf den Server
 
 Der Server (`plugins.blitzdonner.ch`) lebt im Projekt `bd-plugin-updater`. Dort sind die Endpunkte, die Token-Verwaltung, die Republish-Regel und die Server-Härtung dokumentiert.
+
+## Changelog
+
+- **2.7.3** – Ed25519-Signaturprüfung als Pflicht im eingebetteten Client (`REQUIRE_SIGNATURE = true`). Jedes Paket muss eine gültige Signatur eines vertrauten Schlüssels (`ACCEPTED_KEYS`) mitliefern; sonst bricht das Update ab. Fehlt libsodium, wird das Update verweigert und eine Admin-Notice erklärt die Ursache. Kein Killswitch – das Plugin bleibt funktionsfähig. Ab dieser Version müssen neue Versionen signiert publiziert werden.
