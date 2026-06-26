@@ -55,6 +55,8 @@ class BD_Update_Client {
 	const ACCEPTED_KEYS = array(
 		// Inhaber: Blitz & Donner / Stefan (Produktiv) – erzeugt 2026-06-21.
 		'8337dfb76e01b82d' => '8337dfb76e01b82da07e39df711d72f758f33a372932db268bb505b0bdea4860',
+		// Inhaber: Blitz & Donner / David – erzeugt 2026-06-26.
+		'85044a46882e9338' => '85044a46882e93386304cb8329b2407ba7d7f970f727d99d4b546fc79391e2bd',
 	);
 
 	/**
