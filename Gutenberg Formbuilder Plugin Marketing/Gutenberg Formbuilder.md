@@ -325,9 +325,9 @@
 > Wir bauen das Plugin, das wir auf unseren eigenen Sites laufen lassen.
 
 **Body**
-> Blitz & Donner ist eine Schweizer Kommunikationsagentur. Stefan und Annette Gilgen führen sie seit 30 Jahren gemeinsam, ihr Sohn Max arbeitet seit 8 Jahren mit. Wir bauen WordPress-Sites für kleine Organisationen – und kennen jedes Plugin, das den Editor lähmt, jedes Datenschutz-Audit, das in der falschen Frage hängenbleibt, und jedes Formular-Plugin, das Adressen an einen Drittanbieter leitet, ohne dass es im Datenschutzdokument steht.
+> Blitz & Donner ist eine Schweizer Kommunikationsagentur. Wir bauen WordPress-Sites für kleine Organisationen. Wir entwickeln für und mit unseren Kunden Plugins und andere Software, die die Kommunikation unterstützten und Prozesse optimieren. 
 >
-> Den **Gutenberg Formbuilder** haben wir gebaut, weil wir ihn selbst brauchten. Wir geben ihn als Open-Source-Werkzeug heraus – nicht als Service mit monatlicher Rechnung. Geld verdienen wir mit Begleitung: Setup, Schulung, individuelle Erweiterungen. Nicht mit Datenflüssen.
+> Wie alle anderen Plugins haben wir den **Gutenberg Formbuilder** gebaut, weil wir ihn selbst brauchten. Wir geben ihn als Open-Source-Werkzeug heraus – nicht als Service mit monatlicher Rechnung. Geld verdienen wir mit Begleitung: Setup, Schulung, individuelle Erweiterungen. Nicht mit Datenflüssen.
 
 **Belege (3 Karten)**
 

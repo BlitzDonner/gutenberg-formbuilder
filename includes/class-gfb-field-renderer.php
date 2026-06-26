@@ -61,7 +61,10 @@ class GFB_Field_Renderer {
 			return '';
 		}
 		$method = $map[ $block_name ];
-		return self::$method( is_array( $attrs ) ? $attrs : array() );
+		$attrs  = is_array( $attrs ) ? $attrs : array();
+		// className ist ein Standard-Gutenberg-Attribut; es landet automatisch in $attrs.
+		$attrs['_className'] = isset( $attrs['className'] ) ? (string) $attrs['className'] : '';
+		return self::$method( $attrs );
 	}
 
 	/* ============================================================== *
@@ -81,6 +84,8 @@ class GFB_Field_Renderer {
 			'placeholder' => isset( $attrs['placeholder'] ) ? (string) $attrs['placeholder'] : '',
 			'required'    => ! empty( $attrs['required'] ),
 			'sensitive'   => ! empty( $attrs['sensitive'] ),
+			// Gutenberg-Standard: «Zusätzliche CSS-Klasse(n)» aus dem Editor.
+			'_className'  => isset( $attrs['_className'] ) ? (string) $attrs['_className'] : '',
 		);
 	}
 
@@ -94,7 +99,16 @@ class GFB_Field_Renderer {
 	 * @return string
 	 */
 	private static function wrap( $field_class, $inner, array $common, $label_html = '' ) {
-		$cls   = 'gfb-field ' . sanitize_html_class( $field_class );
+		$cls = 'gfb-field ' . sanitize_html_class( $field_class );
+		// Vom Editor eingegebene «Zusätzliche CSS-Klasse(n)» anhängen.
+		if ( ! empty( $common['_className'] ) ) {
+			foreach ( explode( ' ', $common['_className'] ) as $extra_cls ) {
+				$extra_cls = sanitize_html_class( $extra_cls );
+				if ( '' !== $extra_cls ) {
+					$cls .= ' ' . $extra_cls;
+				}
+			}
+		}
 		$attrs = '';
 		if ( $common['sensitive'] ) {
 			$attrs = ' data-gfb-sensitive="1"';
@@ -450,7 +464,18 @@ class GFB_Field_Renderer {
 			? '<legend>' . esc_html( trim( $c['label'] ) ) . $req_star . '</legend>'
 			: '';
 
-		return '<fieldset class="gfb-field gfb-field-radio"' . $fs_attrs . '>'
+		// Vom Editor eingegebene «Zusätzliche CSS-Klasse(n)» an das fieldset anhängen.
+		$fs_cls = 'gfb-field gfb-field-radio';
+		if ( ! empty( $c['_className'] ) ) {
+			foreach ( explode( ' ', $c['_className'] ) as $extra_cls ) {
+				$extra_cls = sanitize_html_class( $extra_cls );
+				if ( '' !== $extra_cls ) {
+					$fs_cls .= ' ' . $extra_cls;
+				}
+			}
+		}
+
+		return '<fieldset class="' . esc_attr( $fs_cls ) . '"' . $fs_attrs . '>'
 			. $legend
 			. $pill
 			. $inner

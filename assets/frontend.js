@@ -292,6 +292,113 @@
 		return parts.indexOf( form ) !== -1;
 	}
 
+	/**
+	 * Cipher-Animation: morpht Klartext zeichenweise in Chiffre-Zeichen.
+	 *
+	 * @param {HTMLElement} cipherEl  – .gfb-submit-overlay__cipher
+	 */
+	function gfbRunCipherAnimation( cipherEl ) {
+		var pool = [ '█', '▓', '▒', '░', '●', '◆', '■', '◼', '▪', '◈', '✦' ];
+		var texts = [ 'Hallo Stefan', 'Formulardaten', 'Sichere Übertragung', 'Verschlüsselt' ];
+		var textIndex = 0;
+		var charIndex = 0;
+		var currentText = texts[ 0 ];
+		var chars = currentText.split( '' );
+		var result = chars.slice(); /* Kopie, wird zeichenweise ersetzt */
+
+		function randomChar() {
+			return pool[ Math.floor( Math.random() * pool.length ) ];
+		}
+
+		function tick() {
+			if ( charIndex < chars.length ) {
+				result[ charIndex ] = randomChar();
+				charIndex++;
+				cipherEl.textContent = result.join( '' );
+				var delay = 80 + Math.floor( Math.random() * 41 ); /* 80–120 ms */
+				cipherEl._gfbTimer = setTimeout( tick, delay );
+			} else {
+				/* Alle Zeichen ersetzt – kurze Pause, dann nächster Klartext */
+				cipherEl._gfbTimer = setTimeout( function () {
+					textIndex = ( textIndex + 1 ) % texts.length;
+					currentText = texts[ textIndex ];
+					chars = currentText.split( '' );
+					result = chars.slice();
+					charIndex = 0;
+					tick();
+				}, 400 );
+			}
+		}
+
+		tick();
+	}
+
+	/**
+	 * Submit-Overlay einblenden und Button sperren.
+	 * Wird im submit-EventListener vor dem Snapshot aufgerufen.
+	 *
+	 * @param {HTMLFormElement} form
+	 */
+	function gfbShowSubmitOverlay( form ) {
+		/* Button sperren */
+		var wrapper = form.closest( '.gfb-form-wrapper' );
+		var submitBtn = wrapper
+			? wrapper.querySelector( 'button[type="submit"]' )
+			: form.querySelector( 'button[type="submit"]' );
+		if ( ! submitBtn ) {
+			/* Fallback: letzter Button im Formular */
+			var allBtns = form.querySelectorAll( 'button' );
+			submitBtn = allBtns[ allBtns.length - 1 ] || null;
+		}
+		if ( submitBtn ) {
+			submitBtn.disabled = true;
+			submitBtn.setAttribute( 'aria-disabled', 'true' );
+		}
+
+		if ( ! wrapper ) {
+			return;
+		}
+
+		/* position: relative sicherstellen */
+		var wrapperStyle = window.getComputedStyle( wrapper );
+		if ( wrapperStyle.position === 'static' ) {
+			wrapper.style.position = 'relative';
+		}
+
+		/* Overlay-DOM aufbauen */
+		var overlay = document.createElement( 'div' );
+		overlay.className = 'gfb-submit-overlay';
+		overlay.setAttribute( 'role', 'alert' );
+		overlay.setAttribute( 'aria-live', 'assertive' );
+
+		var content = document.createElement( 'div' );
+		content.className = 'gfb-submit-overlay__content';
+
+		var cipher = document.createElement( 'div' );
+		cipher.className = 'gfb-submit-overlay__cipher';
+		cipher.setAttribute( 'aria-hidden', 'true' );
+
+		var barTrack = document.createElement( 'div' );
+		barTrack.className = 'gfb-submit-overlay__bar-track';
+
+		var bar = document.createElement( 'div' );
+		bar.className = 'gfb-submit-overlay__bar';
+		barTrack.appendChild( bar );
+
+		var message = document.createElement( 'p' );
+		message.className = 'gfb-submit-overlay__message';
+		message.textContent = 'Deine Daten werden verschlüsselt und sicher übermittelt \u2026';
+
+		content.appendChild( cipher );
+		content.appendChild( barTrack );
+		content.appendChild( message );
+		overlay.appendChild( content );
+		wrapper.appendChild( overlay );
+
+		/* Cipher-Animation starten */
+		gfbRunCipherAnimation( cipher );
+	}
+
 	function initForm( db, form ) {
 		var key = form.getAttribute( 'data-gfb-key' );
 		if ( ! key ) {
@@ -384,6 +491,7 @@
 		form.addEventListener(
 			'submit',
 			function () {
+				gfbShowSubmitOverlay( form );
 				try {
 					var sk = form.getAttribute( 'data-gfb-key' );
 					if ( sk && window.sessionStorage ) {

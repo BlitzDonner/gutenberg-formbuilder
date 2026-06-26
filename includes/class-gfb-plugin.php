@@ -877,6 +877,54 @@ class GFB_Plugin {
 			'datalist' => $attr_global,
 			'button'   => array_merge( $attr_global, array( 'type' => true, 'name' => true, 'value' => true, 'disabled' => true, 'form' => true ) ),
 			'a'        => array_merge( $attr_global, array( 'href' => true, 'target' => true, 'rel' => true ) ),
+
+			// Bild / Medien (Core-Blöcke: image, gallery, video, audio, cover).
+			'img'        => array_merge( $attr_global, array( 'src' => true, 'alt' => true, 'width' => true, 'height' => true, 'loading' => true, 'decoding' => true, 'srcset' => true, 'sizes' => true ) ),
+			'figure'     => $attr_global,
+			'figcaption' => $attr_global,
+			'picture'    => $attr_global,
+			'source'     => array( 'srcset' => true, 'sizes' => true, 'media' => true, 'type' => true ),
+			'video'      => array_merge( $attr_global, array( 'src' => true, 'poster' => true, 'controls' => true, 'autoplay' => true, 'loop' => true, 'muted' => true, 'preload' => true, 'width' => true, 'height' => true, 'playsinline' => true ) ),
+			'audio'      => array_merge( $attr_global, array( 'src' => true, 'controls' => true, 'autoplay' => true, 'loop' => true, 'muted' => true, 'preload' => true ) ),
+
+			// Typografie (Core-Blöcke: heading, paragraph, list, quote, code, preformatted, details).
+			'h1'         => $attr_global,
+			'h2'         => $attr_global,
+			'h3'         => $attr_global,
+			'h4'         => $attr_global,
+			'h5'         => $attr_global,
+			'h6'         => $attr_global,
+			'blockquote' => array_merge( $attr_global, array( 'cite' => true ) ),
+			'cite'       => $attr_global,
+			'pre'        => $attr_global,
+			'code'       => $attr_global,
+			'mark'       => $attr_global,
+			'sub'        => $attr_global,
+			'sup'        => $attr_global,
+			'abbr'       => $attr_global,
+			'details'    => array_merge( $attr_global, array( 'open' => true ) ),
+			'summary'    => $attr_global,
+
+			// Tabellen (Core-Block: table).
+			'table'      => $attr_global,
+			'thead'      => $attr_global,
+			'tbody'      => $attr_global,
+			'tfoot'      => $attr_global,
+			'tr'         => $attr_global,
+			'th'         => array_merge( $attr_global, array( 'scope' => true, 'colspan' => true, 'rowspan' => true ) ),
+			'td'         => array_merge( $attr_global, array( 'colspan' => true, 'rowspan' => true ) ),
+			'caption'    => $attr_global,
+
+			// Trennlinie (Core-Block: separator).
+			'hr'         => $attr_global,
+
+			// Inline-Elemente.
+			'del'        => $attr_global,
+			'ins'        => $attr_global,
+			'kbd'        => $attr_global,
+			'var'        => $attr_global,
+			'samp'       => $attr_global,
+			'time'       => array_merge( $attr_global, array( 'datetime' => true ) ),
 		);
 
 		/**
