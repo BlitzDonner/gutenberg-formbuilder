@@ -41,7 +41,7 @@ class GFB_Admin_Settings {
 		add_submenu_page(
 			GFB_Admin_Submissions::PAGE_SLUG,
 			__( 'Sicherheit & Einstellungen', 'gutenberg-formbuilder' ),
-			__( 'Sicherheit', 'gutenberg-formbuilder' ),
+			__( 'Sicherheit & Einstellungen', 'gutenberg-formbuilder' ),
 			GFB_Capabilities::CAP_MANAGE_SETTINGS,
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render_page' )
@@ -72,7 +72,7 @@ class GFB_Admin_Settings {
 		}
 		$reach = get_transient( 'gfb_storage_reach' );
 		if ( is_array( $reach ) && empty( $reach['ok'] ) ) {
-			echo '<div class="notice notice-error"><p><strong>Gutenberg Formbuilder — wichtiger Sicherheitshinweis:</strong> '
+			echo '<div class="notice notice-error"><p><strong>Gutenberg Formbuilder – wichtiger Sicherheitshinweis:</strong> '
 				. esc_html__( 'Hochgeladene Dateien könnten direkt aus dem Internet abrufbar sein. Die Plugin-Verschlüsselung schützt den Inhalt zwar weiterhin, aber dein Webserver sollte das Verzeichnis komplett blockieren. ', 'gutenberg-formbuilder' )
 				. '<a href="' . esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) ) . '">'
 				. esc_html__( 'Details und Anleitung ansehen', 'gutenberg-formbuilder' ) . '</a></p></div>';
@@ -299,6 +299,20 @@ class GFB_Admin_Settings {
 				$message = __( 'Unbekannte Aktion.', 'gutenberg-formbuilder' );
 		}
 
+		// Zurück zur Karte, aus der die Aktion kam (Anker), statt an den Seitenanfang.
+		$anchors = array(
+			'save_clamav'          => 'gfb-clamav',
+			'eicar_test'           => 'gfb-clamav',
+			'save_license'         => 'gfb-lizenz',
+			'test_license'         => 'gfb-lizenz',
+			'save_captcha'         => 'gfb-captcha',
+			'save_caps'            => 'gfb-berechtigungen',
+			'storage_reach_test'   => 'gfb-privatsphaere',
+			'save_webkit_datetime' => 'gfb-frontend',
+			'rewrap_now'           => 'gfb-rotation',
+		);
+		$fragment = isset( $anchors[ $action ] ) ? '#' . $anchors[ $action ] : '';
+
 		wp_safe_redirect(
 			add_query_arg(
 				array(
@@ -306,9 +320,24 @@ class GFB_Admin_Settings {
 					'gfb_m' => rawurlencode( $message ),
 				),
 				admin_url( 'admin.php' )
-			)
+			) . $fragment
 		);
 		exit;
+	}
+
+	/**
+	 * Baut die Status-Etikette für die Titelzeile einer zugeklappten Karte.
+	 *
+	 * @param string $state on|off|warn|neutral (Farbe).
+	 * @param string $text  Sichtbarer Kurztext.
+	 * @return string HTML (escaped).
+	 */
+	private static function summary_badge( $state, $text ) {
+		$allowed = array( 'on', 'off', 'warn', 'neutral' );
+		if ( ! in_array( $state, $allowed, true ) ) {
+			$state = 'neutral';
+		}
+		return '<span class="gfb-card-badge gfb-card-badge--' . esc_attr( $state ) . '">' . esc_html( $text ) . '</span>';
 	}
 
 	/**
@@ -322,14 +351,21 @@ class GFB_Admin_Settings {
 		$clamav_set  = GFB_Clamav::get_settings();
 		$msg         = isset( $_GET['gfb_m'] ) ? sanitize_text_field( wp_unslash( $_GET['gfb_m'] ) ) : '';
 
-		echo '<div class="wrap">';
+		echo '<div class="wrap gfb-admin gfb-settings">';
 		echo '<h1>' . esc_html__( 'Sicherheit & Einstellungen', 'gutenberg-formbuilder' ) . '</h1>';
 		if ( '' !== $msg ) {
-			echo '<div class="notice notice-info"><p>' . esc_html( $msg ) . '</p></div>';
+			echo '<div class="notice notice-info" id="gfb-settings-notice"><p>' . esc_html( $msg ) . '</p></div>';
+			// Kommt die Rückleitung mit Anker (#gfb-…), wandert die Meldung in die
+			// Ziel-Karte, damit sie beim Ankersprung sichtbar ist. Ohne JavaScript
+			// bleibt sie einfach oben stehen.
+			echo "<script>document.addEventListener('DOMContentLoaded',function(){var h=window.location.hash;if(!h||h.indexOf('#gfb-')!==0){return;}var card=document.getElementById(h.substring(1));var note=document.getElementById('gfb-settings-notice');if(card&&note){card.open=true;note.style.margin='0.6rem 0 1rem';var s=card.querySelector('summary');card.insertBefore(note,s?s.nextSibling:card.firstChild);card.scrollIntoView();}});</script>";
 		}
 
-		// 1) Verschlüsselung
-		echo '<h2>' . esc_html__( 'Verschlüsselung', 'gutenberg-formbuilder' ) . '</h2>';
+		// 1) Verschlüsselung (erste Karte; jede weitere Sektion schliesst die vorherige Karte).
+		$enc_badge = $status['ok']
+			? self::summary_badge( 'on', __( 'Aktiv', 'gutenberg-formbuilder' ) )
+			: self::summary_badge( 'off', __( 'Nicht aktiv', 'gutenberg-formbuilder' ) );
+		echo '<details class="gfb-settings-card" id="gfb-verschluesselung"><summary><h2>' . esc_html__( 'Verschlüsselung', 'gutenberg-formbuilder' ) . '</h2>' . $enc_badge . '</summary>';
 		if ( $status['ok'] ) {
 			echo '<p style="color:#1a7f37">' . esc_html__( 'Aktiv.', 'gutenberg-formbuilder' )
 				. ' ' . sprintf( esc_html__( 'Aktive Schlüssel-ID: %s. Bekannte Schlüssel: %d.', 'gutenberg-formbuilder' ), esc_html( $status['active_id'] ), (int) $status['key_count'] )
@@ -350,7 +386,10 @@ class GFB_Admin_Settings {
 		self::render_license_section();
 
 		// 2) ClamAV
-		echo '<hr/><h2>' . esc_html__( 'ClamAV (Virenscan beim Upload)', 'gutenberg-formbuilder' ) . '</h2>';
+		$clamav_badge = ( 'disabled' === $clamav_set['mode'] )
+			? self::summary_badge( 'neutral', __( 'Deaktiviert', 'gutenberg-formbuilder' ) )
+			: self::summary_badge( 'on', __( 'Aktiv', 'gutenberg-formbuilder' ) );
+		echo '</details><details class="gfb-settings-card" id="gfb-clamav"><summary><h2>' . esc_html__( 'ClamAV (Virenscan beim Upload)', 'gutenberg-formbuilder' ) . '</h2>' . $clamav_badge . '</summary>';
 
 		self::render_clamav_help_box( $clamav_set );
 
@@ -386,7 +425,7 @@ class GFB_Admin_Settings {
 
 		echo '<tr class="gfb-clamav-config-row"><th>' . esc_html__( 'Pfad zu clamscan/clamdscan', 'gutenberg-formbuilder' ) . '</th><td>'
 			. '<input type="text" name="binary_path" value="' . esc_attr( $clamav_set['binary_path'] ) . '" class="regular-text" placeholder="/usr/bin/clamdscan" />'
-			. '<p class="description">' . esc_html__( 'Vollständiger Pfad zur ausführbaren Datei. In einer SSH-Sitzung herausfinden mit: which clamdscan oder which clamscan. Auf Shared-Hosting ggf. der Support fragen.', 'gutenberg-formbuilder' ) . '</p>'
+			. '<p class="description">' . esc_html__( 'Vollständiger Pfad zur ausführbaren Datei (ermitteln mit «which clamdscan» oder «which clamscan»).', 'gutenberg-formbuilder' ) . '</p>'
 			. '</td></tr>';
 
 		echo '<tr class="gfb-clamav-config-row"><th>' . esc_html__( 'clamd-Socket-Pfad', 'gutenberg-formbuilder' ) . '</th><td>'
@@ -396,7 +435,7 @@ class GFB_Admin_Settings {
 
 		echo '<tr class="gfb-clamav-config-row"><th>' . esc_html__( 'Timeout (Sek.)', 'gutenberg-formbuilder' ) . '</th><td>'
 			. '<input type="number" name="timeout_sec" value="' . esc_attr( (string) $clamav_set['timeout_sec'] ) . '" min="1" max="600" />'
-			. '<p class="description">' . esc_html__( 'Wie lange soll auf das Scan-Ergebnis maximal gewartet werden? Standard: 30 Sekunden. Für sehr grosse Dateien ggf. erhöhen.', 'gutenberg-formbuilder' ) . '</p>'
+			. '<p class="description">' . esc_html__( 'Maximale Wartezeit auf das Scan-Ergebnis. Standard: 30 Sekunden.', 'gutenberg-formbuilder' ) . '</p>'
 			. '</td></tr>';
 
 		echo '<tr class="gfb-clamav-config-row"><th>' . esc_html__( 'Pflicht für Datei-Uploads', 'gutenberg-formbuilder' ) . '</th><td>'
@@ -405,7 +444,7 @@ class GFB_Admin_Settings {
 			. ' /> ' . esc_html__( 'Strikter Modus (NICHT Standard): Wenn der Scanner nicht erreichbar ist, werden ALLE Datei-Uploads abgelehnt.', 'gutenberg-formbuilder' )
 			. '</label>'
 			. '<p class="description"><strong>' . esc_html__( 'Standardmässig deaktiviert.', 'gutenberg-formbuilder' ) . '</strong> '
-			. esc_html__( 'Aktiviere diese Option NUR, wenn du oben einen Modus (Binary/Socket) eingerichtet und mit "Verbindung testen" erfolgreich geprüft hast. Sonst werden alle Datei-Uploads blockiert. Auf Hostings ohne ClamAV-Möglichkeit unbedingt deaktiviert lassen – die Datei-Verschlüsselung greift unabhängig davon.', 'gutenberg-formbuilder' ) . '</p>'
+			. esc_html__( 'Nur aktivieren, wenn ein Modus eingerichtet und mit «Verbindung testen» geprüft ist – sonst werden alle Datei-Uploads blockiert. Die Datei-Verschlüsselung greift unabhängig davon.', 'gutenberg-formbuilder' ) . '</p>'
 			. '</td></tr>';
 
 		echo '</tbody></table>';
@@ -423,31 +462,30 @@ class GFB_Admin_Settings {
 		wp_nonce_field( 'gfb_settings_action' );
 		echo '<input type="hidden" name="gfb_settings_action" value="eicar_test" />';
 		submit_button( __( 'Verbindung testen (EICAR-Test)', 'gutenberg-formbuilder' ), 'secondary', 'submit', false );
-		echo ' <span class="description">' . esc_html__( 'Erstellt das offizielle EICAR-Testmuster (eine harmlose Datei, die jeder Virenscanner als bekannten Test erkennt) und schickt sie an deine ClamAV-Konfiguration. Erwartet: "infected" – das bedeutet, der Scanner funktioniert.', 'gutenberg-formbuilder' ) . '</span>';
+		echo '<p class="description">' . esc_html__( 'Schickt das offizielle EICAR-Testmuster (eine harmlose Test-Datei) an deine ClamAV-Konfiguration. Erwartet: «infected» – dann funktioniert der Scanner.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '</form>';
 
 		// 2b) Spam-Schutz (CAPTCHA) – Friendly Captcha
 		self::render_captcha_section();
 
 		// 3) Capability-Matrix
-		echo '<hr/><h2>' . esc_html__( 'Berechtigungen', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Legt fest, welche WordPress-Rolle welche Aktion mit den Formular-Einträgen ausführen darf. Häkchen setzen oder entfernen und speichern.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</details><details class="gfb-settings-card" id="gfb-berechtigungen"><summary><h2>' . esc_html__( 'Berechtigungen', 'gutenberg-formbuilder' ) . '</h2></summary>';
+		echo '<p>' . esc_html__( 'Legt fest, welche WordPress-Rolle welche Aktion mit den Formular-Einträgen ausführen darf.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '<form method="post">';
 		wp_nonce_field( 'gfb_settings_action' );
 		echo '<input type="hidden" name="gfb_settings_action" value="save_caps" />';
 		global $wp_roles;
-		echo '<table class="widefat striped"><thead><tr><th style="vertical-align:bottom;">' . esc_html__( 'Rolle', 'gutenberg-formbuilder' ) . '</th>';
+		echo '<table class="widefat striped gfb-caps-table"><thead><tr><th class="gfb-caps-role-col">' . esc_html__( 'Rolle', 'gutenberg-formbuilder' ) . '</th>';
 		foreach ( GFB_Capabilities::all_caps() as $cap ) {
 			$meta = GFB_Capabilities::cap_meta( $cap );
-			echo '<th style="vertical-align:top;min-width:10rem;max-width:14rem;white-space:normal;">'
-				. '<span style="display:block;font-weight:600;">' . esc_html( $meta['title'] ) . '</span>'
-				. '<span style="display:block;font-weight:400;font-size:11px;line-height:1.45;color:#50575e;margin:.3rem 0 .35rem;">' . esc_html( $meta['description'] ) . '</span>'
-				. '<code style="font-size:10px;color:#646970;">' . esc_html( $cap ) . '</code>'
+			echo '<th>'
+				. '<span class="gfb-caps-title">' . esc_html( $meta['title'] ) . '</span>'
+				. '<span class="gfb-caps-desc">' . esc_html( $meta['description'] ) . '</span>'
 				. '</th>';
 		}
 		echo '</tr></thead><tbody>';
 		foreach ( $wp_roles->roles as $role_slug => $role_data ) {
-			echo '<tr><td><strong>' . esc_html( $role_data['name'] ) . '</strong> <code>' . esc_html( $role_slug ) . '</code></td>';
+			echo '<tr><td class="gfb-caps-role-cell"><strong>' . esc_html( $role_data['name'] ) . '</strong></td>';
 			foreach ( GFB_Capabilities::all_caps() as $cap ) {
 				$has = ! empty( $role_data['capabilities'][ $cap ] );
 				echo '<td><input type="checkbox" name="caps[' . esc_attr( $role_slug ) . '][' . esc_attr( $cap ) . ']" value="1" '
@@ -459,23 +497,25 @@ class GFB_Admin_Settings {
 		submit_button( __( 'Berechtigungen speichern', 'gutenberg-formbuilder' ) );
 		echo '</form>';
 
-		// 4) Audit-Log (Verweis auf dedizierte Seite)
-		echo '<hr/><h2>' . esc_html__( 'Audit-Log', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<p>'
-			. esc_html__( 'Die Einträge und die Integritätsprüfung (Hash-Chain) findest du unter ', 'gutenberg-formbuilder' )
-			. '<a href="' . esc_url( admin_url( 'admin.php?page=' . GFB_Admin_Audit::PAGE_SLUG ) ) . '">'
-			. esc_html__( 'Audit-Log', 'gutenberg-formbuilder' )
-			. '</a>.'
-			. '</p>';
+		// Die frühere Audit-Log-Karte (nur ein Verweis) ist entfernt –
+		// das Audit-Log hat einen eigenen Submenü-Punkt.
 
 		// 4b) Storage-Erreichbarkeits-Test (Webserver darf private Dateien nicht ausliefern)
-		echo '<hr/><h2>' . esc_html__( 'Sind hochgeladene Dateien wirklich privat?', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Dieser Selbsttest prüft, ob jemand mit einem direkten Link an die Dateien aus dem geschützten Speicher kommt. Erwartet wird: NEIN — der Webserver muss die Anfrage ablehnen.', 'gutenberg-formbuilder' ) . '</p>';
+		$reach_for_badge = get_transient( 'gfb_storage_reach' );
+		if ( is_array( $reach_for_badge ) ) {
+			$reach_badge = ! empty( $reach_for_badge['ok'] )
+				? self::summary_badge( 'on', __( 'Test bestanden', 'gutenberg-formbuilder' ) )
+				: self::summary_badge( 'off', __( 'Handlungsbedarf', 'gutenberg-formbuilder' ) );
+		} else {
+			$reach_badge = self::summary_badge( 'neutral', __( 'Nicht getestet', 'gutenberg-formbuilder' ) );
+		}
+		echo '</details><details class="gfb-settings-card" id="gfb-privatsphaere"><summary><h2>' . esc_html__( 'Sind hochgeladene Dateien wirklich privat?', 'gutenberg-formbuilder' ) . '</h2>' . $reach_badge . '</summary>';
+		echo '<p>' . esc_html__( 'Dieser Selbsttest prüft, ob jemand mit einem direkten Link an die Dateien aus dem geschützten Speicher kommt. Erwartet wird: NEIN – der Webserver muss die Anfrage ablehnen.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '<details style="margin:0 0 0.8rem"><summary style="cursor:pointer">'
 			. esc_html__( 'Wie läuft der Test ab?', 'gutenberg-formbuilder' ) . '</summary>'
 			. '<ol style="margin:0.4rem 0 0.6rem 1.4rem">'
 			. '<li>' . esc_html__( 'Das Plugin legt kurz eine harmlose Test-Datei im privaten Speicher an.', 'gutenberg-formbuilder' ) . '</li>'
-			. '<li>' . esc_html__( 'Es ruft die zugehörige URL über das Internet ab — so, wie es ein Fremder tun könnte.', 'gutenberg-formbuilder' ) . '</li>'
+			. '<li>' . esc_html__( 'Es ruft die zugehörige URL über das Internet ab – so, wie es ein Fremder tun könnte.', 'gutenberg-formbuilder' ) . '</li>'
 			. '<li>' . esc_html__( 'Antwortet der Webserver mit "verboten" (403) oder "nicht gefunden" (404), ist alles in Ordnung.', 'gutenberg-formbuilder' ) . '</li>'
 			. '<li>' . esc_html__( 'Die Test-Datei wird sofort wieder gelöscht.', 'gutenberg-formbuilder' ) . '</li>'
 			. '</ol></details>';
@@ -486,8 +526,8 @@ class GFB_Admin_Settings {
 			$bg       = $is_ok ? '#edfaef' : '#fcebec';
 			$border   = $is_ok ? '#1a7f37' : '#a32016';
 			$icon     = $is_ok ? '✓' : '✗';
-			$headline = $is_ok ? __( 'Test bestanden — deine Dateien sind privat.', 'gutenberg-formbuilder' )
-				: __( 'Achtung — Handlungsbedarf!', 'gutenberg-formbuilder' );
+			$headline = $is_ok ? __( 'Test bestanden – deine Dateien sind privat.', 'gutenberg-formbuilder' )
+				: __( 'Achtung – Handlungsbedarf!', 'gutenberg-formbuilder' );
 
 			echo '<div style="background:' . esc_attr( $bg ) . ';border-left:4px solid ' . esc_attr( $border ) . ';padding:0.8rem 1rem;margin:0.6rem 0;border-radius:3px">';
 			echo '<p style="margin:0;font-size:1.05em"><strong>' . esc_html( $icon . ' ' . $headline ) . '</strong></p>';
@@ -496,8 +536,8 @@ class GFB_Admin_Settings {
 				echo '<p style="margin:0.6rem 0 0;font-size:0.92em;color:#50575e">';
 				echo '<strong>' . esc_html__( 'Getestete URL:', 'gutenberg-formbuilder' ) . '</strong> ';
 				echo '<code style="word-break:break-all">' . esc_html( $cached_reach['url'] ) . '</code>';
-				echo ' — ' . esc_html( sprintf( __( 'Antwort vom Webserver: HTTP %d', 'gutenberg-formbuilder' ), (int) $cached_reach['http_code'] ) );
-				echo '<br><em>' . esc_html__( '(Diese Test-Datei existiert nicht mehr — sie wurde nach dem Test wieder gelöscht.)', 'gutenberg-formbuilder' ) . '</em>';
+				echo ' – ' . esc_html( sprintf( __( 'Antwort vom Webserver: HTTP %d', 'gutenberg-formbuilder' ), (int) $cached_reach['http_code'] ) );
+				echo '<br><em>' . esc_html__( '(Diese Test-Datei existiert nicht mehr – sie wurde nach dem Test wieder gelöscht.)', 'gutenberg-formbuilder' ) . '</em>';
 				echo '</p>';
 			}
 			if ( ! $is_ok ) {
@@ -506,19 +546,22 @@ class GFB_Admin_Settings {
 			}
 			echo '</div>';
 		} else {
-			echo '<p class="description">' . esc_html__( 'Noch nicht getestet. Klicke unten auf "Jetzt prüfen".', 'gutenberg-formbuilder' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Noch nicht getestet.', 'gutenberg-formbuilder' ) . '</p>';
 		}
 
 		echo '<form method="post">';
 		wp_nonce_field( 'gfb_settings_action' );
 		echo '<input type="hidden" name="gfb_settings_action" value="storage_reach_test" />';
 		submit_button( __( 'Jetzt prüfen', 'gutenberg-formbuilder' ), 'secondary' );
-		echo ' <span class="description">' . esc_html__( 'Dauert nur wenige Sekunden. Kann beliebig oft wiederholt werden, z. B. nach Änderungen am Webserver.', 'gutenberg-formbuilder' ) . '</span>';
+		echo '<p class="description">' . esc_html__( 'Kann jederzeit wiederholt werden, z. B. nach Änderungen am Webserver.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '</form>';
 
 		// Formular / Frontend
 		$webkit_fallback = GFB_Plugin::is_webkit_datetime_fallback_enabled();
-		echo '<hr/><h2>' . esc_html__( 'Formular (Frontend)', 'gutenberg-formbuilder' ) . '</h2>';
+		$webkit_badge    = $webkit_fallback
+			? self::summary_badge( 'on', __( 'Fallback aktiv', 'gutenberg-formbuilder' ) )
+			: self::summary_badge( 'neutral', __( 'Native Picker', 'gutenberg-formbuilder' ) );
+		echo '</details><details class="gfb-settings-card" id="gfb-frontend"><summary><h2>' . esc_html__( 'Formular (Frontend)', 'gutenberg-formbuilder' ) . '</h2>' . $webkit_badge . '</summary>';
 		echo '<p>' . esc_html__( 'Steuert das Verhalten von Datums-, Zeit- und Datum/Uhrzeit-Feldern im Browser.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '<form method="post">';
 		wp_nonce_field( 'gfb_settings_action' );
@@ -526,20 +569,26 @@ class GFB_Admin_Settings {
 		echo '<p><label><input type="checkbox" name="webkit_datetime_fallback" value="1" ' . checked( $webkit_fallback, true, false ) . ' /> ';
 		echo esc_html__( 'Safari/WebKit: Datums- und Zeitfelder als Text mit Musterprüfung (statt nativem Picker)', 'gutenberg-formbuilder' );
 		echo '</label></p>';
-		echo '<p class="description">' . esc_html__( 'Aktiviert (Standard): In Safari werden die Felder zu Texteingaben mit pattern aus den WordPress-Datumsformaten umgewandelt — bekannt stabiler bei 12-Stunden-Format und Validierung. Deaktiviert: native Browser-Picker (type="date", "time", "datetime-local") bleiben erhalten.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Aktiviert (Standard): Safari erhält Texteingaben mit Musterprüfung nach den WordPress-Datumsformaten – stabiler bei 12-Stunden-Format und Validierung. Deaktiviert: native Browser-Picker bleiben erhalten.', 'gutenberg-formbuilder' ) . '</p>';
 		submit_button( __( 'Speichern', 'gutenberg-formbuilder' ) );
 		echo '</form>';
 
 		// 5) Key-Rotation
-		echo '<hr/><h2>' . esc_html__( 'Key-Rotation', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Nach dem Hinzufügen eines neuen Master-Keys (in wp-config.php) werden bestehende Datei-DEKs hier mit der neuen KEK reverpackt. Datei-Inhalte werden NICHT entschlüsselt.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</details><details class="gfb-settings-card" id="gfb-rotation"><summary><h2>' . esc_html__( 'Key-Rotation', 'gutenberg-formbuilder' ) . '</h2></summary>';
+		echo '<p>' . esc_html__( 'Nach dem Hinzufügen eines neuen Master-Keys in wp-config.php verpackt dieser Lauf die Schlüssel bestehender Dateien neu. Datei-Inhalte werden dabei nicht entschlüsselt.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '<form method="post">';
 		wp_nonce_field( 'gfb_settings_action' );
 		echo '<input type="hidden" name="gfb_settings_action" value="rewrap_now" />';
 		submit_button( __( 'Re-Wrap-Lauf jetzt starten (max. 200 Dateien)', 'gutenberg-formbuilder' ), 'secondary' );
 		echo '</form>';
 
-		echo '</div>';
+		echo '</details>'; // letzte .gfb-settings-card
+
+		// Aufklapp-Zustand der Karten im Browser merken (localStorage) und
+		// beim Anker-Aufruf (#gfb-…) die Ziel-Karte öffnen. Ohne JavaScript
+		// sind alle Karten zuklappbar, starten aber zugeklappt.
+		echo "<script>(function(){var KEY='gfbSettingsOpen';var cards=document.querySelectorAll('details.gfb-settings-card');var saved=[];try{saved=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){}for(var i=0;i<cards.length;i++){if(saved.indexOf(cards[i].id)!==-1){cards[i].open=true;}cards[i].addEventListener('toggle',function(){var open=[];for(var j=0;j<cards.length;j++){if(cards[j].open){open.push(cards[j].id);}}try{localStorage.setItem(KEY,JSON.stringify(open));}catch(e){}});}var h=window.location.hash;if(h&&h.indexOf('#gfb-')===0){var t=document.getElementById(h.substring(1));if(t){t.open=true;}}})();</script>";
+		echo '</div>'; // .wrap
 	}
 
 	/**
@@ -568,8 +617,25 @@ class GFB_Admin_Settings {
 			'by_const'       => $by_const,
 		);
 
-		echo '<hr/><h2>' . esc_html__( 'Lizenz / Updates', 'gutenberg-formbuilder' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Mit einem gültigen Lizenz-Token bezieht das Plugin automatische Updates vom Server plugins.blitzdonner.ch. Ohne Token läuft das Plugin ganz normal weiter – es werden lediglich keine automatischen Updates angeboten (kein Abschalten, kein Funktionsverlust).', 'gutenberg-formbuilder' ) . '</p>';
+		$code = isset( $status['code'] ) ? $status['code'] : 'no_token';
+		switch ( $code ) {
+			case 'valid':
+				$license_badge = self::summary_badge( 'on', __( 'Token gültig', 'gutenberg-formbuilder' ) );
+				break;
+			case 'const_set':
+				$license_badge = self::summary_badge( 'on', __( 'Per wp-config', 'gutenberg-formbuilder' ) );
+				break;
+			case 'forbidden':
+				$license_badge = self::summary_badge( 'off', __( 'Token ungültig', 'gutenberg-formbuilder' ) );
+				break;
+			case 'unreachable':
+				$license_badge = self::summary_badge( 'warn', __( 'Server nicht erreichbar', 'gutenberg-formbuilder' ) );
+				break;
+			default:
+				$license_badge = self::summary_badge( 'neutral', __( 'Kein Token', 'gutenberg-formbuilder' ) );
+		}
+		echo '</details><details class="gfb-settings-card" id="gfb-lizenz"><summary><h2>' . esc_html__( 'Lizenz / Updates', 'gutenberg-formbuilder' ) . '</h2>' . $license_badge . '</summary>';
+		echo '<p>' . esc_html__( 'Mit einem gültigen Lizenz-Token bezieht das Plugin automatische Updates von plugins.blitzdonner.ch. Ohne Token läuft es normal weiter, nur ohne Update-Angebote.', 'gutenberg-formbuilder' ) . '</p>';
 
 		// Status-Box oberhalb des Felds.
 		self::render_license_status_box( $status );
@@ -592,7 +658,7 @@ class GFB_Admin_Settings {
 				? esc_attr__( '•••••••••• (gespeichert – leer lassen, um beizubehalten)', 'gutenberg-formbuilder' )
 				: '';
 			echo '<input type="password" id="gfb_update_token" name="gfb_update_token" value="" class="regular-text" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" />';
-			echo '<p class="description">' . esc_html__( 'Wird serverseitig gehalten und nie an das Frontend ausgegeben. Aus Sicherheitsgründen leer dargestellt.', 'gutenberg-formbuilder' );
+			echo '<p class="description">' . esc_html__( 'Bleibt serverseitig und wird nie im Klartext angezeigt.', 'gutenberg-formbuilder' );
 			if ( $has_token ) {
 				echo ' ' . esc_html__( 'Aktuell gesetzt – zum Ändern neuen Wert eintragen, sonst leer lassen.', 'gutenberg-formbuilder' );
 			}
@@ -613,7 +679,7 @@ class GFB_Admin_Settings {
 		wp_nonce_field( 'gfb_settings_action' );
 		echo '<input type="hidden" name="gfb_settings_action" value="test_license" />';
 		submit_button( __( 'Token testen', 'gutenberg-formbuilder' ), 'secondary', 'submit', false );
-		echo ' <span class="description">' . esc_html__( 'Prüft das hinterlegte Token sofort gegen den Update-Server, unabhängig vom üblichen Update-Takt.', 'gutenberg-formbuilder' ) . '</span>';
+		echo '<p class="description">' . esc_html__( 'Prüft das hinterlegte Token sofort gegen den Update-Server, unabhängig vom üblichen Update-Takt.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '</form>';
 	}
 
@@ -705,7 +771,14 @@ class GFB_Admin_Settings {
 		$s          = GFB_Captcha::get_settings();
 		$incomplete = GFB_Captcha::is_enabled_but_incomplete();
 
-		echo '<hr/><h2>' . esc_html__( 'Spam-Schutz (CAPTCHA) – Friendly Captcha', 'gutenberg-formbuilder' ) . '</h2>';
+		if ( ! empty( $s['enabled'] ) ) {
+			$captcha_badge = $incomplete
+				? self::summary_badge( 'warn', __( 'Unvollständig konfiguriert', 'gutenberg-formbuilder' ) )
+				: self::summary_badge( 'on', __( 'Aktiv', 'gutenberg-formbuilder' ) );
+		} else {
+			$captcha_badge = self::summary_badge( 'neutral', __( 'Deaktiviert', 'gutenberg-formbuilder' ) );
+		}
+		echo '</details><details class="gfb-settings-card" id="gfb-captcha"><summary><h2>' . esc_html__( 'Spam-Schutz (CAPTCHA) – Friendly Captcha', 'gutenberg-formbuilder' ) . '</h2>' . $captcha_badge . '</summary>';
 
 		// A5: nicht-blockierende Warnung bei aktiv + unvollstaendig.
 		if ( $incomplete ) {
@@ -748,13 +821,37 @@ class GFB_Admin_Settings {
 		// daher: wenn gesetzt und leer gesendet, übernimmt der POST-Handler den Wert aus dem Feld; um versehentliches Loeschen zu vermeiden,
 		// füllt der Nutzer das Feld nur bei Aenderung. Hinweis im description-Text.
 		echo '<input type="password" id="gfb_captcha_api_key" name="captcha_api_key" value="" class="regular-text" autocomplete="off" spellcheck="false" placeholder="' . $api_ph . '" />';
-		echo '<p class="description">' . esc_html__( 'Wird serverseitig gehalten und nie an das Frontend ausgegeben. Aus Sicherheitsgründen leer dargestellt.', 'gutenberg-formbuilder' );
+		echo '<p class="description">' . esc_html__( 'Bleibt serverseitig und wird nie im Klartext angezeigt.', 'gutenberg-formbuilder' );
 		if ( $api_set ) {
 			echo ' ' . esc_html__( 'Aktuell gesetzt – zum Ändern neuen Wert eintragen, sonst leer lassen.', 'gutenberg-formbuilder' );
 		}
 		echo '</p></td></tr>';
 
 		echo '</tbody></table>';
+
+		// Anleitung: Schlüssel beim Anbieter erstellen (eingeklappt, gleiches Muster
+		// wie der Datenschutz-Block; Schritte verifiziert gegen die offizielle Doku).
+		echo '<details><summary>' . esc_html__( 'Wie erhalte ich Site-Key und API-Key?', 'gutenberg-formbuilder' ) . '</summary>';
+		echo '<ol style="margin:0.5rem 0 0.4rem 1.4rem">';
+		echo '<li>' . sprintf(
+			/* translators: %s: Link auf friendlycaptcha.com */
+			esc_html__( 'Konto bei %s erstellen (Gratis-Plan verfügbar) und anmelden.', 'gutenberg-formbuilder' ),
+			'<a href="https://friendlycaptcha.com" target="_blank" rel="noopener noreferrer">friendlycaptcha.com</a>'
+		) . '</li>';
+		echo '<li>' . sprintf(
+			/* translators: %s: Link auf die Applications-Seite im Dashboard */
+			esc_html__( 'Im Dashboard unter %s mit «+ New Application» eine Anwendung anlegen. Der Site-Key erscheint unter dem Anwendungsnamen und beginnt immer mit «FC».', 'gutenberg-formbuilder' ),
+			'<a href="https://app.friendlycaptcha.eu/dashboard/accounts/-/apps" target="_blank" rel="noopener noreferrer">Applications</a>'
+		) . '</li>';
+		echo '<li>' . sprintf(
+			/* translators: %s: Link auf die API-Keys-Seite im Dashboard */
+			esc_html__( 'Unter %s einen neuen API-Key erstellen – das ist das Secret für die serverseitige Prüfung.', 'gutenberg-formbuilder' ),
+			'<a href="https://app.friendlycaptcha.eu/dashboard/accounts/-/keys" target="_blank" rel="noopener noreferrer">API Keys</a>'
+		) . '</li>';
+		echo '<li>' . esc_html__( 'Beide Werte hier eintragen und speichern.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '</ol>';
+		echo '<p class="description" style="margin:0 0 0.2rem">' . esc_html__( 'Der API-Key wird nur einmal angezeigt – direkt nach dem Erstellen kopieren.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</details>';
 
 		// Datenschutz-Hinweisblock (schlank, informativ – nicht als Warnblock).
 		self::render_captcha_privacy_box();

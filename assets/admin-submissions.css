@@ -421,3 +421,265 @@
 		flex-wrap: wrap;
 	}
 }
+
+/* ------------------------------------------------------------------ *
+ * Sicherheit & Einstellungen – Karten-Layout
+ * Nutzt dieselben Variablen wie die Einträge-Seite (.wrap.gfb-admin).
+ * ------------------------------------------------------------------ */
+
+/* Sektions-Karten: gleiche Optik wie .gfb-admin-meta-card */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card {
+	background: var(--gfb-bg);
+	border: 1px solid var(--gfb-border);
+	border-radius: var(--gfb-radius);
+	box-shadow: var(--gfb-shadow);
+	padding: 1.25rem 1.35rem 1.1rem;
+	margin-bottom: var(--gfb-stack);
+	overflow-x: auto;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card > h2 {
+	margin: 0 0 0.6em;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--gfb-text);
+}
+
+/* Fliesstext: lesbare Zeilenlänge statt voller Fensterbreite */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card p,
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .description,
+#wpbody-content .wrap.gfb-settings .gfb-settings-card li {
+	max-width: 46rem;
+	line-height: 1.55;
+}
+
+/* Eingabefelder: begrenzte Breite statt Vollbreite */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="text"],
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="password"],
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="email"],
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="url"] {
+	width: 100%;
+	max-width: 26rem;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="number"] {
+	max-width: 7rem;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card textarea {
+	width: 100%;
+	max-width: 46rem;
+}
+
+/* Formulare in der Karte: klarer Abstand statt Aneinanderkleben */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card form {
+	margin: 0 0 1rem;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card form:last-child {
+	margin-bottom: 0;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card form + form {
+	border-top: 1px solid var(--gfb-bg-subtle);
+	padding-top: 0.9rem;
+}
+
+/* Speichern-Knöpfe: kompakter Abstand innerhalb der Karte */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card p.submit {
+	margin: 0.4rem 0 0;
+	padding: 0;
+}
+
+/* form-table: Beschriftungsspalte fixieren, Luft zwischen den Zeilen */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card table.form-table th {
+	width: 14rem;
+	padding: 0.9rem 0.8rem 0.9rem 0;
+	vertical-align: top;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card table.form-table td {
+	padding: 0.9rem 0;
+}
+
+/* Aufklapp-Elemente (details): dezenter Block statt nackter Zeile */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card details {
+	background: var(--gfb-bg-subtle);
+	border: 1px solid var(--gfb-border);
+	border-radius: var(--gfb-radius-sm);
+	padding: 0.6rem 0.9rem;
+	margin: 0 0 0.9rem;
+	max-width: 46rem;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card details > summary {
+	cursor: pointer;
+	font-weight: 500;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card details[open] > summary {
+	margin-bottom: 0.5rem;
+}
+
+/* Radio-/Checkbox-Gruppen: Abstand zwischen den Optionen (z. B. «Nein / Ja») */
+/* WP-Core setzt in forms.css «.form-table td fieldset label { margin: … !important }»
+   und überschreibt damit sogar Inline-Styles – darum hier ebenfalls !important. */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card fieldset > label,
+#wpbody-content .wrap.gfb-settings .gfb-settings-card td > label {
+	display: inline-block !important;
+	margin: 0 1.5rem 0.35rem 0 !important;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="radio"],
+#wpbody-content .wrap.gfb-settings .gfb-settings-card input[type="checkbox"] {
+	margin-right: 0.35rem;
+}
+
+/* Berechtigungs-Matrix: passt in die Kartenbreite, kein Quer-Scroller.
+   Feste Spaltenaufteilung; Beschreibungen brechen innerhalb der Spalte um. */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card table.gfb-caps-table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table th.gfb-caps-role-col,
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table td.gfb-caps-role-cell {
+	width: 8.5rem;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table thead th {
+	vertical-align: top;
+	padding: 0.7rem 0.6rem 0.7rem 0;
+	white-space: normal;
+	word-break: normal;
+	overflow-wrap: break-word;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table th.gfb-caps-role-col {
+	vertical-align: bottom;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table .gfb-caps-title {
+	display: block;
+	font-weight: 600;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table .gfb-caps-desc {
+	display: block;
+	font-weight: 400;
+	font-size: 11px;
+	line-height: 1.45;
+	color: var(--gfb-label);
+	margin: 0.3rem 0 0.35rem;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table code.gfb-caps-code {
+	font-size: 10px;
+	color: var(--gfb-muted);
+	background: var(--gfb-bg-subtle);
+	padding: 1px 4px;
+	/* Umbruch nur an den <wbr>-Stellen (nach Unterstrichen), nicht mitten im Wort. */
+}
+
+/* Rollen-Zelle: Name und Kennung untereinander, kein Umbruch mitten im Wort */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table td.gfb-caps-role-cell code.gfb-caps-code {
+	display: block;
+	width: fit-content;
+	margin-top: 3px;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table tbody td {
+	vertical-align: top;
+	padding: 0.6rem 0.6rem 0.6rem 0;
+}
+
+/* Aufklappbare Einstellungs-Karten: Titelzeile als Klappkopf, grössere Überschrift */
+#wpbody-content .wrap.gfb-settings details.gfb-settings-card > summary {
+	cursor: pointer;
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	user-select: none;
+}
+
+#wpbody-content .wrap.gfb-settings details.gfb-settings-card > summary::-webkit-details-marker {
+	display: none;
+}
+
+#wpbody-content .wrap.gfb-settings details.gfb-settings-card > summary::before {
+	content: '';
+	width: 0.55rem;
+	height: 0.55rem;
+	border-right: 2px solid var(--gfb-muted);
+	border-bottom: 2px solid var(--gfb-muted);
+	transform: rotate(-45deg);
+	transition: transform 0.15s ease;
+	flex: 0 0 auto;
+}
+
+#wpbody-content .wrap.gfb-settings details.gfb-settings-card[open] > summary::before {
+	transform: rotate(45deg);
+}
+
+#wpbody-content .wrap.gfb-settings details.gfb-settings-card > summary h2 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--gfb-text);
+	display: inline;
+}
+
+#wpbody-content .wrap.gfb-settings details.gfb-settings-card[open] > summary {
+	margin-bottom: 0.9rem;
+}
+
+/* Status-Etiketten in der Titelzeile zugeklappter Karten */
+#wpbody-content .wrap.gfb-settings .gfb-card-badge {
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+	padding: 4px 9px;
+	border-radius: 999px;
+	white-space: nowrap;
+	flex: 0 0 auto;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-card-badge--on {
+	background: #edfaef;
+	color: #1a7f37;
+	border: 1px solid #b7e0c0;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-card-badge--off {
+	background: #fcebec;
+	color: #a32016;
+	border: 1px solid #f0b8b8;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-card-badge--warn {
+	background: #fcf3e6;
+	color: #8a5a00;
+	border: 1px solid #eed3a0;
+}
+
+#wpbody-content .wrap.gfb-settings .gfb-card-badge--neutral {
+	background: var(--gfb-bg-subtle);
+	color: var(--gfb-muted);
+	border: 1px solid var(--gfb-border);
+}
+
+/* Einstellungsseite: Karten nutzen die volle verfügbare Breite
+   (überschreibt das 960-px-Limit von .wrap.gfb-admin; Fliesstext
+   bleibt über die 46-rem-Regel lesbar begrenzt). */
+#wpbody-content .wrap.gfb-admin.gfb-settings {
+	max-width: none;
+}
+
+/* Berechtigungs-Matrix: Innenabstand links, damit nichts am Tabellenrand klebt */
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table thead th,
+#wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table tbody td {
+	padding-left: 0.8rem;
+}

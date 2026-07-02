@@ -21,6 +21,8 @@ class GFB_Admin_Submissions {
 		add_action( 'load-toplevel_page_' . self::PAGE_SLUG, array( __CLASS__, 'handle_early_actions' ) );
 		// Export (CSV oder ZIP; kein nopriv-Pendant).
 		add_action( 'admin_post_gfb_export', array( __CLASS__, 'handle_export' ) );
+		// Einzel-Export einer Einsendung als ZIP (CSV + JSON + Anhänge; kein nopriv-Pendant).
+		add_action( 'admin_post_gfb_export_single', array( __CLASS__, 'handle_export_single' ) );
 	}
 
 	/**
@@ -86,7 +88,10 @@ class GFB_Admin_Submissions {
 	 * @return void
 	 */
 	public static function print_inline_admin_css() {
-		if ( ! self::is_submissions_admin_screen() ) {
+		// Auch auf der Seite «Sicherheit & Einstellungen» laden (gleiches Design-System).
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$is_settings_screen = is_admin() && class_exists( 'GFB_Admin_Settings' ) && GFB_Admin_Settings::PAGE_SLUG === $page;
+		if ( ! self::is_submissions_admin_screen() && ! $is_settings_screen ) {
 			return;
 		}
 
@@ -275,7 +280,26 @@ class GFB_Admin_Submissions {
 			),
 			'gfb_delete_' . (int) $row->id
 		);
-		echo '<div class="gfb-admin-actions"><a href="' . esc_url( $delete_url ) . '" class="button gfb-admin-btn-delete" onclick="return confirm(\'' . esc_js( __( 'Diesen Eintrag wirklich löschen?', 'gutenberg-formbuilder' ) ) . '\');">' . esc_html__( 'Eintrag löschen', 'gutenberg-formbuilder' ) . '</a></div>';
+		echo '<div class="gfb-admin-actions">';
+
+		// Einzel-Download als ZIP: nur mit Download-Berechtigung und verfügbarem ZipArchive.
+		if ( GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES ) && class_exists( 'ZipArchive' ) ) {
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="gfb-admin-single-export-form" style="display:inline-block;margin-right:12px;">';
+			wp_nonce_field( 'gfb_export_single_' . (int) $row->id, '_gfb_export_single_nonce' );
+			echo '<input type="hidden" name="action" value="gfb_export_single" />';
+			echo '<input type="hidden" name="gfb_submission_id" value="' . (int) $row->id . '" />';
+			if ( GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS ) ) {
+				echo '<label style="margin-right:8px;">';
+				echo '<input type="checkbox" name="gfb_export_decrypt" value="1" /> ';
+				echo esc_html__( 'Feldwerte entschlüsseln', 'gutenberg-formbuilder' );
+				echo ' <span class="gfb-admin-export-log-hint">(' . esc_html__( 'protokolliert', 'gutenberg-formbuilder' ) . ')</span>';
+				echo '</label>';
+			}
+			echo '<button type="submit" class="button button-secondary">' . esc_html__( 'Diese Einsendung herunterladen (ZIP)', 'gutenberg-formbuilder' ) . '</button>';
+			echo '</form>';
+		}
+
+		echo '<a href="' . esc_url( $delete_url ) . '" class="button gfb-admin-btn-delete" onclick="return confirm(\'' . esc_js( __( 'Diesen Eintrag wirklich löschen?', 'gutenberg-formbuilder' ) ) . '\');">' . esc_html__( 'Eintrag löschen', 'gutenberg-formbuilder' ) . '</a></div>';
 
 		echo '</div>';
 	}
@@ -1705,5 +1729,318 @@ class GFB_Admin_Submissions {
 
 		++$files_included;
 		return $entry_path;
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * Einzel-Export einer Einsendung (ZIP mit CSV + JSON + Anhängen)
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Handler für admin_post_gfb_export_single.
+	 *
+	 * Gleiche Prüfkette wie handle_export(), zusätzlich an die konkrete
+	 * Einsendungs-ID gebunden (Nonce pro ID). Liefert immer ein ZIP:
+	 * eintrag.csv (eine Datenzeile), eintrag.json, dateien/… (entschlüsselt;
+	 * Voraussetzung ist die Download-Berechtigung). Feldwerte werden nur mit
+	 * Cap gfb_decrypt_submissions und aktivierter Option entschlüsselt.
+	 *
+	 * @return void
+	 */
+	public static function handle_export_single() {
+		// 1) Eingeloggt?
+		if ( ! is_user_logged_in() ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', '', array( 'reason' => 'not_logged_in' ) );
+			wp_die(
+				esc_html__( 'Anmeldung erforderlich.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Authentifizierung', 'gutenberg-formbuilder' ),
+				array( 'response' => 401 )
+			);
+		}
+
+		// 2) Einsendungs-ID lesen (vor Nonce-Prüfung, weil die Nonce ID-gebunden ist).
+		$submission_id = isset( $_POST['gfb_submission_id'] ) ? absint( $_POST['gfb_submission_id'] ) : 0;
+		if ( $submission_id <= 0 ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', '', array( 'reason' => 'no_id' ) );
+			wp_die(
+				esc_html__( 'Keine Einsendung gewählt.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Fehler', 'gutenberg-formbuilder' ),
+				array( 'response' => 400 )
+			);
+		}
+
+		// 3) Caps: Einsendungen sehen UND Dateien herunterladen (ZIP enthält Klartext-Anhänge).
+		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_VIEW_SUBMISSIONS )
+			|| ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES ) ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'capability' ) );
+			wp_die(
+				esc_html__( 'Keine Berechtigung.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Berechtigung', 'gutenberg-formbuilder' ),
+				array( 'response' => 403 )
+			);
+		}
+
+		// 4) ID-gebundene Nonce prüfen (verhindert Auslösen für fremde IDs über abgeänderte Formulare).
+		if ( ! check_admin_referer( 'gfb_export_single_' . $submission_id, '_gfb_export_single_nonce' ) ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'nonce' ) );
+			wp_die(
+				esc_html__( 'Sicherheitsprüfung fehlgeschlagen.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Nonce', 'gutenberg-formbuilder' ),
+				array( 'response' => 403 )
+			);
+		}
+
+		// 5) ZipArchive verfügbar?
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'no_ziparchive' ) );
+			wp_die(
+				esc_html__( 'ZIP-Export nicht verfügbar: PHP-ZipArchive fehlt auf diesem Server.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Fehler', 'gutenberg-formbuilder' ),
+				array( 'response' => 500 )
+			);
+		}
+
+		// 6) Tabelle und Datensatz.
+		if ( ! self::table_exists() ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'no_table' ) );
+			wp_die(
+				esc_html__( 'Datenbanktabelle nicht gefunden.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Fehler', 'gutenberg-formbuilder' ),
+				array( 'response' => 500 )
+			);
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table_name() . ' WHERE id = %d', $submission_id ) );
+		if ( ! $row ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'not_found' ) );
+			wp_die(
+				esc_html__( 'Eintrag nicht gefunden.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Fehler', 'gutenberg-formbuilder' ),
+				array( 'response' => 404 )
+			);
+		}
+
+		// 7) Decrypt-Wunsch nur mit Cap gfb_decrypt_submissions wirksam.
+		$decrypt_requested = isset( $_POST['gfb_export_decrypt'] ) && '1' === $_POST['gfb_export_decrypt'];
+		$can_decrypt       = GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS );
+		if ( $decrypt_requested && ! $can_decrypt ) {
+			$decrypt_requested = false;
+		}
+
+		set_time_limit( 0 );
+		self::stream_zip_single( $row, $decrypt_requested, $can_decrypt );
+	}
+
+	/**
+	 * Erzeugt das ZIP-Paket für genau eine Einsendung und liefert es aus.
+	 *
+	 * Inhalt: eintrag.csv (Kopfzeile + eine Datenzeile, identische Spalten-Logik
+	 * wie der Formular-Export), eintrag.json (dieselben Werte maschinenlesbar),
+	 * dateien/… (Anhänge entschlüsselt, via zip_cell_for_file inkl. Audit pro Datei).
+	 *
+	 * @param object $row               Datenbank-Zeile der Einsendung.
+	 * @param bool   $decrypt_requested Nutzer hat Decrypt-Option gewählt (Cap bereits geprüft).
+	 * @param bool   $can_decrypt       Nutzer hat Cap gfb_decrypt_submissions.
+	 * @return void
+	 */
+	private static function stream_zip_single( $row, $decrypt_requested, $can_decrypt ) {
+		$decrypt_mode  = ( $can_decrypt && $decrypt_requested );
+		$submission_id = (int) $row->id;
+		$form_id       = (string) $row->form_id;
+		$payload       = GFB_Plugin::get_submission_payload_for_row( $row );
+
+		// Schema ermitteln (Spaltenreihenfolge, Labels, Typen) – wie stream_zip, nur für diese Einsendung.
+		$schema_fields = array();
+		$schema        = GFB_Plugin::get_form_schema_from_post( (int) $row->post_id, $form_id );
+		foreach ( $schema as $field ) {
+			$n = isset( $field['name'] ) ? sanitize_key( (string) $field['name'] ) : '';
+			if ( '' !== $n ) {
+				$schema_fields[] = array(
+					'name'  => $n,
+					'label' => isset( $field['label'] ) && '' !== (string) $field['label'] ? (string) $field['label'] : $n,
+					'type'  => isset( $field['type'] ) ? (string) $field['type'] : '',
+				);
+			}
+		}
+		if ( empty( $schema_fields ) ) {
+			foreach ( array_keys( $payload ) as $k ) {
+				if ( '_gfb_labels' === $k ) {
+					continue;
+				}
+				$schema_fields[] = array( 'name' => $k, 'label' => $k, 'type' => '' );
+			}
+		}
+
+		// Meta-Spalten (wie Formular-Export; IP nur im Decrypt-Modus).
+		$meta_cols = array(
+			array( 'name' => 'id',         'label' => __( 'ID',           'gutenberg-formbuilder' ) ),
+			array( 'name' => 'created_at', 'label' => __( 'Datum',        'gutenberg-formbuilder' ) ),
+			array( 'name' => 'post_id',    'label' => __( 'Seiten-ID',    'gutenberg-formbuilder' ) ),
+			array( 'name' => 'form_id',    'label' => __( 'Formular-ID',  'gutenberg-formbuilder' ) ),
+			array( 'name' => 'form_title', 'label' => __( 'Formularname', 'gutenberg-formbuilder' ) ),
+		);
+		if ( $decrypt_mode ) {
+			$meta_cols[] = array( 'name' => 'ip_address', 'label' => __( 'IP-Adresse', 'gutenberg-formbuilder' ) );
+		}
+
+		// Temp-ZIP im privaten Storage-Root (nicht web-erreichbar), Aufräumen auch bei Abbruch.
+		$tmp_dir = GFB_File_Storage::storage_root() . '/.tmp-export';
+		wp_mkdir_p( $tmp_dir );
+		$tmp_zip = $tmp_dir . '/gfb-zip-single-' . $submission_id . '-' . wp_generate_password( 12, false, false ) . '.zip';
+		register_shutdown_function(
+			function () use ( $tmp_zip ) {
+				if ( file_exists( $tmp_zip ) ) {
+					@unlink( $tmp_zip );
+				}
+			}
+		);
+
+		$zip        = new ZipArchive();
+		$zip_result = $zip->open( $tmp_zip, ZipArchive::CREATE | ZipArchive::OVERWRITE );
+		if ( true !== $zip_result ) {
+			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'zip_open_failed', 'code' => $zip_result ) );
+			wp_die(
+				esc_html__( 'ZIP-Datei konnte nicht erstellt werden.', 'gutenberg-formbuilder' ),
+				esc_html__( 'Fehler', 'gutenberg-formbuilder' ),
+				array( 'response' => 500 )
+			);
+		}
+		@chmod( $tmp_zip, 0600 );
+
+		$fields_count      = 0;
+		$files_included    = 0;
+		$used_folder_names = array();
+		$used_file_names   = array();
+		$folder_name       = self::resolve_submission_folder_name( $payload, $submission_id, $decrypt_mode, $used_folder_names );
+
+		// Meta-Werte (für CSV und JSON identisch).
+		$meta_values = array(
+			'id'         => (string) $row->id,
+			'created_at' => (string) $row->created_at,
+			'post_id'    => (string) $row->post_id,
+			'form_id'    => $form_id,
+			'form_title' => isset( $row->form_title ) ? (string) $row->form_title : '',
+		);
+		if ( $decrypt_mode ) {
+			$meta_values['ip_address'] = isset( $row->ip_address ) ? (string) $row->ip_address : '';
+		}
+
+		// Feldwerte aufbauen: Datei-Felder wandern ins ZIP, alle anderen über die CSV-Zellen-Logik.
+		$field_values = array();
+		foreach ( $schema_fields as $col ) {
+			$field_name = $col['name'];
+			$value      = isset( $payload[ $field_name ] ) ? $payload[ $field_name ] : null;
+
+			if ( 'file' === $col['type']
+				&& is_array( $value )
+				&& isset( $value['_ref'] )
+				&& 0 === strpos( (string) $value['_ref'], 'gfb-file:' )
+			) {
+				$file_id = isset( $value['file_id'] ) ? (int) $value['file_id'] : (int) substr( (string) $value['_ref'], strlen( 'gfb-file:' ) );
+				$cell    = self::zip_cell_for_file( $file_id, $submission_id, $folder_name, $zip, $used_file_names, $files_included, $form_id );
+			} else {
+				$cell = self::csv_cell_for_value( $value, $field_name, $can_decrypt, $decrypt_requested, $fields_count );
+			}
+
+			$field_values[] = array(
+				'name'  => $field_name,
+				'label' => $col['label'],
+				'value' => $cell,
+			);
+		}
+
+		// eintrag.csv: Kopfzeile + eine Datenzeile (gleiche Härtung wie der Formular-Export).
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		$csv_fh = fopen( 'php://temp', 'r+' );
+		if ( false !== $csv_fh ) {
+			fwrite( $csv_fh, "\xEF\xBB\xBF" );
+			$header_row = array();
+			$data_row   = array();
+			foreach ( $meta_cols as $col ) {
+				$header_row[] = self::csv_harden_cell( $col['label'] );
+				$data_row[]   = self::csv_harden_cell( $meta_values[ $col['name'] ] );
+			}
+			foreach ( $field_values as $fv ) {
+				$header_row[] = self::csv_harden_cell( $fv['label'] );
+				$data_row[]   = self::csv_harden_cell( $fv['value'] );
+			}
+			if ( PHP_VERSION_ID >= 80100 ) {
+				fputcsv( $csv_fh, $header_row, ';', '"', '' );
+				fputcsv( $csv_fh, $data_row, ';', '"', '' );
+			} else {
+				fputcsv( $csv_fh, $header_row, ';', '"' );
+				fputcsv( $csv_fh, $data_row, ';', '"' );
+			}
+			rewind( $csv_fh );
+			$csv_string = stream_get_contents( $csv_fh );
+			fclose( $csv_fh );
+			$zip->addFromString( 'eintrag.csv', false !== $csv_string ? $csv_string : '' );
+		}
+
+		// eintrag.json: dieselben Werte maschinenlesbar.
+		$json_fields = array();
+		foreach ( $field_values as $fv ) {
+			$json_fields[ $fv['name'] ] = array(
+				'label' => $fv['label'],
+				'value' => $fv['value'],
+			);
+		}
+		$json_data = array(
+			'meta'   => $meta_values,
+			'fields' => $json_fields,
+		);
+		$zip->addFromString( 'eintrag.json', (string) wp_json_encode( $json_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
+
+		$zip->close();
+
+		// Dateiname des ZIPs.
+		$form_slug    = isset( $row->form_title ) && '' !== trim( (string) $row->form_title ) ? trim( (string) $row->form_title ) : $form_id;
+		$ts           = current_time( 'Y-m-d-Hi' );
+		$zip_filename = sanitize_file_name( 'einsendung-' . $submission_id . '-' . $form_slug . '-' . $ts . '.zip' );
+		$zip_filename = str_replace( array( '"', "\r", "\n" ), '_', $zip_filename );
+
+		// Audit VOR Auslieferung.
+		GFB_Audit::record(
+			'submission_export_single',
+			'submission',
+			(string) $submission_id,
+			array(
+				'form_id'          => $form_id,
+				'files_included'   => $files_included,
+				'decrypt_mode'     => $decrypt_mode,
+				'fields_decrypted' => $fields_count,
+				'format'           => 'zip',
+			)
+		);
+		if ( $decrypt_mode ) {
+			GFB_Audit::record(
+				'submission_exported_decrypted',
+				'submission',
+				(string) $submission_id,
+				array(
+					'fields_decrypted' => $fields_count,
+					'format'           => 'zip',
+				)
+			);
+		}
+
+		// ZIP ausliefern.
+		$zip_size = file_exists( $tmp_zip ) ? filesize( $tmp_zip ) : 0;
+		nocache_headers();
+		header( 'Content-Type: application/zip' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Content-Disposition: attachment; filename="' . $zip_filename . '"' );
+		if ( $zip_size > 0 ) {
+			header( 'Content-Length: ' . (int) $zip_size );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+		readfile( $tmp_zip );
+
+		if ( file_exists( $tmp_zip ) ) {
+			@unlink( $tmp_zip );
+		}
+		exit;
 	}
 }
