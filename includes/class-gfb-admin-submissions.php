@@ -282,19 +282,20 @@ class GFB_Admin_Submissions {
 		);
 		echo '<div class="gfb-admin-actions">';
 
-		// Einzel-Download als ZIP: nur mit Download-Berechtigung und verfügbarem ZipArchive.
-		if ( GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES ) && class_exists( 'ZipArchive' ) ) {
+		// Einzel-Download als ZIP: liefert entschlüsselte Anhänge – daher nur mit
+		// BEIDEN Rechten (Datei herunterladen UND entschlüsseln).
+		if ( GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES )
+			&& GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS )
+			&& class_exists( 'ZipArchive' ) ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="gfb-admin-single-export-form" style="display:inline-block;margin-right:12px;">';
 			wp_nonce_field( 'gfb_export_single_' . (int) $row->id, '_gfb_export_single_nonce' );
 			echo '<input type="hidden" name="action" value="gfb_export_single" />';
 			echo '<input type="hidden" name="gfb_submission_id" value="' . (int) $row->id . '" />';
-			if ( GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS ) ) {
-				echo '<label style="margin-right:8px;">';
-				echo '<input type="checkbox" name="gfb_export_decrypt" value="1" /> ';
-				echo esc_html__( 'Feldwerte entschlüsseln', 'gutenberg-formbuilder' );
-				echo ' <span class="gfb-admin-export-log-hint">(' . esc_html__( 'protokolliert', 'gutenberg-formbuilder' ) . ')</span>';
-				echo '</label>';
-			}
+			echo '<label style="margin-right:8px;">';
+			echo '<input type="checkbox" name="gfb_export_decrypt" value="1" /> ';
+			echo esc_html__( 'Feldwerte entschlüsseln', 'gutenberg-formbuilder' );
+			echo ' <span class="gfb-admin-export-log-hint">(' . esc_html__( 'protokolliert', 'gutenberg-formbuilder' ) . ')</span>';
+			echo '</label>';
 			echo '<button type="submit" class="button button-secondary">' . esc_html__( 'Diese Einsendung herunterladen (ZIP)', 'gutenberg-formbuilder' ) . '</button>';
 			echo '</form>';
 		}
@@ -325,12 +326,15 @@ class GFB_Admin_Submissions {
 			$out .= '<div><strong>' . esc_html( $file->original_name ) . '</strong>'
 				. ' <span class="gfb-admin-file-meta">(' . esc_html( $meta ) . ')</span></div>';
 			$out .= '<div class="gfb-admin-file-fingerprint"><code>sha256: ' . esc_html( $file->sha256_plain ) . '</code></div>';
-			if ( $can_download ) {
+			// Klartext-Download ist eine Entschlüsselung: erfordert BEIDE Caps
+			// (Datei herunterladen UND entschlüsseln). Ohne Entschlüsselungs-Recht
+			// wird kein Klartext ausgegeben – auch nicht, wenn Download erlaubt ist.
+			if ( $can_download && $can_decrypt ) {
 				$out .= '<div><a class="button" href="' . esc_url( GFB_File_Storage::download_url( $file_id ) ) . '">'
-					. esc_html__( 'Verschlüsselt herunterladen (Klartext-Stream)', 'gutenberg-formbuilder' )
+					. esc_html__( 'Datei herunterladen (entschlüsselt)', 'gutenberg-formbuilder' )
 					. '</a></div>';
 			} else {
-				$out .= '<div><em>' . esc_html__( 'Keine Berechtigung zum Download.', 'gutenberg-formbuilder' ) . '</em></div>';
+				$out .= '<div><em>' . esc_html__( 'Keine Berechtigung, diese Datei im Klartext herunterzuladen.', 'gutenberg-formbuilder' ) . '</em></div>';
 			}
 			$out .= '</div>';
 			return $out;
@@ -889,7 +893,8 @@ class GFB_Admin_Submissions {
 		// Prüfe, ob das Formular Datei-Felder hat und ob ZipArchive verfügbar ist.
 		$has_file_fields = $post_id_for_box > 0 && self::form_has_file_field( $post_id_for_box, $filter_form_id );
 		$zip_available   = class_exists( 'ZipArchive' );
-		$show_zip_btn    = $has_file_fields && $can_dl && $zip_available;
+		// ZIP enthält entschlüsselte Anhänge → nur mit Download- UND Entschlüsselungs-Recht.
+		$show_zip_btn    = $has_file_fields && $can_dl && $can_decrypt && $zip_available;
 
 		/* translators: 1: Formularname, 2: Anzahl Einträge */
 		$info_text = sprintf(
@@ -1011,9 +1016,11 @@ class GFB_Admin_Submissions {
 			$kind = 'csv';
 		}
 
-		// 7) ZIP: zusätzliche Prüfungen.
+		// 7) ZIP: zusätzliche Prüfungen. Das ZIP enthält entschlüsselte Anhänge –
+		// daher BEIDE Rechte nötig (Datei herunterladen UND entschlüsseln).
 		if ( 'zip' === $kind ) {
-			if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES ) ) {
+			if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES )
+				|| ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS ) ) {
 				GFB_Audit::record( 'submission_export_denied', 'form', $form_id, array( 'reason' => 'capability_download' ) );
 				wp_die(
 					esc_html__( 'Keine Berechtigung zum Datei-Download.', 'gutenberg-formbuilder' ),
@@ -1701,6 +1708,14 @@ class GFB_Admin_Submissions {
 			return '[Datei nicht gefunden]';
 		}
 
+		// Gemeinsamer Engpass beider ZIP-Wege: Klartext nur mit Entschlüsselungs-
+		// Recht. Ohne Cap gfb_decrypt_submissions kommt KEIN Klartext ins ZIP –
+		// unabhängig davon, ob der aufrufende Handler die Datei-Cap geprüft hat.
+		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS ) ) {
+			GFB_Audit::record( 'file_export_denied', 'file', (string) $file_id, array( 'reason' => 'capability_decrypt', 'form_id' => $form_id, 'submission_id' => $submission_id ) );
+			return '[verschlüsselt – keine Berechtigung zum Entschlüsseln]';
+		}
+
 		$plain = GFB_File_Storage::decrypt_to_string( $file );
 		if ( is_wp_error( $plain ) ) {
 			return '[Entschluesselung fehlgeschlagen]';
@@ -1768,9 +1783,12 @@ class GFB_Admin_Submissions {
 			);
 		}
 
-		// 3) Caps: Einsendungen sehen UND Dateien herunterladen (ZIP enthält Klartext-Anhänge).
+		// 3) Caps: Einsendungen sehen, Dateien herunterladen UND entschlüsseln.
+		// Das ZIP enthält entschlüsselte Anhänge, daher ist die Entschlüsselungs-
+		// Berechtigung zwingend (Defense in Depth zum Engpass in zip_cell_for_file).
 		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_VIEW_SUBMISSIONS )
-			|| ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES ) ) {
+			|| ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES )
+			|| ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS ) ) {
 			GFB_Audit::record( 'submission_export_single_denied', 'submission', (string) $submission_id, array( 'reason' => 'capability' ) );
 			wp_die(
 				esc_html__( 'Keine Berechtigung.', 'gutenberg-formbuilder' ),

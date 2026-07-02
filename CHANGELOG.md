@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.9.1] – 2026-07-02
+
+### Sicherheit
+
+- **Schwere Lücke geschlossen: Klartext-Datei-Download ohne Entschlüsselungs-Recht.** Der Datei-Download und beide ZIP-Export-Wege lieferten hochgeladene Dateien im Klartext aus, sobald ein Benutzer die Berechtigung «Dateien herunterladen» (`gfb_download_files`) hatte – **ohne** die Berechtigung «Entschlüsseln» (`gfb_decrypt_submissions`) zu verlangen. Eine Rolle, die sensible Textfelder nur maskiert sah, konnte so die zugehörige Datei entschlüsselt herunterladen (beobachtet mit einer Redaktions-Rolle auf einer Live-Seite). Die Dateien liegen weiterhin korrekt verschlüsselt (AES-256-GCM); die Lücke lag allein in der Autorisierung an der Ausgabe. **Fix (Defense in Depth):** Das Ausgeben einer Datei im Klartext gilt jetzt überall als Entschlüsselung und verlangt zwingend BEIDE Rechte – im Download-Endpunkt (`GFB_File_Storage::handle_download`), im Formular-ZIP-Export und im Einzel-Einsendungs-ZIP (`handle_export`, `handle_export_single`), am gemeinsamen Engpass `zip_cell_for_file` sowie in der Sichtbarkeit aller betroffenen Knöpfe. Ohne Entschlüsselungs-Recht wird kein Klartext mehr geliefert (HTTP 403), und Versuche werden protokolliert (`file_download_denied`, `file_export_denied`). **Empfehlung für Betreiber:** Rollen prüfen – wer «Dateien herunterladen» hat, sollte bewusst auch «Entschlüsseln» haben; andernfalls das Datei-Recht entziehen.
+
 ## [2.9.0] – 2026-07-02
 
 ### Geändert

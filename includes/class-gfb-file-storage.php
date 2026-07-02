@@ -416,7 +416,12 @@ class GFB_File_Storage {
 				array( 'response' => 401 )
 			);
 		}
-		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES ) ) {
+		// Dieser Endpunkt liefert die Datei ENTSCHLÜSSELT aus. Das ist eine
+		// Entschlüsselung und erfordert deshalb BEIDE Rechte: Datei herunterladen
+		// UND entschlüsseln. Ein Recht allein genügt nicht (Defense in Depth –
+		// die Prüfung ist unabhängig von der Sichtbarkeit des Knopfs im Backend).
+		if ( ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DOWNLOAD_FILES )
+			|| ! GFB_Capabilities::user_can( GFB_Capabilities::CAP_DECRYPT_SUBMISSIONS ) ) {
 			GFB_Audit::record( 'file_download_denied', 'file', '', array( 'reason' => 'capability' ) );
 			wp_die(
 				esc_html__( 'Keine Berechtigung.', 'gutenberg-formbuilder' ),
