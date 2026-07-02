@@ -2,6 +2,36 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.8.1] – 2026-06-26
+
+### Neu
+
+- **Zweiter Signatur-Schlüssel im Update-Client:** Davids Ed25519-Public-Key in die Schlüsselliste des Update-Clients aufgenommen (`includes/class-bd-update-client.php`). Damit kann auch er Releases für `plugins.blitzdonner.ch` signieren; vom Client signiert akzeptierte Updates bleiben auf die hinterlegten Schlüssel beschränkt.
+
+## [2.8.0] – 2026-06-26
+
+### Neu
+
+- **Submit-Overlay mit Verschlüsselungs-Animation:** Nach dem Absenden zeigt das Formular ein Overlay, das den Verschlüsselungs- und Übertragungsvorgang visualisiert (`assets/form.css`, `assets/frontend.js`, Rendering in `includes/class-gfb-plugin.php`). Spezifikation: `docs/SUBMIT-OVERLAY-SPEC.md`.
+- **Core-Blöcke in Formularen:** Innerhalb des `gfb/form`-Blocks sind jetzt auch WordPress-Core-Blöcke erlaubt (Anpassung in `includes/class-gfb-field-renderer.php` und `includes/class-gfb-plugin.php`).
+
+### Behoben
+
+- **CSS-Klassen-Fix** im Feld-Rendering.
+
+## [2.7.4] – 2026-06-26
+
+Enthält auch die Änderungen der nicht separat veröffentlichten Version 2.7.3.
+
+### Neu
+
+- **Signierte Erstveröffentlichung auf `plugins.blitzdonner.ch`:** 2.7.4 ist das erste Release, das signiert über den eigenen Update-Server ausgeliefert wird.
+
+### Geändert
+
+- **Ed25519-Signaturprüfung als Pflicht im Update-Client:** Der Client akzeptiert nur noch Update-Pakete mit gültiger Ed25519-Signatur eines hinterlegten Schlüssels; die reine SHA-256-Prüfung genügt nicht mehr (`includes/class-bd-update-client.php`, ursprünglich als 2.7.3).
+- **Auto-Publish via GitHub Actions entfernt:** Der Workflow `.github/workflows/publish-update.yml` veröffentlicht nicht mehr automatisch an den Update-Server, sondern dient nur noch als Qualitätsgate für Releases. Die Veröffentlichung erfolgt seither signiert ausserhalb von GitHub.
+
 ## [2.7.2] – 2026-06-22
 
 ### Neu
