@@ -1,6 +1,6 @@
 # Feature-Spezifikation: CAPTCHA-Integration (nur Friendly Captcha)
 
-Plugin: Gutenberg Formbuilder · Ziel-Version: 2.7.0 · Autorin: Ripley (Product Owner/UX) · Datum: 2026-06-14
+Plugin: Blitz & Donner Formular · Ziel-Version: 2.7.0 · Autorin: Ripley (Product Owner/UX) · Datum: 2026-06-14
 Grundlage für: Stark (Bau) → Neo (Test). Diese Spec definiert das WAS und die Akzeptanzkriterien, nicht die Implementierung.
 
 ## 0. Ausgangslage (verifiziert im Code)

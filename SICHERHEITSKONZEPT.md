@@ -1,10 +1,10 @@
 # Sicherheitskonzept und Begründung
 
-Dieses Dokument erklärt, warum Gutenberg Formbuilder sicher per Konzept ist. Es richtet sich an Sicherheitsverantwortliche in Schweizer Unternehmen, die beurteilen müssen, ob das Plugin für kritische Formulare geeignet ist.
+Dieses Dokument erklärt, warum Blitz & Donner Formular sicher per Konzept ist. Es richtet sich an Sicherheitsverantwortliche in Schweizer Unternehmen, die beurteilen müssen, ob das Plugin für kritische Formulare geeignet ist.
 
 ## Kurzfazit
 
-Gutenberg Formbuilder schützt Formulardaten nicht mit einer einzelnen Massnahme. Das Plugin kombiniert serverseitige Validierung, private Dateiablage, starke Verschlüsselung, getrennte Berechtigungen, manipulationsresistente Audit-Logs und gehärtete Admin-Oberflächen.
+Blitz & Donner Formular schützt Formulardaten nicht mit einer einzelnen Massnahme. Das Plugin kombiniert serverseitige Validierung, private Dateiablage, starke Verschlüsselung, getrennte Berechtigungen, manipulationsresistente Audit-Logs und gehärtete Admin-Oberflächen.
 
 Der wichtigste Grundsatz lautet: Eingehende Daten gelten nie als vertrauenswürdig. Das Plugin prüft jede Einreichung auf dem Server, rekonstruiert das Formularschema aus dem Block-Tree und verarbeitet nur Daten, die zu diesem Schema passen.
 
@@ -39,7 +39,7 @@ Diese Massnahmen reduzieren Spam, Replay-Angriffe, manipulierte Redirects und un
 
 Das Plugin prüft Eingaben nach Feldtyp. Eine E-Mail muss eine E-Mail sein, eine URL muss ein erlaubtes Schema nutzen, Zahlen müssen Zahlen sein, Optionen müssen zu den definierten Auswahlwerten passen.
 
-Das ist wichtig, weil der Browser keine Sicherheitsgrenze ist. HTML-Attribute wie `required`, `type=email` oder `accept` helfen der Benutzerführung. Sie schützen aber nicht gegen gezielte Requests. Gutenberg Formbuilder erzwingt deshalb alle relevanten Regeln nochmals serverseitig.
+Das ist wichtig, weil der Browser keine Sicherheitsgrenze ist. HTML-Attribute wie `required`, `type=email` oder `accept` helfen der Benutzerführung. Sie schützen aber nicht gegen gezielte Requests. Blitz & Donner Formular erzwingt deshalb alle relevanten Regeln nochmals serverseitig.
 
 ## Sensible Felder werden verschlüsselt
 
@@ -51,7 +51,7 @@ Auch E-Mail-Benachrichtigungen enthalten keine entschlüsselten sensiblen Werte.
 
 ## Datei-Uploads: geprüft, privat, verschlüsselt
 
-Datei-Uploads sind der kritischste Teil eines Formularplugins. Gutenberg Formbuilder behandelt sie deshalb besonders streng.
+Datei-Uploads sind der kritischste Teil eines Formularplugins. Blitz & Donner Formular behandelt sie deshalb besonders streng.
 
 Vor dem Speichern prüft das Plugin:
 
@@ -129,7 +129,7 @@ Das schützt nicht davor, dass ein privilegierter Benutzer etwas tut. Es macht s
 
 Gutenberg-Blöcke speichern HTML im Inhalt. Das kann bei Formularen gefährlich sein, wenn dieses HTML als vertrauenswürdig gilt.
 
-Gutenberg Formbuilder vermeidet diese Annahme. Alle Feldblöcke werden serverseitig über Render-Callbacks erzeugt. Das gespeicherte Block-HTML ist nicht die Vertrauensbasis für das Frontend.
+Blitz & Donner Formular vermeidet diese Annahme. Alle Feldblöcke werden serverseitig über Render-Callbacks erzeugt. Das gespeicherte Block-HTML ist nicht die Vertrauensbasis für das Frontend.
 
 Zusätzlich begrenzt `wp_kses` die erlaubten HTML-Strukturen. Dadurch sinkt das Risiko, dass manipuliertes Block-Markup JavaScript oder gefährliche Attribute ins Frontend bringt.
 
@@ -176,7 +176,7 @@ Wenn selbst der Serverbetreiber oder Hosting-Provider niemals Klartext sehen dar
 
 ## Gesamtbeurteilung
 
-Gutenberg Formbuilder ist sicher per Konzept, weil es Angriffe an mehreren Stellen begrenzt:
+Blitz & Donner Formular ist sicher per Konzept, weil es Angriffe an mehreren Stellen begrenzt:
 
 - vor der Verarbeitung durch Request-Schutz,
 - während der Verarbeitung durch serverseitige Validierung,

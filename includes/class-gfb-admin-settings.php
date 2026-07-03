@@ -59,7 +59,7 @@ class GFB_Admin_Settings {
 		}
 		$status = GFB_Crypto::status();
 		if ( ! $status['ok'] ) {
-			echo '<div class="notice notice-error"><p><strong>Gutenberg Formbuilder:</strong> '
+			echo '<div class="notice notice-error"><p><strong>Blitz & Donner Formular:</strong> '
 				. esc_html__( 'Verschlüsselung ist NICHT aktiv. Datei-Uploads sind blockiert, sensible Felder werden im Klartext gespeichert. Grund: ', 'gutenberg-formbuilder' )
 				. esc_html( $status['reason'] )
 				. ' <a href="' . esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) ) . '">'
@@ -67,12 +67,12 @@ class GFB_Admin_Settings {
 		}
 		$clamav_pre = GFB_Clamav::precondition_for_uploads();
 		if ( is_wp_error( $clamav_pre ) ) {
-			echo '<div class="notice notice-warning"><p><strong>Gutenberg Formbuilder:</strong> '
+			echo '<div class="notice notice-warning"><p><strong>Blitz & Donner Formular:</strong> '
 				. esc_html( $clamav_pre->get_error_message() ) . '</p></div>';
 		}
 		$reach = get_transient( 'gfb_storage_reach' );
 		if ( is_array( $reach ) && empty( $reach['ok'] ) ) {
-			echo '<div class="notice notice-error"><p><strong>Gutenberg Formbuilder – wichtiger Sicherheitshinweis:</strong> '
+			echo '<div class="notice notice-error"><p><strong>Blitz & Donner Formular – wichtiger Sicherheitshinweis:</strong> '
 				. esc_html__( 'Hochgeladene Dateien könnten direkt aus dem Internet abrufbar sein. Die Plugin-Verschlüsselung schützt den Inhalt zwar weiterhin, aber dein Webserver sollte das Verzeichnis komplett blockieren. ', 'gutenberg-formbuilder' )
 				. '<a href="' . esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) ) . '">'
 				. esc_html__( 'Details und Anleitung ansehen', 'gutenberg-formbuilder' ) . '</a></p></div>';

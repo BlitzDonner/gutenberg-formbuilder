@@ -570,7 +570,7 @@ class GFB_Security {
 
 		$ht = $base . '/.htaccess';
 		if ( ! file_exists( $ht ) ) {
-			$rules  = "# Auto-generiert von Gutenberg Formbuilder. Nicht ändern.\n";
+			$rules  = "# Auto-generiert von Blitz & Donner Formular. Nicht ändern.\n";
 			$rules .= "Options -Indexes\n";
 			$rules .= "<IfModule mod_php7.c>\nphp_flag engine off\n</IfModule>\n";
 			$rules .= "<IfModule mod_php8.c>\nphp_flag engine off\n</IfModule>\n";
@@ -622,7 +622,7 @@ class GFB_Security {
 	 */
 	public static function register_personal_data_exporter( $exporters ) {
 		$exporters['gutenberg-formbuilder'] = array(
-			'exporter_friendly_name' => __( 'Gutenberg Formbuilder', 'gutenberg-formbuilder' ),
+			'exporter_friendly_name' => __( 'Blitz & Donner Formular', 'gutenberg-formbuilder' ),
 			'callback'               => array( __CLASS__, 'export_personal_data' ),
 		);
 		return $exporters;
@@ -634,7 +634,7 @@ class GFB_Security {
 	 */
 	public static function register_personal_data_eraser( $erasers ) {
 		$erasers['gutenberg-formbuilder'] = array(
-			'eraser_friendly_name' => __( 'Gutenberg Formbuilder', 'gutenberg-formbuilder' ),
+			'eraser_friendly_name' => __( 'Blitz & Donner Formular', 'gutenberg-formbuilder' ),
 			'callback'             => array( __CLASS__, 'erase_personal_data' ),
 		);
 		return $erasers;

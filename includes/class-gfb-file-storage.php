@@ -143,7 +143,7 @@ class GFB_File_Storage {
 
 		$ht = $root . '/.htaccess';
 		if ( ! file_exists( $ht ) ) {
-			$rules  = "# Auto-generiert von Gutenberg Formbuilder. Sperrt jeglichen Direktzugriff.\n";
+			$rules  = "# Auto-generiert von Blitz & Donner Formular. Sperrt jeglichen Direktzugriff.\n";
 			$rules .= "Require all denied\n";
 			$rules .= "Order allow,deny\n";
 			$rules .= "Deny from all\n";

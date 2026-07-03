@@ -1,4 +1,4 @@
-# SECURITY.md — Gutenberg Formbuilder
+# SECURITY.md — Blitz & Donner Formular
 
 Geltungsbereich: Plugin ab Version **2.0** (aktueller Stand siehe `GFB_PLUGIN_VERSION` in `gutenberg-formbuilder.php`).
 Dieses Dokument beschreibt das Bedrohungsmodell, die getroffenen Massnahmen, das Krypto-Design und die Konfigurationspunkte für den produktiven Betrieb.

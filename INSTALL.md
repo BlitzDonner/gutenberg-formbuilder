@@ -1,4 +1,4 @@
-# INSTALL.md — Gutenberg Formbuilder
+# INSTALL.md — Blitz & Donner Formular
 
 ## 1. Voraussetzungen
 
@@ -35,7 +35,7 @@ Nach Aktivierung zeigt die Plugin-Einstellungsseite (Formular-Einträge → Sich
 ## 3. Aktivierung
 
 1. Plugin in `wp-content/plugins/gutenberg-formbuilder/` ablegen (oder via Symlink).
-2. WP-Admin → Plugins → "Gutenberg Formbuilder" aktivieren.
+2. WP-Admin → Plugins → "Blitz & Donner Formular" aktivieren.
 3. Prüfen unter Formular-Einträge → Sicherheit:
    - Verschlüsselung: aktiv (gruener Status)
    - ClamAV: konfiguriert oder bewusst deaktiviert

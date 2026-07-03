@@ -1,6 +1,6 @@
 # Feature-Spezifikation: Submit-Overlay mit Verschluesselungs-Animation (Doppelklick-Schutz)
 
-Plugin: Gutenberg Formbuilder · Ziel-Version: 2.8.0 · Autorin: Ripley (Product Owner/UX) · Datum: 2026-06-26
+Plugin: Blitz & Donner Formular · Ziel-Version: 2.8.0 · Autorin: Ripley (Product Owner/UX) · Datum: 2026-06-26
 Grundlage fuer: Stark (Bau) --> Neo (Test). Diese Spec definiert das WAS und die Akzeptanzkriterien, nicht die Implementierung.
 
 ## 0. Ausgangslage (verifiziert im Code)

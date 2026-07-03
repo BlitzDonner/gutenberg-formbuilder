@@ -1,6 +1,6 @@
 # Update-Server-Integration
 
-Diese Doku beschreibt, wie der Gutenberg Formbuilder seine Updates vom selbst gehosteten Update-Server `plugins.blitzdonner.ch` bezieht. Sie richtet sich an Entwickler, die den Mechanismus warten oder in ein weiteres Agentur-Plugin übertragen.
+Diese Doku beschreibt, wie der Blitz & Donner Formular seine Updates vom selbst gehosteten Update-Server `plugins.blitzdonner.ch` bezieht. Sie richtet sich an Entwickler, die den Mechanismus warten oder in ein weiteres Agentur-Plugin übertragen.
 
 ## Überblick
 

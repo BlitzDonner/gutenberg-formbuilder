@@ -1,6 +1,6 @@
 # Farben, Transparenz und Verläufe
 
-Kurzdoku zum Verhalten von **Gutenberg Formbuilder** (Ergänzung zum [README](../README.md)).
+Kurzdoku zum Verhalten von **Blitz & Donner Formular** (Ergänzung zum [README](../README.md)).
 
 ## Editor (`assets/editor.js`)
 

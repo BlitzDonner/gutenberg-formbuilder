@@ -1,4 +1,4 @@
-# Gutenberg Formbuilder
+# Blitz & Donner Formular
 
 WordPress-Plugin: Formular-Builder **nur mit Gutenberg-Blöcken**, serverseitige Speicherung der Einsendungen, lokale Entwürfe im Browser (IndexedDB).
 

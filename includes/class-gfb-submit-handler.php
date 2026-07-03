@@ -1,6 +1,6 @@
 <?php
 /**
- * Submit handling for Gutenberg Formbuilder.
+ * Submit handling for Blitz & Donner Formular.
  *
  * Sicherheitsrelevant: Alle externen Eingaben (POST/FILES/SERVER) werden
  * über GFB_Security validiert. Anonymer Endpoint (admin_post_nopriv).

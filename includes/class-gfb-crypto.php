@@ -1,6 +1,6 @@
 <?php
 /**
- * Crypto-Fundament für Gutenberg Formbuilder.
+ * Crypto-Fundament für Blitz & Donner Formular.
  *
  * Architektur (envelope encryption):
  * - KEK ("Key Encryption Key"): kommt aus wp-config.php-Konstanten.

@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.9.3] – 2026-07-03
+
+### Geändert
+
+- **Plugin umbenannt in «Blitz & Donner Formular».** Der sichtbare Produktname erscheint neu überall als «Blitz & Donner Formular» – Plugin-Kopf, Admin-Hinweise, Datenschutz-Export und -Löschung, generierte Schutzdateien und die gesamte Dokumentation. Die Beschreibung nennt neu den «Block-Editor» statt «Gutenberg». Die technische Kennung bleibt bewusst unverändert (Ordner/Slug `gutenberg-formbuilder`, Textdomain, Block-Namen `gfb/*`, Datenbank-Tabellen, Präfixe `gfb_`), damit bestehende Installationen – Formulare, Einsendungen, Einstellungen und die Update-Verbindung – ohne Bruch weiterlaufen.
+
 ## [2.9.2] – 2026-07-03
 
 ### Behoben
