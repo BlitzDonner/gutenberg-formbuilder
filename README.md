@@ -198,4 +198,4 @@ Nach dem Absenden leitet WordPress u. a. auf eine URL mit `gfb_status=error`, 
 
 ## Lizenz
 
-Ohne separate LICENSE-Datei: Klärung durch die Organisation **BlitzDonner** / Projekteigner; bei Bedarf MIT/GPL ergänzen.
+**GPL-2.0-or-later** (GNU General Public License, Version 2 oder später) – dieselbe Lizenz wie WordPress-Core. Volltext in [`LICENSE`](LICENSE). Der Quellcode ist offen einsehbar, nutzbar, veränderbar und weitergabefähig; Weitergaben und abgeleitete Werke stehen wieder unter der GPL.

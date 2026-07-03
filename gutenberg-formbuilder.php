@@ -6,6 +6,8 @@
  * Plugin URI: https://plugins.blitzdonner.ch
  * Author: Blitz & Donner
  * Author URI: https://plugins.blitzdonner.ch
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires at least: 6.6
  * Requires PHP: 7.4
  * Text Domain: gutenberg-formbuilder
