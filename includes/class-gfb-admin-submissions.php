@@ -1597,9 +1597,11 @@ class GFB_Admin_Submissions {
 				$field_name = $col['name'];
 				$value      = isset( $payload[ $field_name ] ) ? $payload[ $field_name ] : null;
 
-				// Datei-Feld: im ZIP-Modus andere Zellen-Logik.
-				if ( 'file' === $col['type']
-					&& is_array( $value )
+				// Datei-Feld: im ZIP-Modus andere Zellen-Logik. Erkennung über die
+				// Datei-Referenz im Wert, NICHT über den Schema-Typ – sonst fällt die
+				// Datei durch, wenn das Formular geändert/gelöscht wurde und nur ein
+				// Ersatz-Schema ohne Feld-Typen vorliegt.
+				if ( is_array( $value )
 					&& isset( $value['_ref'] )
 					&& 0 === strpos( (string) $value['_ref'], 'gfb-file:' )
 				) {
@@ -1950,8 +1952,10 @@ class GFB_Admin_Submissions {
 			$field_name = $col['name'];
 			$value      = isset( $payload[ $field_name ] ) ? $payload[ $field_name ] : null;
 
-			if ( 'file' === $col['type']
-				&& is_array( $value )
+			// Erkennung über die Datei-Referenz, nicht über den Schema-Typ (siehe
+			// stream_zip): so kommt die Datei auch dann ins ZIP, wenn das Formular
+			// geändert/gelöscht wurde und nur ein Ersatz-Schema ohne Typen vorliegt.
+			if ( is_array( $value )
 				&& isset( $value['_ref'] )
 				&& 0 === strpos( (string) $value['_ref'], 'gfb-file:' )
 			) {

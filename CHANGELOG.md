@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.9.2] – 2026-07-03
+
+### Behoben
+
+- **ZIP-Export: Dateianhänge fehlten bei nachträglich geändertem Formular.** Der Einzel-Einsendungs- und der Formular-ZIP-Export fügten einen Dateianhang nur ein, wenn das Formular-Schema das Feld noch als Typ `file` führte. Wurde das zugehörige Formular nach der Einsendung geändert oder gelöscht, lieferte `get_form_schema_from_post()` ein Ersatz-Schema ohne Feld-Typen, und die Datei fiel aus dem ZIP – `eintrag.csv` und `eintrag.json` blieben vollständig, nur der Anhang fehlte. Die Datei-Erkennung erfolgt jetzt über die Datei-Referenz im Wert (`_ref` = `gfb-file:`) statt über den Schema-Typ, in `stream_zip` und `stream_zip_single`. Der einzelne Datei-Download in der Feldansicht (`handle_download`) war nie betroffen. Der Fehler bestand seit der Einführung des Einzel-Downloads in 2.9.0.
+
 ## [2.9.1] – 2026-07-02
 
 ### Sicherheit
