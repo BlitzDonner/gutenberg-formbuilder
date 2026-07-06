@@ -39,6 +39,8 @@ Der Client hängt sich in drei WordPress-Filter und einen Admin-Hook:
 
 Innerhalb eines Requests cacht der Client die Server-Antwort, um Mehrfach-Abfragen zu vermeiden.
 
+**Ohne Token (seit 2.9.4):** Der Client fragt den Server auch ohne hinterlegtes Token an – der `Authorization`-Header wird nur gesendet, wenn ein Token vorhanden ist. Der Server entscheidet: Als frei markierte Plugins (z.B. Blitz & Donner PDF) liefern tokenlos aus, lizenzpflichtige wie der Formbuilder antworten mit 403. Wichtig, weil die Klasse `BD_Update_Client` von allen B&D-Plugins einer Installation geteilt wird (die zuerst geladene Kopie gewinnt): Eine veraltete Kopie hier würde tokenfreie Plugins derselben Installation blockieren.
+
 ## Token via wp-config-Konstante
 
 Das Token gehört **nicht** in den Plugin-Code. Es wird pro Kundeninstallation in `wp-config.php` gesetzt:
