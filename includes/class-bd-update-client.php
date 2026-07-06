@@ -250,21 +250,21 @@ class BD_Update_Client {
 			return $this->remote;
 		}
 
-		$token = $this->get_token();
-		if ( '' === $token ) {
-			$this->remote = new WP_Error( 'no_token', __( 'Kein Lizenz-Token hinterlegt.', 'bd-update-client' ) );
-			return $this->remote;
+		// Ohne Token wird trotzdem angefragt: freie Plugins (free_updates auf
+		// dem Server) liefern auch ohne Lizenz aus. Der Server entscheidet –
+		// bei lizenzpflichtigen Plugins antwortet er mit 403.
+		$token   = $this->get_token();
+		$headers = array( 'Accept' => 'application/json' );
+		if ( '' !== $token ) {
+			// SICHERHEIT: Token im Header, nie in der URL.
+			$headers['Authorization'] = 'Bearer ' . $token;
 		}
 
 		$url = $this->server_url . '/bd-updater/check/' . rawurlencode( $this->slug );
 
 		$response = wp_remote_post( $url, array(
 			'timeout' => 15,
-			'headers' => array(
-				// SICHERHEIT: Token im Header, nie in der URL.
-				'Authorization' => 'Bearer ' . $token,
-				'Accept'        => 'application/json',
-			),
+			'headers' => $headers,
 			'body'    => array(
 				'domain' => $this->current_host(),
 			),
@@ -404,10 +404,9 @@ class BD_Update_Client {
 			return $reply;
 		}
 
+		// Auch ohne Token herunterladen (freie Plugins) – der Server lehnt
+		// lizenzpflichtige Downloads ohne Token mit 403 ab.
 		$token = $this->get_token();
-		if ( '' === $token ) {
-			return new WP_Error( 'no_token', __( 'Kein Lizenz-Token hinterlegt – Download nicht moeglich.', 'bd-update-client' ) );
-		}
 
 		// Erwartete Pruefsumme aus dem Update-Transient holen.
 		$expected = $this->expected_sha256();
@@ -550,13 +549,16 @@ class BD_Update_Client {
 	private function download_with_header( $url, $token ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 
+		$headers = array();
+		if ( '' !== $token ) {
+			$headers['Authorization'] = 'Bearer ' . $token;
+		}
+
 		$response = wp_remote_post( $url, array(
 			'timeout'  => 60,
 			'stream'   => true,
 			'filename' => wp_tempnam( $this->slug . '.zip' ),
-			'headers'  => array(
-				'Authorization' => 'Bearer ' . $token,
-			),
+			'headers'  => $headers,
 			'body'     => array(
 				'domain' => $this->current_host(),
 			),
