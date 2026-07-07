@@ -8,6 +8,12 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 
 - **Update-Client blockierte fremde Blitz-&-Donner-Plugins.** Die eingebettete Klasse `BD_Update_Client` wird von allen B&D-Plugins geteilt (wer zuerst lädt, gewinnt). Die alte Kopie brach ohne Lizenz-Token lokal ab – dadurch bekamen tokenfreie Plugins wie «Blitz & Donner PDF» auf derselben Installation fälschlich «Lizenz abgelaufen» angezeigt. Die Kopie ist jetzt auf dem kanonischen Stand: Ohne Token wird der Server trotzdem angefragt, er entscheidet (freie Plugins liefern aus, lizenzpflichtige antworten mit 403). Für den Formbuilder selbst ändert sich nichts.
 
+## [2.9.4] – 2026-07-07
+
+### Behoben
+
+- **Radio-Feld: Ausrichtung «zeilenweise» wirkte im Theme-Modus nicht.** Die CSS-Regel für die zeilenweise Anordnung der Optionen (`.gfb-radio-options--row`) war nur für die Erscheinungsmodi Hell, Dunkel und Automatik definiert. Im Theme-Modus (Theme-Standard) fehlte sie, sodass die im Editor gewählte Richtung ohne Wirkung blieb. Die Anordnung ist eine funktionale Wahl (kein Farb-Styling) und gilt jetzt modus-unabhängig in allen Erscheinungsmodi. Der Renderer setzte die Klasse stets korrekt; der Fehler lag allein im fehlenden CSS für den Theme-Modus – eine Regression aus der Stil-Aufräumung in 2.6.4.
+
 ## [2.9.3] – 2026-07-03
 
 ### Geändert

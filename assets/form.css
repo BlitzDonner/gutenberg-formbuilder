@@ -442,6 +442,22 @@
 	gap: 1.25rem !important;
 }
 
+/* Anordnung der Radio-Optionen in ALLEN Erscheinungsmodi – auch im Theme-Modus.
+   Die Richtung (spalten- oder zeilenweise) ist eine bewusste funktionale Wahl
+   des Nutzers, kein Farb-/Theme-Styling. Ohne diese Regel bleibt die «Richtung»-
+   Auswahl im Theme-Modus wirkungslos (die appearance-gebundenen Regeln oben
+   greifen dort nicht). */
+.gfb-form-wrapper .gfb-radio-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.gfb-form-wrapper .gfb-radio-options--row {
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 1.25rem;
+}
+
 /* Die Option-Labels innerhalb einer Radio-Zeile NICHT als Block-Label stylen. */
 .gfb-form-wrapper[data-gfb-appearance="light"] .gfb-radio-row > label,
 .gfb-form-wrapper[data-gfb-appearance="dark"] .gfb-radio-row > label,
