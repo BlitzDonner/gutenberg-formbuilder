@@ -8,7 +8,7 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 
 - **Update-Client blockierte fremde Blitz-&-Donner-Plugins.** Die eingebettete Klasse `BD_Update_Client` wird von allen B&D-Plugins geteilt (wer zuerst lädt, gewinnt). Die alte Kopie brach ohne Lizenz-Token lokal ab – dadurch bekamen tokenfreie Plugins wie «Blitz & Donner PDF» auf derselben Installation fälschlich «Lizenz abgelaufen» angezeigt. Die Kopie ist jetzt auf dem kanonischen Stand: Ohne Token wird der Server trotzdem angefragt, er entscheidet (freie Plugins liefern aus, lizenzpflichtige antworten mit 403). Für den Formbuilder selbst ändert sich nichts.
 
-## [2.9.4] – 2026-07-07
+## [2.9.5] – 2026-07-07
 
 ### Behoben
 

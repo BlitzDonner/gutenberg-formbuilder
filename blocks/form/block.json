@@ -2,7 +2,7 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "gfb/form",
-  "version": "2.9.4",
+  "version": "2.9.5",
   "title": "Formular",
   "category": "gfb-form",
   "icon": {
