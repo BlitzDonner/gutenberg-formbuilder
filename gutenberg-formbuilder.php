@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Blitz & Donner Formular
  * Description: Sicherheitszentrierter Formular-Builder für den Block-Editor mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
- * Version: 2.9.5
+ * Version: 2.9.6
  * Plugin URI: https://plugins.blitzdonner.ch
  * Author: Blitz & Donner
  * Author URI: https://plugins.blitzdonner.ch
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GFB_PLUGIN_FILE', __FILE__ );
 define( 'GFB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GFB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'GFB_PLUGIN_VERSION', '2.9.5' );
+define( 'GFB_PLUGIN_VERSION', '2.9.6' );
 
 // Reihenfolge wichtig: Crypto + Capabilities + Audit zuerst, dann alles, was sie nutzt.
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-crypto.php';

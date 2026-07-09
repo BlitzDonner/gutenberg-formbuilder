@@ -8,6 +8,12 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 
 - **Update-Client blockierte fremde Blitz-&-Donner-Plugins.** Die eingebettete Klasse `BD_Update_Client` wird von allen B&D-Plugins geteilt (wer zuerst lädt, gewinnt). Die alte Kopie brach ohne Lizenz-Token lokal ab – dadurch bekamen tokenfreie Plugins wie «Blitz & Donner PDF» auf derselben Installation fälschlich «Lizenz abgelaufen» angezeigt. Die Kopie ist jetzt auf dem kanonischen Stand: Ohne Token wird der Server trotzdem angefragt, er entscheidet (freie Plugins liefern aus, lizenzpflichtige antworten mit 403). Für den Formbuilder selbst ändert sich nichts.
 
+## [2.9.6] – 2026-07-09
+
+### Geändert
+
+- **Sende-Overlay: Platzhaltertext ersetzt.** Die Verschlüsselungs-Animation beim Absenden zeigte testhalber den Klartext «Hallo Stefan» als eines von mehreren durchlaufenden Beispielwörtern – für Kunden wirkte das befremdlich. Ersetzt durch ein dreizeiliges Haiku zum Thema Datenschutz («Worte werden still / in Geheimschrift eingehüllt / sicher an ihr Ziel»), das denselben Zeichen-für-Zeichen-Effekt durchläuft (`assets/frontend.js`, `gfbRunCipherAnimation`).
+
 ## [2.9.5] – 2026-07-07
 
 ### Behoben

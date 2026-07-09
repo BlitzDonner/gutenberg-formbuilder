@@ -299,7 +299,8 @@
 	 */
 	function gfbRunCipherAnimation( cipherEl ) {
 		var pool = [ '█', '▓', '▒', '░', '●', '◆', '■', '◼', '▪', '◈', '✦' ];
-		var texts = [ 'Hallo Stefan', 'Formulardaten', 'Sichere Übertragung', 'Verschlüsselt' ];
+		/* Haiku zum Thema Datenschutz – läuft in Schleife, statt Klartext-Beispieldaten zu zeigen. */
+		var texts = [ 'Worte werden still', 'in Geheimschrift eingehüllt', 'sicher an ihr Ziel' ];
 		var textIndex = 0;
 		var charIndex = 0;
 		var currentText = texts[ 0 ];
