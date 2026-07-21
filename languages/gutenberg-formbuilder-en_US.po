@@ -560,3 +560,93 @@ msgstr "Confirmation pending (expiry unknown)"
 
 msgid "Nicht rechtzeitig bestätigt (abgelaufen am %s)"
 msgstr "Not confirmed in time (expired on %s)"
+
+msgid "Branding der Bestätigungsmail gespeichert."
+msgstr "Confirmation email branding saved."
+
+msgid "Branding der Bestätigungsmails (site-weit)"
+msgstr "Confirmation email branding (site-wide)"
+
+msgid "Logo und Fusszeile rahmen jede Mail an die ausfüllende Person (Sofort-Quittung, Link-Mail, Voll-Quittung). Die Betreiber-Benachrichtigungen bleiben unverändert reiner Text."
+msgstr "Logo and footer frame every email to the person filling in the form (instant receipt, link email, full receipt). Operator notifications remain plain text."
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Logo aus Mediathek wählen"
+msgstr "Choose logo from media library"
+
+msgid "Logo entfernen"
+msgstr "Remove logo"
+
+msgid "Empfohlen: ein Bild von der eigenen Domain (Mediathek). Base64-/data:-Bilder werden bewusst abgelehnt – Gmail zeigt sie nicht an, und sie gelten als Spam-Signal."
+msgstr "Recommended: an image from your own domain (media library). Base64/data: images are deliberately rejected – Gmail does not display them, and they are a spam signal."
+
+msgid "Logo-URL (Fallback)"
+msgstr "Logo URL (fallback)"
+
+msgid "Nur verwendet, wenn kein Mediathek-Logo gewählt ist. Nur http(s)-Adressen."
+msgstr "Only used when no media library logo is selected. http(s) addresses only."
+
+msgid "Logo-Link"
+msgstr "Logo link"
+
+msgid "Wird aufs Logo gelegt (z. B. Ihre Startseite). Leer = Logo ohne Link."
+msgstr "Applied to the logo (e.g. your home page). Empty = logo without a link."
+
+msgid "Fusszeile (Absender-Identität)"
+msgstr "Footer (sender identity)"
+
+msgid "Firma, Adresse, Kontakt, Impressum-Link. Erlaubt sind nur Links, Zeilenumbrüche und Fettung/Kursiv (a, br, strong, b, em) – alles andere wird beim Speichern entfernt. Erscheint über dem neutralen Schluss-Satz."
+msgstr "Company, address, contact, imprint link. Only links, line breaks and bold/italic are allowed (a, br, strong, b, em) – everything else is removed on save. Appears above the neutral closing sentence."
+
+msgid "Branding speichern"
+msgstr "Save branding"
+
+msgid "Mediathek nicht verfügbar – bitte das Feld «Logo-URL (Fallback)» verwenden."
+msgstr "Media library not available – please use the “Logo URL (fallback)” field."
+
+msgid "Logo für Bestätigungsmails wählen"
+msgstr "Choose logo for confirmation emails"
+
+msgid "Als Logo übernehmen"
+msgstr "Use as logo"
+
+msgid "Vorschau der Bestätigungsmail"
+msgstr "Confirmation email preview"
+
+msgid "Vorschau mit Beispielinhalt – der Mailtext pro Formular kommt aus dem Block «Bestätigungsmail – Inhalt»."
+msgstr "Preview with sample content – the email text per form comes from the “Confirmation email – content” block."
+
+msgid "Empfänger der Testmail"
+msgstr "Test email recipient"
+
+msgid "Testmail senden"
+msgstr "Send test email"
+
+msgid "Die Testmail nutzt den echten Versandweg (Multipart, Absender, Return-Path, Header) mit dem Beispielinhalt der Vorschau. Höchstens 5 Testmails pro 10 Minuten."
+msgstr "The test email uses the real sending path (multipart, sender, return path, headers) with the sample content of the preview. At most 5 test emails per 10 minutes."
+
+msgid "Testmail an den Mailserver übergeben – «übergeben» heisst nicht «zugestellt», bitte Posteingang und Spam-Ordner prüfen."
+msgstr "Test email handed over to the mail server – “handed over” does not mean “delivered”; please check your inbox and spam folder."
+
+msgid "Testmail: Übergabe an den Mailserver fehlgeschlagen."
+msgstr "Test email: handover to the mail server failed."
+
+msgid "Keine gültige Empfängeradresse – es wurde keine Testmail versendet."
+msgstr "No valid recipient address – no test email was sent."
+
+msgid "Zu viele Testmails – bitte kurz warten (höchstens 5 pro 10 Minuten)."
+msgstr "Too many test emails – please wait a moment (at most 5 per 10 minutes)."
+
+msgid "Muster"
+msgstr "Sample"
+
+msgid "Vorname"
+msgstr "First name"
+
+msgid "E-Mail"
+msgstr "Email"
+
+msgid "Die Vorschau erscheint nach dem ersten Speichern."
+msgstr "The preview appears after saving for the first time."

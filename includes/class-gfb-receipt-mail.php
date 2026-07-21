@@ -36,6 +36,9 @@ class GFB_Receipt_Mail {
 	/** Präfix der atomaren Gate-Zähler in wp_options (autoload=no, Aufräumen im Cron). */
 	const GATE_OPTION_PREFIX = 'gfb_rg_';
 
+	/** Option: site-weites Branding der Person-Mails (Logo, Logo-Link, Footer-Identität). */
+	const OPTION_BRANDING = 'gfb_receipt_branding';
+
 	/**
 	 * Tatsächliches Captcha-Verifikationsergebnis DIESES Requests
 	 * ('' = nicht verifiziert, sonst pass|fail|unreachable). Gesetzt von
@@ -85,6 +88,115 @@ class GFB_Receipt_Mail {
 		add_action( 'init', array( __CLASS__, 'register_confirm_templates' ), 20 );
 		// gfb/confirm-status nur im Site Editor anbieten (in Beiträgen/Seiten sinnlos).
 		add_filter( 'allowed_block_types_all', array( __CLASS__, 'restrict_confirm_status_inserter' ), 10, 2 );
+		// Integrations-Hooks für Dritt-Plugins (z. B. CRM-Anbindung): geben nur
+		// boolesche/Status-Werte heraus, nie Feldinhalte.
+		add_filter( 'gfb_doi_cleared', array( __CLASS__, 'filter_doi_cleared' ), 10, 2 );
+		add_filter( 'gfb_doi_status', array( __CLASS__, 'filter_doi_status' ), 10, 2 );
+		add_filter( 'gfb_transfer_consent', array( __CLASS__, 'filter_transfer_consent' ), 10, 2 );
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * Integrations-Hooks (docs/INTEGRATIONEN.md)
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Zeilen-Lookup für die Integrations-Filter (prepared, nur die nötigen
+	 * Spalten – Feldinhalte verlassen die Filter nie).
+	 *
+	 * @param int $submission_id Zeilen-ID.
+	 * @return object|null
+	 */
+	private static function submission_row_for_hooks( $submission_id ) {
+		global $wpdb;
+		$sid = absint( $submission_id );
+		if ( $sid < 1 ) {
+			return null;
+		}
+		$table = $wpdb->prefix . 'gfb_submissions';
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT id, post_id, form_id, payload, confirm_status, confirm_expires_at FROM {$table} WHERE id = %d", $sid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Filter gfb_doi_status: ''/none/pending/confirmed/expired.
+	 * '' = unbekannte ID; sonst dieselbe Zustandslogik wie die DOI-Ampel
+	 * (eine Quelle: GFB_Admin_Submissions::doi_status_for_row, UTC-Zeitpfad).
+	 *
+	 * @param mixed $value         Eingangswert (Default '').
+	 * @param int   $submission_id Zeilen-ID.
+	 * @return string
+	 */
+	public static function filter_doi_status( $value, $submission_id ) {
+		$row = self::submission_row_for_hooks( $submission_id );
+		if ( null === $row ) {
+			return '';
+		}
+		return GFB_Admin_Submissions::doi_status_for_row(
+			isset( $row->confirm_status ) ? (string) $row->confirm_status : '',
+			isset( $row->confirm_expires_at ) ? (string) $row->confirm_expires_at : ''
+		);
+	}
+
+	/**
+	 * Filter gfb_doi_cleared: Ist die Übermittlung aus DOI-Sicht freigegeben?
+	 * true = Formular ohne DOI-Modus (keine Bestätigungspflicht) ODER
+	 * confirm_status «confirmed»; false bei pending/abgelaufen/unbekannter ID.
+	 * Konservativer Randfall: DOI-Formular, dessen Token-Anlage scheiterte
+	 * (Status leer, Modus doi) → false.
+	 *
+	 * @param mixed $value         Eingangswert (Default false).
+	 * @param int   $submission_id Zeilen-ID.
+	 * @return bool
+	 */
+	public static function filter_doi_cleared( $value, $submission_id ) {
+		$row = self::submission_row_for_hooks( $submission_id );
+		if ( null === $row ) {
+			return false;
+		}
+		$status = isset( $row->confirm_status ) ? (string) $row->confirm_status : '';
+		if ( 'confirmed' === $status ) {
+			return true;
+		}
+		if ( '' !== $status ) {
+			// pending – offen oder abgelaufen: nicht freigegeben.
+			return false;
+		}
+		// Kein DOI-Status in der Zeile: massgeblich ist der Modus des Formulars.
+		$attrs = GFB_Plugin::get_form_block_attributes_from_post( (int) $row->post_id, (string) $row->form_id );
+		return self::MODE_DOI !== self::mode_from_attrs( is_array( $attrs ) ? $attrs : array() );
+	}
+
+	/**
+	 * Filter gfb_transfer_consent: true NUR, wenn am Formular ein
+	 * Einwilligungs-Feld (consentField, gfb/field-checkbox) designiert ist UND
+	 * die Einsendung dort den Checkbox-Wahrwert «1» trägt. Kein designiertes
+	 * Feld → false (Erlaubnis nie implizit). Vertraulich gespeicherte Werte
+	 * (Envelope) werden für diese Abfrage NICHT entschlüsselt → false.
+	 *
+	 * @param mixed $value         Eingangswert (Default false).
+	 * @param int   $submission_id Zeilen-ID.
+	 * @return bool
+	 */
+	public static function filter_transfer_consent( $value, $submission_id ) {
+		$row = self::submission_row_for_hooks( $submission_id );
+		if ( null === $row ) {
+			return false;
+		}
+		$attrs = GFB_Plugin::get_form_block_attributes_from_post( (int) $row->post_id, (string) $row->form_id );
+		$field = ( is_array( $attrs ) && isset( $attrs['consentField'] ) ) ? sanitize_key( (string) $attrs['consentField'] ) : '';
+		if ( '' === $field ) {
+			return false;
+		}
+		$payload = json_decode( isset( $row->payload ) ? (string) $row->payload : '', true );
+		if ( ! is_array( $payload ) || ! isset( $payload[ $field ] ) ) {
+			return false;
+		}
+		$checkbox = $payload[ $field ];
+		if ( GFB_Crypto::is_field_envelope( $checkbox ) ) {
+			return false;
+		}
+		// Checkbox-Norm des Plugins: '1' = angekreuzt, '0' = nicht.
+		return '1' === (string) $checkbox;
 	}
 
 	/**
@@ -676,6 +788,25 @@ class GFB_Receipt_Mail {
 			return false;
 		}
 
+		// Trigger-Zeitpunkt für aufgeschobene Übermittlungen (Dritt-Plugins):
+		// feuert genau EINMAL – der atomare CAS lässt nur den ersten Versuch
+		// hierher (affected_rows === 1). Nach dem Statuswechsel, vor der
+		// Voll-Quittung.
+		$row_info = $wpdb->get_row( $wpdb->prepare( "SELECT post_id, form_id FROM {$table} WHERE id = %d", $sid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		/**
+		 * Erfolgreiche DOI-Bestätigung einer Einsendung.
+		 *
+		 * @param int    $submission_id Zeilen-ID.
+		 * @param string $form_id       Formular-ID.
+		 * @param int    $post_id       Post-ID.
+		 */
+		do_action(
+			'gfb_doi_confirmed',
+			(int) $sid,
+			$row_info ? sanitize_key( (string) $row_info->form_id ) : '',
+			$row_info ? (int) $row_info->post_id : 0
+		);
+
 		// Voll-Quittung + Betreiber-Mail 2 (best effort, Bestätigung gilt bereits).
 		return self::send_full_receipt_after_confirm( $sid );
 	}
@@ -1195,18 +1326,72 @@ class GFB_Receipt_Mail {
 	 * @return array{html:string,text:string}
 	 */
 	private static function build_mail( array $blocks, array $ctx ) {
+		$blogname = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$branding = self::branding();
+
 		$text_lines = array();
 		$inner_html = self::render_blocks_for_mail( $blocks, $ctx, $text_lines );
 
-		// Neutraler, wahrheitsgemässer Schluss-Satz pro Modus (E3, anpassbar).
+		// Site-weiter Kopfbereich (Logo): entfällt ohne konfiguriertes Logo
+		// vollständig (kein Leerraum). In der Textfassung entfällt das Logo.
+		$header_default = '';
+		if ( '' !== $branding['logo_src'] ) {
+			$logo_img = '<img src="' . esc_url( $branding['logo_src'] ) . '" alt="' . esc_attr( $blogname ) . '" width="200" style="display:block;max-width:200px;height:auto;border:0;" />';
+			if ( '' !== $branding['logo_link'] ) {
+				$logo_img = '<a href="' . esc_url( $branding['logo_link'] ) . '">' . $logo_img . '</a>';
+			}
+			$header_default = '<tr><td align="center" style="padding:0 0 24px;">' . $logo_img . '</td></tr>';
+		}
+		/**
+		 * Kopfbereich der Person-Mails (gerenderter Default, kann leer sein).
+		 * Rückgabe ersetzt den Bereich vollständig.
+		 *
+		 * @param string              $header_default Gerendertes Tabellenzeilen-HTML.
+		 * @param array<string,mixed> $ctx            Render-Kontext (mode, form_id, post_id …).
+		 */
+		$header_html = apply_filters( 'gfb_receipt_mail_header_html', $header_default, $ctx );
+		if ( is_string( $header_html ) && '' !== $header_html ) {
+			$inner_html = $header_html . $inner_html;
+		}
+
+		// Fussbereich: zuerst die Absender-Identität aus dem Branding, darunter
+		// der neutrale, wahrheitsgemässe Schluss-Satz pro Modus (E3, anpassbar).
+		// Die Identität ist doppelt kses-gefiltert (Speichern + branding()).
 		$footer = self::footer_text( $ctx );
+
+		$footer_cell = '';
+		if ( '' !== $branding['footer_html'] ) {
+			$footer_cell .= '<div style="padding:0 0 10px;">' . $branding['footer_html'] . '</div>';
+		}
 		if ( '' !== $footer ) {
-			$inner_html  .= '<tr><td style="padding:18px 0 0;border-top:1px solid #e2e4e7;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#6c7378;">' . esc_html( $footer ) . '</td></tr>';
+			$footer_cell .= '<div>' . esc_html( $footer ) . '</div>';
+		}
+		$footer_default = '';
+		if ( '' !== $footer_cell ) {
+			$footer_default = '<tr><td style="padding:18px 0 0;border-top:1px solid #e2e4e7;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#6c7378;">' . $footer_cell . '</td></tr>';
+		}
+		/**
+		 * Fussbereich der Person-Mails (gerenderter Default: Identität +
+		 * Schluss-Satz). Rückgabe ersetzt den Bereich vollständig.
+		 *
+		 * @param string              $footer_default Gerendertes Tabellenzeilen-HTML.
+		 * @param array<string,mixed> $ctx            Render-Kontext (mode, form_id, post_id …).
+		 */
+		$footer_area = apply_filters( 'gfb_receipt_mail_footer_html', $footer_default, $ctx );
+		if ( is_string( $footer_area ) && '' !== $footer_area ) {
+			$inner_html .= $footer_area;
+		}
+
+		// Textfassung spiegelt den Fussbereich: Identität als Klartext
+		// (Links als «Text: URL»), darunter der Schluss-Satz.
+		if ( '' !== $branding['footer_html'] ) {
+			$text_lines[] = '';
+			$text_lines[] = self::footer_identity_to_text( $branding['footer_html'] );
+		}
+		if ( '' !== $footer ) {
 			$text_lines[] = '';
 			$text_lines[] = $footer;
 		}
-
-		$blogname = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
 		$html = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>' . esc_html( $blogname ) . '</title></head>'
 			. '<body style="margin:0;padding:0;background-color:#f4f5f6;">'
@@ -1458,6 +1643,120 @@ class GFB_Receipt_Mail {
 		 */
 		$text = apply_filters( 'gfb_receipt_footer_text', $text, $ctx['mode'], $ctx['form_id'] );
 		return trim( wp_strip_all_tags( (string) $text ) );
+	}
+
+	/**
+	 * Sanitisiert die Branding-Einstellungen (beim Speichern UND beim Rendern –
+	 * Defense in Depth). Logo nur als Attachment-ID oder http(s)-URL;
+	 * data:-URIs werden bewusst abgelehnt (Gmail zeigt Base64-Bilder nicht an,
+	 * Spam-Signal). Footer nur über die schmale kses-Allowlist.
+	 *
+	 * @param array<string,mixed> $raw Rohwerte.
+	 * @return array{logo_id:int,logo_url:string,logo_link:string,footer_text:string}
+	 */
+	public static function sanitize_branding( array $raw ) {
+		return array(
+			'logo_id'     => isset( $raw['logo_id'] ) ? absint( $raw['logo_id'] ) : 0,
+			'logo_url'    => self::sanitize_branding_url( isset( $raw['logo_url'] ) ? (string) $raw['logo_url'] : '' ),
+			'logo_link'   => self::sanitize_branding_url( isset( $raw['logo_link'] ) ? (string) $raw['logo_link'] : '' ),
+			'footer_text' => self::branding_footer_kses( isset( $raw['footer_text'] ) ? (string) $raw['footer_text'] : '' ),
+		);
+	}
+
+	/**
+	 * Footer-Identität: kses-Allowlist NUR a[href], br, strong, b, em –
+	 * alles andere fliegt raus. Links http(s)/mailto (Kontaktadresse).
+	 *
+	 * @param string $html Rohtext des Betreibers.
+	 * @return string Gefiltertes HTML.
+	 */
+	public static function branding_footer_kses( $html ) {
+		$allowed = array(
+			'a'      => array( 'href' => true ),
+			'br'     => array(),
+			'strong' => array(),
+			'b'      => array(),
+			'em'     => array(),
+		);
+		$kses = wp_kses( (string) $html, $allowed, array( 'http', 'https', 'mailto' ) );
+		// Sicherheitsnetz gegen on*-Handler (Muster kses_mail_inline).
+		$kses = preg_replace( '/\s+on[a-z]+\s*=\s*"[^"]*"/i', '', (string) $kses );
+		$kses = preg_replace( '/\s+on[a-z]+\s*=\s*\'[^\']*\'/i', '', (string) $kses );
+		return trim( (string) $kses );
+	}
+
+	/**
+	 * URL-Sanitizer des Brandings: ausschliesslich absolute http(s)-URLs,
+	 * alles andere (data:, javascript:, relativ) → leer.
+	 *
+	 * @param string $url Roh-URL.
+	 * @return string
+	 */
+	private static function sanitize_branding_url( $url ) {
+		$url = trim( (string) $url );
+		if ( '' === $url ) {
+			return '';
+		}
+		$clean  = esc_url_raw( $url, array( 'http', 'https' ) );
+		$scheme = strtolower( (string) wp_parse_url( $clean, PHP_URL_SCHEME ) );
+		return ( '' !== $clean && in_array( $scheme, array( 'http', 'https' ), true ) ) ? $clean : '';
+	}
+
+	/**
+	 * Aufgelöstes Branding zur Renderzeit: Logo-Quelle (Attachment-ID hat
+	 * Vorrang vor der URL-Fallback-Angabe), Logo-Link, kses-gefilterte
+	 * Footer-Identität.
+	 *
+	 * @return array{logo_src:string,logo_link:string,footer_html:string}
+	 */
+	private static function branding() {
+		$raw = get_option( self::OPTION_BRANDING, array() );
+		if ( ! is_array( $raw ) ) {
+			$raw = array();
+		}
+		$clean = self::sanitize_branding( $raw );
+
+		$logo_src = '';
+		if ( $clean['logo_id'] > 0 && function_exists( 'wp_get_attachment_image_url' ) ) {
+			$attachment_url = wp_get_attachment_image_url( $clean['logo_id'], 'medium' );
+			if ( is_string( $attachment_url ) ) {
+				$logo_src = self::sanitize_branding_url( $attachment_url );
+			}
+		}
+		if ( '' === $logo_src ) {
+			$logo_src = $clean['logo_url'];
+		}
+
+		return array(
+			'logo_src'    => $logo_src,
+			'logo_link'   => $clean['logo_link'],
+			'footer_html' => $clean['footer_text'],
+		);
+	}
+
+	/**
+	 * Footer-Identität als Klartext für die AltBody-Fassung:
+	 * <br> → Zeilenumbruch, Links als «Text: URL», Rest Tags weg.
+	 *
+	 * @param string $html kses-gefiltertes Footer-HTML.
+	 * @return string
+	 */
+	private static function footer_identity_to_text( $html ) {
+		$text = preg_replace( '/<br\s*\/?>/i', "\n", (string) $html );
+		$text = preg_replace_callback(
+			'/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/is',
+			static function ( $m ) {
+				$href  = html_entity_decode( (string) $m[1], ENT_QUOTES, 'UTF-8' );
+				$label = trim( wp_strip_all_tags( (string) $m[2] ) );
+				if ( '' === $label || $label === $href ) {
+					return $href;
+				}
+				return $label . ': ' . $href;
+			},
+			$text
+		);
+		$text = wp_strip_all_tags( (string) $text );
+		return trim( html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ) );
 	}
 
 	/**
@@ -1895,6 +2194,145 @@ class GFB_Receipt_Mail {
 				$cutoff
 			)
 		);
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * Vorschau + Testmail (Admin-Karte «Bestätigungsmail an Absender/innen»)
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Demo-Kontext für Vorschau und Testmail: eingebaute Standard-Vorlage plus
+	 * statische, übersetzte Dummy-Feldwerte – nie echte Einsendungsdaten.
+	 *
+	 * @return array{blocks:array<int,array>,ctx:array<string,mixed>}
+	 */
+	private static function preview_context() {
+		$labels = array(
+			'vorname' => __( 'Vorname', 'gutenberg-formbuilder' ),
+			'email'   => __( 'E-Mail', 'gutenberg-formbuilder' ),
+		);
+		$payload = array(
+			'vorname'     => __( 'Muster', 'gutenberg-formbuilder' ),
+			'email'       => 'muster@example.com',
+			'_gfb_labels' => $labels,
+		);
+		$schema  = array(
+			array(
+				'name'  => 'vorname',
+				'type'  => 'text',
+				'label' => $labels['vorname'],
+			),
+			array(
+				'name'  => 'email',
+				'type'  => 'email',
+				'label' => $labels['email'],
+			),
+		);
+		$snapshot = array(
+			'vorname' => (string) $payload['vorname'],
+			'email'   => 'muster@example.com',
+		);
+		return array(
+			'blocks' => self::default_region_blocks( 'instant' ),
+			'ctx'    => self::build_context( 'instant', 0, 'gfb_preview', $payload, $schema, $snapshot ),
+		);
+	}
+
+	/**
+	 * Serverseitig gerenderte Vorschau der Person-Mail mit dem GESPEICHERTEN
+	 * Branding (Logo-Header, Beispielinhalt, Footer-Identität, Schluss-Satz).
+	 * Gleiche Quelle wie die Testmail – Vorschau und Versand sind identisch.
+	 *
+	 * @return array{html:string,text:string}
+	 */
+	public static function preview_mail_parts() {
+		$demo  = self::preview_context();
+		$parts = self::build_mail( $demo['blocks'], $demo['ctx'] );
+		// Defensive Garantie (Härtung 21.07.2026): Rückgabe ist IMMER ein
+		// vollständiges array{html,text} mit Strings. Ohne gespeicherte
+		// Branding-Option greifen die Defaults (Standard-Vorlage ohne
+		// Logo-/Footer-Bereich) – der Erstaufruf-Pfad ist Harness-belegt.
+		if ( ! is_array( $parts ) ) {
+			$parts = array();
+		}
+		$parts['html'] = isset( $parts['html'] ) && is_string( $parts['html'] ) ? $parts['html'] : '';
+		$parts['text'] = isset( $parts['text'] ) && is_string( $parts['text'] ) ? $parts['text'] : '';
+		return $parts;
+	}
+
+	/**
+	 * Testmail über den ECHTEN Versandpfad der Engine (build_mail +
+	 * phpmailer_init → Multipart, From/Return-Path/Header wie produktiv).
+	 * Läuft bewusst NICHT durchs Send-Gate (Admin-Aktion, verbraucht keine
+	 * Deckel), aber mit milder eigener Drosselung gegen Versehen/Schleifen.
+	 * Audit ohne Empfängeradresse (PII-Regel: nur Status).
+	 *
+	 * @param string $recipient Empfängeradresse.
+	 * @return bool|WP_Error True/False = Übergabe an den Mailserver; WP_Error bei Ablehnung.
+	 */
+	public static function send_test_mail( $recipient ) {
+		$recipient = sanitize_email( (string) $recipient );
+		if ( '' === $recipient || ! is_email( $recipient ) ) {
+			return new WP_Error( 'gfb_test_recipient', __( 'Keine gültige Empfängeradresse – es wurde keine Testmail versendet.', 'gutenberg-formbuilder' ) );
+		}
+		if ( self::test_mail_rate_limited() ) {
+			return new WP_Error( 'gfb_test_rate', __( 'Zu viele Testmails – bitte kurz warten (höchstens 5 pro 10 Minuten).', 'gutenberg-formbuilder' ) );
+		}
+
+		$switched = self::switch_mail_locale( 'gfb_preview', 0 );
+
+		$demo    = self::preview_context();
+		$subject = '[Test] ' . sprintf(
+			/* translators: %s: Name der Website */
+			__( 'Ihre Einsendung bei %s ist eingegangen', 'gutenberg-formbuilder' ),
+			wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES )
+		);
+		$sent = self::send_mail( $recipient, $subject, $demo['blocks'], $demo['ctx'] );
+
+		if ( $switched ) {
+			restore_previous_locale();
+		}
+
+		GFB_Audit::record(
+			'receipt_test_mail',
+			'config',
+			'',
+			array( 'result' => $sent ? 'handed_off' : 'handoff_failed' )
+		);
+
+		return (bool) $sent;
+	}
+
+	/**
+	 * Milde Site-weite Drosselung der Testmail: 5 pro 10 Minuten
+	 * (Zeitstempel-Transient, Muster confirm_rate_limited).
+	 *
+	 * @return bool True, wenn gedrosselt.
+	 */
+	private static function test_mail_rate_limited() {
+		$key        = 'gfb_receipt_testmail_rate';
+		$window     = 10 * MINUTE_IN_SECONDS;
+		$max_events = 5;
+
+		$events = get_transient( $key );
+		if ( ! is_array( $events ) ) {
+			$events = array();
+		}
+		$cutoff = time() - $window;
+		$events = array_values(
+			array_filter(
+				$events,
+				static function ( $ts ) use ( $cutoff ) {
+					return (int) $ts >= $cutoff;
+				}
+			)
+		);
+		if ( count( $events ) >= $max_events ) {
+			return true;
+		}
+		$events[] = time();
+		set_transient( $key, $events, $window );
+		return false;
 	}
 
 	/* ------------------------------------------------------------------ *

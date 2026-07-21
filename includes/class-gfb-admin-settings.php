@@ -28,6 +28,8 @@ class GFB_Admin_Settings {
 	public static function boot() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 11 );
 		add_action( 'admin_init', array( __CLASS__, 'maybe_handle_post' ) );
+		// Mediathek-Auswahl (wp.media) für das Bestätigungsmail-Logo.
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_media' ) );
 		add_action( 'admin_init', array( 'GFB_Clamav', 'maybe_migrate_defaults' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'render_global_notices' ) );
 		add_action( 'send_headers', array( __CLASS__, 'maybe_send_admin_csp' ) );
@@ -110,6 +112,18 @@ class GFB_Admin_Settings {
 	}
 
 	/**
+	 * wp.media nur auf der eigenen Einstellungsseite laden (Logo-Auswahl).
+	 *
+	 * @return void
+	 */
+	public static function maybe_enqueue_media() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( self::PAGE_SLUG === $page && function_exists( 'wp_enqueue_media' ) ) {
+			wp_enqueue_media();
+		}
+	}
+
+	/**
 	 * @return void
 	 */
 	public static function maybe_handle_post() {
@@ -185,6 +199,45 @@ class GFB_Admin_Settings {
 						'api_key_set'  => '' !== $saved['api_key'] ? 'yes' : 'no',
 					)
 				);
+				break;
+
+			case 'save_receipt_branding':
+				// Sanitize zentral in der Engine (Datenmodell-Besitzerin):
+				// Logo nur Attachment-ID oder http(s)-URL (data: fliegt),
+				// Footer durch die schmale kses-Allowlist.
+				$branding = GFB_Receipt_Mail::sanitize_branding(
+					array(
+						'logo_id'     => isset( $_POST['receipt_logo_id'] ) ? wp_unslash( $_POST['receipt_logo_id'] ) : 0,
+						'logo_url'    => isset( $_POST['receipt_logo_url'] ) ? wp_unslash( $_POST['receipt_logo_url'] ) : '',
+						'logo_link'   => isset( $_POST['receipt_logo_link'] ) ? wp_unslash( $_POST['receipt_logo_link'] ) : '',
+						'footer_text' => isset( $_POST['receipt_footer_text'] ) ? wp_unslash( $_POST['receipt_footer_text'] ) : '',
+					)
+				);
+				update_option( GFB_Receipt_Mail::OPTION_BRANDING, $branding, false );
+				GFB_Audit::record(
+					'settings_receipt_branding_saved',
+					'config',
+					'',
+					array(
+						'logo'   => ( $branding['logo_id'] > 0 || '' !== $branding['logo_url'] ) ? 'yes' : 'no',
+						'footer' => '' !== $branding['footer_text'] ? 'yes' : 'no',
+					)
+				);
+				$message = __( 'Branding der Bestätigungsmail gespeichert.', 'gutenberg-formbuilder' );
+				break;
+
+			case 'send_receipt_test':
+				// Testmail über den echten Engine-Pfad; Drosselung und
+				// Empfänger-Validierung in der Engine. Notice nie «zugestellt».
+				$test_recipient = isset( $_POST['receipt_test_recipient'] ) ? sanitize_email( wp_unslash( $_POST['receipt_test_recipient'] ) ) : '';
+				$test_result    = GFB_Receipt_Mail::send_test_mail( $test_recipient );
+				if ( is_wp_error( $test_result ) ) {
+					$message = $test_result->get_error_message();
+				} elseif ( $test_result ) {
+					$message = __( 'Testmail an den Mailserver übergeben – «übergeben» heisst nicht «zugestellt», bitte Posteingang und Spam-Ordner prüfen.', 'gutenberg-formbuilder' );
+				} else {
+					$message = __( 'Testmail: Übergabe an den Mailserver fehlgeschlagen.', 'gutenberg-formbuilder' );
+				}
 				break;
 
 			case 'save_license':
@@ -301,6 +354,8 @@ class GFB_Admin_Settings {
 
 		// Zurück zur Karte, aus der die Aktion kam (Anker), statt an den Seitenanfang.
 		$anchors = array(
+			'save_receipt_branding' => 'gfb-bestaetigungsmail',
+			'send_receipt_test'     => 'gfb-bestaetigungsmail',
 			'save_clamav'          => 'gfb-clamav',
 			'eicar_test'           => 'gfb-clamav',
 			'save_license'         => 'gfb-lizenz',
@@ -988,27 +1043,33 @@ class GFB_Admin_Settings {
 
 		echo '<p>' . esc_html__( 'Formulare können der ausfüllenden Person eine Eingangsbestätigung senden – sofort oder erst nach Klick auf einen Bestätigungslink (Double-Opt-in). Der Modus wird pro Formular am Block eingestellt (Bereich «Bestätigungsmail an Absender/in»).', 'gutenberg-formbuilder' ) . '</p>';
 
-		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Zuverlässige Zustellung ist Betreiber-Aufgabe', 'gutenberg-formbuilder' ) . '</strong></p>';
-		echo '<ul style="margin:.2rem 0 .8rem 1.2rem;list-style:disc;">';
+		// Hinweisblöcke als zugeklappte Toggles (natives details-Muster der
+		// Karte, Standardzustand zu) – Inhalte unverändert.
+		echo '<details style="margin:.5rem 0 0;border:1px solid #dcdcde;border-radius:5px;background:#fff;"><summary style="cursor:pointer;padding:.55rem .75rem;font-weight:600;">' . esc_html__( 'Zuverlässige Zustellung ist Betreiber-Aufgabe', 'gutenberg-formbuilder' ) . '</summary><div style="padding:0 .75rem .5rem;">';
+		echo '<ul style="margin:.2rem 0 .3rem 1.2rem;list-style:disc;">';
 		echo '<li>' . esc_html__( 'Die Mails werden mit fester Absenderadresse noreply@ihrer-domain über den Mailweg der Website verschickt (wp_mail). Für zuverlässige Zustellung braucht die Domain ein SMTP-Setup mit SPF, DKIM und DMARC – ohne diese Nachweise landen Autoresponder oft im Spam.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Der Return-Path (Rückläufer-Adresse) wird auf die Absenderadresse gesetzt. Richten Sie dieses Postfach ein oder leiten Sie es um, damit Bounces (unzustellbare Mails) sichtbar werden.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Keine Freemail-Domain (gmail.com, gmx.ch usw.) als Absenderadresse verwenden – deren DMARC-Richtlinien lassen Fremdversand scheitern.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Der Status in den Formular-Einträgen bedeutet «an Mailserver übergeben» – nicht «zugestellt». Der einzige positive Zustellnachweis ist der Klick auf den Bestätigungslink.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '</ul>';
+		echo '</ul></div></details>';
 
-		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Missbrauchsschutz (automatisch aktiv)', 'gutenberg-formbuilder' ) . '</strong></p>';
-		echo '<ul style="margin:.2rem 0 .8rem 1.2rem;list-style:disc;">';
+		echo '<details style="margin:.5rem 0 0;border:1px solid #dcdcde;border-radius:5px;background:#fff;"><summary style="cursor:pointer;padding:.55rem .75rem;font-weight:600;">' . esc_html__( 'Missbrauchsschutz (automatisch aktiv)', 'gutenberg-formbuilder' ) . '</summary><div style="padding:0 .75rem .5rem;">';
+		echo '<ul style="margin:.2rem 0 .3rem 1.2rem;list-style:disc;">';
 		echo '<li>' . esc_html__( 'Der Sofort-Modus versendet nur, wenn für das Formular ein Captcha erzwungen ist – sonst wäre das Formular als anonyme Mail-Kanone missbrauchbar.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Ein mehrschichtiges Sende-Limit begrenzt den Versand: 50 Bestätigungsmails pro Stunde und Website, 10 pro Stunde und IP-Adresse, 3 pro Stunde und Empfängeradresse (Filter gfb_receipt_gate_limits).', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Nie bestätigte Einsendungen im Link-Modus werden nach 45 Tagen automatisch gelöscht (Filter gfb_receipt_retention_days).', 'gutenberg-formbuilder' ) . '</li>';
-		echo '</ul>';
+		echo '</ul></div></details>';
 
-		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Datenschutz und Recht', 'gutenberg-formbuilder' ) . '</strong></p>';
-		echo '<ul style="margin:.2rem 0 .8rem 1.2rem;list-style:disc;">';
+		echo '<details style="margin:.5rem 0 .8rem;border:1px solid #dcdcde;border-radius:5px;background:#fff;"><summary style="cursor:pointer;padding:.55rem .75rem;font-weight:600;">' . esc_html__( 'Datenschutz und Recht', 'gutenberg-formbuilder' ) . '</summary><div style="padding:0 .75rem .5rem;">';
+		echo '<ul style="margin:.2rem 0 .3rem 1.2rem;list-style:disc;">';
 		echo '<li>' . esc_html__( 'Wird ein externer SMTP-Dienst genutzt, ist er Auftragsbearbeiter (Art. 9 revDSG, Art. 28 DSGVO): AVV abschliessen, Serverstandort und TLS prüfen, EU-/CH-Anbieter bevorzugen.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Der Klick auf den Bestätigungslink belegt die Kontrolle über das Postfach – er ist keine rechtsverbindliche Willenserklärung. Für bindende Erklärungen geeignetere Mittel verwenden.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Vertrauliche Felder stehen im Sofort-Modus nur als Hinweis «vertraulich gespeichert» in der Mail; im Klartext erst nach bestätigter Adresse (Double-Opt-in).', 'gutenberg-formbuilder' ) . '</li>';
-		echo '</ul>';
+		echo '</ul></div></details>';
+
+		self::render_receipt_branding_form();
+
+		self::render_receipt_preview_and_test();
 
 		self::render_captcha_snippet_block(
 			'gfb-receipt-privacy-snippet',
@@ -1022,6 +1083,159 @@ class GFB_Admin_Settings {
 		// Eigener Copy-Handler: das Skript der CAPTCHA-Karte läuft beim Parsen
 		// und erreicht diesen später gerenderten Button nicht mehr.
 		echo "<script>(function(){var b=document.querySelector('#gfb-bestaetigungsmail .gfb-captcha-copy');if(!b)return;b.addEventListener('click',function(){var ta=document.getElementById(b.getAttribute('data-target'));if(!ta)return;ta.removeAttribute('hidden');ta.focus();ta.select();var done=function(){var o=b.textContent;b.textContent=b.getAttribute('data-done');setTimeout(function(){b.textContent=o;},1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){try{document.execCommand('copy');done();}catch(e){}});}else{try{document.execCommand('copy');done();}catch(e){}}});})();</script>";
+	}
+
+	/**
+	 * Inline-Vorschau + Testmail der Bestätigungsmail. Die Vorschau rendert
+	 * serverseitig aus den GESPEICHERTEN Werten (nach «Speichern» zeigt der
+	 * Reload die aktuelle Fassung – bewusst kein AJAX-Live-Preview) und steckt
+	 * in einem iframe mit escaped srcdoc, damit Mail-HTML und Admin-CSS sich
+	 * gegenseitig nicht berühren. Die Testmail nutzt denselben Inhalt über den
+	 * echten Engine-Pfad.
+	 *
+	 * @return void
+	 */
+	private static function render_receipt_preview_and_test() {
+		$preview = GFB_Receipt_Mail::preview_mail_parts();
+
+		echo '<p style="margin:1rem 0 .4rem;"><strong>' . esc_html__( 'Vorschau der Bestätigungsmail', 'gutenberg-formbuilder' ) . '</strong></p>';
+		echo '<p class="description" style="margin:0 0 .5rem;">' . esc_html__( 'Vorschau mit Beispielinhalt – der Mailtext pro Formular kommt aus dem Block «Bestätigungsmail – Inhalt».', 'gutenberg-formbuilder' ) . '</p>';
+		echo self::preview_iframe_html( $preview['html'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped intern (beide Zweige)
+
+		$current_user  = wp_get_current_user();
+		$default_email = $current_user instanceof WP_User ? sanitize_email( (string) $current_user->user_email ) : '';
+
+		echo '<form method="post" style="margin-top:0.75rem">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="send_receipt_test" />';
+		echo '<label for="gfb-receipt-test-recipient" style="display:block;margin:0 0 .3rem;font-weight:600;">' . esc_html__( 'Empfänger der Testmail', 'gutenberg-formbuilder' ) . '</label>';
+		echo '<input type="email" id="gfb-receipt-test-recipient" name="receipt_test_recipient" value="' . esc_attr( $default_email ) . '" class="regular-text" required /> ';
+		submit_button( __( 'Testmail senden', 'gutenberg-formbuilder' ), 'secondary', 'submit', false );
+		echo '<p class="description" style="margin:.3rem 0 0;">' . esc_html__( 'Die Testmail nutzt den echten Versandweg (Multipart, Absender, Return-Path, Header) mit dem Beispielinhalt der Vorschau. Höchstens 5 Testmails pro 10 Minuten.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</form>';
+	}
+
+	/**
+	 * Vorschau-iframe der Bestätigungsmail (Härtung 21.07.2026): Inhalt kommt
+	 * AUSSCHLIESSLICH aus srcdoc (bewusst nie ein src-Attribut – sonst könnte
+	 * das iframe eine echte Seite laden). Ist das Mail-HTML wider Erwarten
+	 * leer, erscheint statt des iframes eine klare Meldung – nie ein iframe
+	 * mit leerem srcdoc.
+	 *
+	 * @param string $mail_html Vollständiges Mail-HTML aus preview_mail_parts().
+	 * @return string HTML (escaped, beide Zweige).
+	 */
+	private static function preview_iframe_html( $mail_html ) {
+		$mail_html = is_string( $mail_html ) ? $mail_html : '';
+		if ( '' === trim( $mail_html ) ) {
+			return '<p class="description">' . esc_html__( 'Die Vorschau erscheint nach dem ersten Speichern.', 'gutenberg-formbuilder' ) . '</p>';
+		}
+		return '<iframe srcdoc="' . esc_attr( $mail_html ) . '" title="' . esc_attr__( 'Vorschau der Bestätigungsmail', 'gutenberg-formbuilder' ) . '" style="width:100%;max-width:46rem;height:420px;border:1px solid #dcdcde;border-radius:6px;background:#fff;" sandbox=""></iframe>';
+	}
+
+	/**
+	 * Branding-Formular der Person-Mails: Logo (Mediathek + URL-Fallback),
+	 * Logo-Link und Footer-Identität. Sanitize zentral in
+	 * GFB_Receipt_Mail::sanitize_branding() (Speichern) und branding()
+	 * (Rendern) – Defense in Depth.
+	 *
+	 * @return void
+	 */
+	private static function render_receipt_branding_form() {
+		$branding = get_option( GFB_Receipt_Mail::OPTION_BRANDING, array() );
+		$branding = GFB_Receipt_Mail::sanitize_branding( is_array( $branding ) ? $branding : array() );
+
+		$preview_url = '';
+		if ( $branding['logo_id'] > 0 ) {
+			$attachment_url = wp_get_attachment_image_url( $branding['logo_id'], 'medium' );
+			if ( is_string( $attachment_url ) ) {
+				$preview_url = $attachment_url;
+			}
+		}
+		if ( '' === $preview_url && '' !== $branding['logo_url'] ) {
+			$preview_url = $branding['logo_url'];
+		}
+		$has_preview = '' !== $preview_url;
+
+		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Branding der Bestätigungsmails (site-weit)', 'gutenberg-formbuilder' ) . '</strong></p>';
+		echo '<p class="description" style="margin:0 0 .6rem;">' . esc_html__( 'Logo und Fusszeile rahmen jede Mail an die ausfüllende Person (Sofort-Quittung, Link-Mail, Voll-Quittung). Die Betreiber-Benachrichtigungen bleiben unverändert reiner Text.', 'gutenberg-formbuilder' ) . '</p>';
+
+		echo '<form method="post">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="save_receipt_branding" />';
+		echo '<table class="form-table" role="presentation"><tbody>';
+
+		// Logo aus der Mediathek (Attachment-ID) mit Vorschau.
+		echo '<tr><th scope="row">' . esc_html__( 'Logo', 'gutenberg-formbuilder' ) . '</th><td>';
+		echo '<input type="hidden" name="receipt_logo_id" id="gfb-receipt-logo-id" value="' . esc_attr( (string) $branding['logo_id'] ) . '" />';
+		echo '<p style="margin:0 0 .5rem;"><img id="gfb-receipt-logo-preview" src="' . esc_url( $preview_url ) . '" alt="" style="max-width:200px;height:auto;border:1px solid #dcdcde;border-radius:4px;padding:4px;background:#fff;"' . ( $has_preview ? '' : ' hidden' ) . ' /></p>';
+		echo '<button type="button" class="button button-secondary" id="gfb-receipt-logo-choose">' . esc_html__( 'Logo aus Mediathek wählen', 'gutenberg-formbuilder' ) . '</button> ';
+		echo '<button type="button" class="button" id="gfb-receipt-logo-remove"' . ( $branding['logo_id'] > 0 ? '' : ' hidden' ) . '>' . esc_html__( 'Logo entfernen', 'gutenberg-formbuilder' ) . '</button>';
+		echo '<p class="description">' . esc_html__( 'Empfohlen: ein Bild von der eigenen Domain (Mediathek). Base64-/data:-Bilder werden bewusst abgelehnt – Gmail zeigt sie nicht an, und sie gelten als Spam-Signal.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</td></tr>';
+
+		// URL-Fallback.
+		echo '<tr><th scope="row">' . esc_html__( 'Logo-URL (Fallback)', 'gutenberg-formbuilder' ) . '</th><td>';
+		echo '<input type="url" name="receipt_logo_url" value="' . esc_attr( $branding['logo_url'] ) . '" class="regular-text" placeholder="https://" />';
+		echo '<p class="description">' . esc_html__( 'Nur verwendet, wenn kein Mediathek-Logo gewählt ist. Nur http(s)-Adressen.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</td></tr>';
+
+		// Logo-Link.
+		echo '<tr><th scope="row">' . esc_html__( 'Logo-Link', 'gutenberg-formbuilder' ) . '</th><td>';
+		echo '<input type="url" name="receipt_logo_link" value="' . esc_attr( $branding['logo_link'] ) . '" class="regular-text" placeholder="https://" />';
+		echo '<p class="description">' . esc_html__( 'Wird aufs Logo gelegt (z. B. Ihre Startseite). Leer = Logo ohne Link.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</td></tr>';
+
+		// Footer-Identität: kleiner visueller Editor (klassischer TinyMCE via
+		// wp_editor, natives WP-Mittel für Settings-Seiten). Toolbar und
+		// valid_elements sind exakt auf die kses-Allowlist begrenzt – der
+		// Editor bietet nichts an, was der Server wieder wegfiltert.
+		// forced_root_block '' lässt Enter <br> erzeugen statt <p>-Blöcken:
+		// kses entfernt <p> beim Speichern, die Zeilenstruktur ginge verloren.
+		// wpautop bleibt aus, damit der gespeicherte br-Wert unverändert in den
+		// Editor und wieder zurück wandert (Roundtrip ohne Drift). Die
+		// Sicherheitsgrenze bleibt sanitize_branding()/branding_footer_kses().
+		echo '<tr><th scope="row">' . esc_html__( 'Fusszeile (Absender-Identität)', 'gutenberg-formbuilder' ) . '</th><td>';
+		wp_editor(
+			$branding['footer_text'],
+			'gfbreceiptfooter',
+			array(
+				'textarea_name' => 'receipt_footer_text',
+				'textarea_rows' => 6,
+				'teeny'         => true,
+				'media_buttons' => false,
+				'wpautop'       => false,
+				'editor_height' => 140,
+				'tinymce'       => array(
+					'toolbar1'          => 'bold,italic,link,unlink,undo,redo',
+					'toolbar2'          => '',
+					'valid_elements'    => 'a[href],br,strong/b,em',
+					'forced_root_block' => '',
+					'force_br_newlines' => true,
+					'force_p_newlines'  => false,
+				),
+				'quicktags'     => array(
+					'buttons' => 'strong,em,link',
+				),
+			)
+		);
+		echo '<p class="description">' . esc_html__( 'Firma, Adresse, Kontakt, Impressum-Link. Erlaubt sind nur Links, Zeilenumbrüche und Fettung/Kursiv (a, br, strong, b, em) – alles andere wird beim Speichern entfernt. Erscheint über dem neutralen Schluss-Satz.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</td></tr>';
+
+		echo '</tbody></table>';
+		submit_button( __( 'Branding speichern', 'gutenberg-formbuilder' ) );
+		echo '</form>';
+
+		// Klassisches wp.media-Muster; ohne geladene Mediathek bleibt das
+		// URL-Fallback-Feld der Weg (Hinweis statt harter Fehler).
+		echo "<script>(function(){var choose=document.getElementById('gfb-receipt-logo-choose');if(!choose){return;}var idField=document.getElementById('gfb-receipt-logo-id');var preview=document.getElementById('gfb-receipt-logo-preview');var removeBtn=document.getElementById('gfb-receipt-logo-remove');choose.addEventListener('click',function(e){e.preventDefault();if(typeof wp==='undefined'||!wp.media){window.alert(" . wp_json_encode( __( 'Mediathek nicht verfügbar – bitte das Feld «Logo-URL (Fallback)» verwenden.', 'gutenberg-formbuilder' ) ) . ");return;}var frame=wp.media({title:" . wp_json_encode( __( 'Logo für Bestätigungsmails wählen', 'gutenberg-formbuilder' ) ) . ",library:{type:'image'},multiple:false,button:{text:" . wp_json_encode( __( 'Als Logo übernehmen', 'gutenberg-formbuilder' ) ) . "}});frame.on('select',function(){var att=frame.state().get('selection').first().toJSON();idField.value=att.id;preview.src=(att.sizes&&att.sizes.medium)?att.sizes.medium.url:att.url;preview.removeAttribute('hidden');removeBtn.removeAttribute('hidden');});frame.open();});if(removeBtn){removeBtn.addEventListener('click',function(e){e.preventDefault();idField.value='0';preview.setAttribute('hidden','hidden');preview.src='';removeBtn.setAttribute('hidden','hidden');});}})();</script>";
+
+		// TinyMCE in der standardmässig zugeklappten Karte: Ein in einem
+		// versteckten <details> initialisierter Editor kann mit kollabierter
+		// Iframe-Höhe rendern. Beim ERSTEN Aufklappen deshalb einmalig das
+		// dokumentierte WP-Re-Init-Muster (mceRemoveEditor sichert den Inhalt
+		// in die Textarea, tinymce.init mit den Original-Settings baut neu auf).
+		echo "<script>(function(){var card=document.getElementById('gfb-bestaetigungsmail');if(!card){return;}var done=false;card.addEventListener('toggle',function(){if(done||!card.open){return;}if(typeof tinymce==='undefined'||typeof tinyMCEPreInit==='undefined'||!tinymce.get('gfbreceiptfooter')||!tinyMCEPreInit.mceInit||!tinyMCEPreInit.mceInit.gfbreceiptfooter){return;}done=true;tinymce.execCommand('mceRemoveEditor',true,'gfbreceiptfooter');tinymce.init(tinyMCEPreInit.mceInit.gfbreceiptfooter);});})();</script>";
 	}
 
 	/**

@@ -82,6 +82,10 @@
       "type": "string",
       "default": ""
     },
+    "consentField": {
+      "type": "string",
+      "default": ""
+    },
     "appearanceMode": {
       "type": "string",
       "default": "theme"

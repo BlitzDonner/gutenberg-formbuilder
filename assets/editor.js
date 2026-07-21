@@ -550,6 +550,107 @@
 	}
 
 	/**
+	 * Checkbox-Felder unter gfb/form (für das Einwilligungs-Feld der
+	 * Integrations-Hooks), inkl. sensitive-Flag für die Editor-Warnung.
+	 *
+	 * @param {Array} blocks
+	 * @return {Array<{name:string,label:string,sensitive:boolean}>}
+	 */
+	function gfbCollectFormCheckboxFieldRows( blocks ) {
+		var rows = [];
+		if ( ! blocks || ! blocks.length ) {
+			return rows;
+		}
+		blocks.forEach( function ( b ) {
+			if ( ! b || ! b.name ) {
+				return;
+			}
+			if (
+				b.name === 'gfb/form-success' ||
+				b.name === 'gfb/receipt-mail' ||
+				b.name === 'gfb/doi-mail'
+			) {
+				return;
+			}
+			if ( b.name === 'gfb/field-checkbox' ) {
+				var attrs = b.attributes || {};
+				var nm = attrs.name != null ? String( attrs.name ).trim() : '';
+				if ( nm ) {
+					rows.push( {
+						name: nm,
+						label: attrs.label != null ? String( attrs.label ) : '',
+						sensitive: attrs.sensitive === true,
+					} );
+				}
+				return;
+			}
+			if ( b.innerBlocks && b.innerBlocks.length ) {
+				rows = rows.concat( gfbCollectFormCheckboxFieldRows( b.innerBlocks ) );
+			}
+		} );
+		return rows;
+	}
+
+	/**
+	 * Inspector-Bereich «Datenweitergabe (Integrationen)» am gfb/form-Block:
+	 * designiert das Einwilligungs-Feld für den Filter gfb_transfer_consent.
+	 *
+	 * @param {object} attributes
+	 * @param {function} setAttributes
+	 * @param {Array<{name:string,label:string,sensitive:boolean}>} checkboxRows
+	 * @return {*}
+	 */
+	function renderConsentControls( attributes, setAttributes, checkboxRows ) {
+		var options = [
+			{
+				label: __( '— kein Feld gewählt —', 'gutenberg-formbuilder' ),
+				value: '',
+			},
+		];
+		checkboxRows.forEach( function ( row ) {
+			var optLabel = row.label ? row.label + ' (' + row.name + ')' : row.name;
+			options.push( { label: optLabel, value: row.name } );
+		} );
+
+		var selected = null;
+		checkboxRows.forEach( function ( row ) {
+			if ( attributes.consentField && row.name === attributes.consentField ) {
+				selected = row;
+			}
+		} );
+
+		return el(
+			PanelBody,
+			{
+				title: __( 'Datenweitergabe (Integrationen)', 'gutenberg-formbuilder' ),
+				initialOpen: false,
+			},
+			el( SelectControl, {
+				label: __( 'Einwilligungs-Feld für Datenweitergabe (optional)', 'gutenberg-formbuilder' ),
+				help: __(
+					'Nur für Dritt-Integrationen (Filter gfb_transfer_consent): Er liefert nur dann «ja», wenn dieses Kontrollkästchen in der Einsendung angekreuzt wurde. Ohne gewähltes Feld liefert er immer «nein» – Erlaubnis nie implizit.',
+					'gutenberg-formbuilder'
+				),
+				value: attributes.consentField || '',
+				options: options,
+				onChange: function ( v ) {
+					setAttributes( { consentField: v || '' } );
+				},
+			} ),
+			selected && selected.sensitive
+				? el(
+						Notice,
+						{ status: 'warning', isDismissible: false, key: 'consent-sensitive' },
+						__(
+							'Das Einwilligungs-Feld darf nicht als vertraulich markiert sein – vertraulich gespeicherte Werte werden für die Weitergabe-Abfrage nicht entschlüsselt, der Filter liefert dann immer «nein».',
+							'gutenberg-formbuilder'
+						)
+				  )
+				: null
+		);
+	}
+
+	/**
 	 * Rekursiv: enthält der Block-Baum ein vertraulich markiertes Feld?
 	 *
 	 * @param {Array} blocks
@@ -1955,6 +2056,32 @@
 				[ props.clientId ]
 			);
 
+			/* Checkbox-Felder für das Einwilligungs-Feld (Integrations-Hooks). */
+			var checkboxFieldRows = useSelect(
+				function ( select ) {
+					try {
+						var block = select( 'core/block-editor' ).getBlock( props.clientId );
+						if ( ! block ) {
+							return [];
+						}
+						var raw = gfbCollectFormCheckboxFieldRows( block.innerBlocks || [] );
+						var seen = {};
+						var out = [];
+						raw.forEach( function ( r ) {
+							if ( seen[ r.name ] ) {
+								return;
+							}
+							seen[ r.name ] = true;
+							out.push( r );
+						} );
+						return out;
+					} catch ( errConsent ) {
+						return [];
+					}
+				},
+				[ props.clientId ]
+			);
+
 			/* Zustand für die Editor-Warnungen der Bestätigungsmail. */
 			var receiptInfo = useSelect(
 				function ( select ) {
@@ -2143,6 +2270,7 @@
 					),
 					renderEmailNotificationControls( attributes, setAttributes, emailFieldRows || [] ),
 					renderReceiptMailControls( attributes, setAttributes, emailFieldRows || [], receiptInfo ),
+					renderConsentControls( attributes, setAttributes, checkboxFieldRows || [] ),
 					el( PanelBody, {
 						title: __( 'Spam-Schutz (CAPTCHA)', 'gutenberg-formbuilder' ),
 						initialOpen: false,

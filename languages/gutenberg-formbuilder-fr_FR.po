@@ -559,3 +559,93 @@ msgstr "Confirmation en attente (échéance inconnue)"
 
 msgid "Nicht rechtzeitig bestätigt (abgelaufen am %s)"
 msgstr "Non confirmé à temps (expiré le %s)"
+
+msgid "Branding der Bestätigungsmail gespeichert."
+msgstr "Habillage de l’e-mail de confirmation enregistré."
+
+msgid "Branding der Bestätigungsmails (site-weit)"
+msgstr "Habillage des e-mails de confirmation (pour tout le site)"
+
+msgid "Logo und Fusszeile rahmen jede Mail an die ausfüllende Person (Sofort-Quittung, Link-Mail, Voll-Quittung). Die Betreiber-Benachrichtigungen bleiben unverändert reiner Text."
+msgstr "Le logo et le pied de page encadrent chaque e-mail à la personne qui remplit le formulaire (accusé immédiat, e-mail avec lien, accusé complet). Les notifications à l’exploitant restent en texte brut."
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Logo aus Mediathek wählen"
+msgstr "Choisir le logo dans la médiathèque"
+
+msgid "Logo entfernen"
+msgstr "Supprimer le logo"
+
+msgid "Empfohlen: ein Bild von der eigenen Domain (Mediathek). Base64-/data:-Bilder werden bewusst abgelehnt – Gmail zeigt sie nicht an, und sie gelten als Spam-Signal."
+msgstr "Recommandé : une image de votre propre domaine (médiathèque). Les images Base64/data: sont volontairement refusées – Gmail ne les affiche pas et elles constituent un signal de spam."
+
+msgid "Logo-URL (Fallback)"
+msgstr "URL du logo (solution de repli)"
+
+msgid "Nur verwendet, wenn kein Mediathek-Logo gewählt ist. Nur http(s)-Adressen."
+msgstr "Utilisée seulement si aucun logo de la médiathèque n’est choisi. Adresses http(s) uniquement."
+
+msgid "Logo-Link"
+msgstr "Lien du logo"
+
+msgid "Wird aufs Logo gelegt (z. B. Ihre Startseite). Leer = Logo ohne Link."
+msgstr "Appliqué au logo (p. ex. votre page d’accueil). Vide = logo sans lien."
+
+msgid "Fusszeile (Absender-Identität)"
+msgstr "Pied de page (identité de l’expéditeur)"
+
+msgid "Firma, Adresse, Kontakt, Impressum-Link. Erlaubt sind nur Links, Zeilenumbrüche und Fettung/Kursiv (a, br, strong, b, em) – alles andere wird beim Speichern entfernt. Erscheint über dem neutralen Schluss-Satz."
+msgstr "Société, adresse, contact, lien vers les mentions légales. Seuls les liens, sauts de ligne et gras/italique sont autorisés (a, br, strong, b, em) – tout le reste est supprimé à l’enregistrement. Apparaît au-dessus de la phrase de clôture neutre."
+
+msgid "Branding speichern"
+msgstr "Enregistrer l’habillage"
+
+msgid "Mediathek nicht verfügbar – bitte das Feld «Logo-URL (Fallback)» verwenden."
+msgstr "Médiathèque indisponible – veuillez utiliser le champ « URL du logo (solution de repli) »."
+
+msgid "Logo für Bestätigungsmails wählen"
+msgstr "Choisir le logo des e-mails de confirmation"
+
+msgid "Als Logo übernehmen"
+msgstr "Utiliser comme logo"
+
+msgid "Vorschau der Bestätigungsmail"
+msgstr "Aperçu de l’e-mail de confirmation"
+
+msgid "Vorschau mit Beispielinhalt – der Mailtext pro Formular kommt aus dem Block «Bestätigungsmail – Inhalt»."
+msgstr "Aperçu avec contenu d’exemple – le texte de l’e-mail par formulaire provient du bloc « E-mail de confirmation – contenu »."
+
+msgid "Empfänger der Testmail"
+msgstr "Destinataire de l’e-mail de test"
+
+msgid "Testmail senden"
+msgstr "Envoyer un e-mail de test"
+
+msgid "Die Testmail nutzt den echten Versandweg (Multipart, Absender, Return-Path, Header) mit dem Beispielinhalt der Vorschau. Höchstens 5 Testmails pro 10 Minuten."
+msgstr "L’e-mail de test utilise le vrai canal d’envoi (multipart, expéditeur, return path, en-têtes) avec le contenu d’exemple de l’aperçu. Au maximum 5 e-mails de test par 10 minutes."
+
+msgid "Testmail an den Mailserver übergeben – «übergeben» heisst nicht «zugestellt», bitte Posteingang und Spam-Ordner prüfen."
+msgstr "E-mail de test remis au serveur de messagerie – « remis » ne signifie pas « distribué » ; veuillez vérifier votre boîte de réception et le dossier spam."
+
+msgid "Testmail: Übergabe an den Mailserver fehlgeschlagen."
+msgstr "E-mail de test : échec de la remise au serveur de messagerie."
+
+msgid "Keine gültige Empfängeradresse – es wurde keine Testmail versendet."
+msgstr "Adresse de destinataire invalide – aucun e-mail de test n’a été envoyé."
+
+msgid "Zu viele Testmails – bitte kurz warten (höchstens 5 pro 10 Minuten)."
+msgstr "Trop d’e-mails de test – veuillez patienter un instant (au maximum 5 par 10 minutes)."
+
+msgid "Muster"
+msgstr "Exemple"
+
+msgid "Vorname"
+msgstr "Prénom"
+
+msgid "E-Mail"
+msgstr "E-mail"
+
+msgid "Die Vorschau erscheint nach dem ersten Speichern."
+msgstr "L’aperçu apparaît après le premier enregistrement."

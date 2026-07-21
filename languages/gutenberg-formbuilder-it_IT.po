@@ -559,3 +559,93 @@ msgstr "Conferma in attesa (scadenza sconosciuta)"
 
 msgid "Nicht rechtzeitig bestätigt (abgelaufen am %s)"
 msgstr "Non confermato in tempo (scaduto il %s)"
+
+msgid "Branding der Bestätigungsmail gespeichert."
+msgstr "Grafica dell’e-mail di conferma salvata."
+
+msgid "Branding der Bestätigungsmails (site-weit)"
+msgstr "Grafica delle e-mail di conferma (per tutto il sito)"
+
+msgid "Logo und Fusszeile rahmen jede Mail an die ausfüllende Person (Sofort-Quittung, Link-Mail, Voll-Quittung). Die Betreiber-Benachrichtigungen bleiben unverändert reiner Text."
+msgstr "Logo e piè di pagina incorniciano ogni e-mail alla persona che compila il modulo (ricevuta immediata, e-mail con link, ricevuta completa). Le notifiche al gestore restano in testo semplice."
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Logo aus Mediathek wählen"
+msgstr "Scegli il logo dalla libreria media"
+
+msgid "Logo entfernen"
+msgstr "Rimuovi logo"
+
+msgid "Empfohlen: ein Bild von der eigenen Domain (Mediathek). Base64-/data:-Bilder werden bewusst abgelehnt – Gmail zeigt sie nicht an, und sie gelten als Spam-Signal."
+msgstr "Consigliato: un’immagine dal proprio dominio (libreria media). Le immagini Base64/data: vengono rifiutate di proposito – Gmail non le mostra e sono un segnale di spam."
+
+msgid "Logo-URL (Fallback)"
+msgstr "URL del logo (ripiego)"
+
+msgid "Nur verwendet, wenn kein Mediathek-Logo gewählt ist. Nur http(s)-Adressen."
+msgstr "Usato solo se non è scelto un logo dalla libreria media. Solo indirizzi http(s)."
+
+msgid "Logo-Link"
+msgstr "Link del logo"
+
+msgid "Wird aufs Logo gelegt (z. B. Ihre Startseite). Leer = Logo ohne Link."
+msgstr "Applicato al logo (ad es. la sua pagina iniziale). Vuoto = logo senza link."
+
+msgid "Fusszeile (Absender-Identität)"
+msgstr "Piè di pagina (identità del mittente)"
+
+msgid "Firma, Adresse, Kontakt, Impressum-Link. Erlaubt sind nur Links, Zeilenumbrüche und Fettung/Kursiv (a, br, strong, b, em) – alles andere wird beim Speichern entfernt. Erscheint über dem neutralen Schluss-Satz."
+msgstr "Azienda, indirizzo, contatto, link al colophon. Sono consentiti solo link, interruzioni di riga e grassetto/corsivo (a, br, strong, b, em) – tutto il resto viene rimosso al salvataggio. Appare sopra la frase di chiusura neutra."
+
+msgid "Branding speichern"
+msgstr "Salva la grafica"
+
+msgid "Mediathek nicht verfügbar – bitte das Feld «Logo-URL (Fallback)» verwenden."
+msgstr "Libreria media non disponibile – utilizzi il campo «URL del logo (ripiego)»."
+
+msgid "Logo für Bestätigungsmails wählen"
+msgstr "Scegli il logo per le e-mail di conferma"
+
+msgid "Als Logo übernehmen"
+msgstr "Usa come logo"
+
+msgid "Vorschau der Bestätigungsmail"
+msgstr "Anteprima dell’e-mail di conferma"
+
+msgid "Vorschau mit Beispielinhalt – der Mailtext pro Formular kommt aus dem Block «Bestätigungsmail – Inhalt»."
+msgstr "Anteprima con contenuto di esempio – il testo dell’e-mail per ogni modulo proviene dal blocco «E-mail di conferma – contenuto»."
+
+msgid "Empfänger der Testmail"
+msgstr "Destinatario dell’e-mail di prova"
+
+msgid "Testmail senden"
+msgstr "Invia e-mail di prova"
+
+msgid "Die Testmail nutzt den echten Versandweg (Multipart, Absender, Return-Path, Header) mit dem Beispielinhalt der Vorschau. Höchstens 5 Testmails pro 10 Minuten."
+msgstr "L’e-mail di prova usa il canale di invio reale (multipart, mittente, return path, intestazioni) con il contenuto di esempio dell’anteprima. Al massimo 5 e-mail di prova ogni 10 minuti."
+
+msgid "Testmail an den Mailserver übergeben – «übergeben» heisst nicht «zugestellt», bitte Posteingang und Spam-Ordner prüfen."
+msgstr "E-mail di prova consegnata al server di posta – «consegnata» non significa «recapitata»; controlli la posta in arrivo e la cartella spam."
+
+msgid "Testmail: Übergabe an den Mailserver fehlgeschlagen."
+msgstr "E-mail di prova: consegna al server di posta non riuscita."
+
+msgid "Keine gültige Empfängeradresse – es wurde keine Testmail versendet."
+msgstr "Indirizzo del destinatario non valido – nessuna e-mail di prova inviata."
+
+msgid "Zu viele Testmails – bitte kurz warten (höchstens 5 pro 10 Minuten)."
+msgstr "Troppe e-mail di prova – attenda un momento (al massimo 5 ogni 10 minuti)."
+
+msgid "Muster"
+msgstr "Esempio"
+
+msgid "Vorname"
+msgstr "Nome"
+
+msgid "E-Mail"
+msgstr "E-mail"
+
+msgid "Die Vorschau erscheint nach dem ersten Speichern."
+msgstr "L’anteprima appare dopo il primo salvataggio."
