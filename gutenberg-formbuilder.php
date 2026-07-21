@@ -34,6 +34,7 @@ require_once GFB_PLUGIN_DIR . 'includes/class-gfb-security.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-field-renderer.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-plugin.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-submit-handler.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-receipt-mail.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-submissions.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-settings.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-audit.php';
@@ -61,6 +62,10 @@ register_deactivation_hook(
 		if ( $ts ) {
 			wp_unschedule_event( $ts, 'gfb_rewrap_cron' );
 		}
+		$ts_receipt = wp_next_scheduled( GFB_Receipt_Mail::CRON_HOOK );
+		if ( $ts_receipt ) {
+			wp_unschedule_event( $ts_receipt, GFB_Receipt_Mail::CRON_HOOK );
+		}
 	}
 );
 add_action( 'gfb_rewrap_cron', array( 'GFB_Submit_Handler', 'cron_rewrap' ) );
@@ -68,6 +73,7 @@ add_action( 'gfb_rewrap_cron', array( 'GFB_Submit_Handler', 'cron_rewrap' ) );
 GFB_Security::boot();
 GFB_File_Storage::boot();
 GFB_Plugin::boot();
+GFB_Receipt_Mail::boot();
 GFB_Admin_Settings::boot();
 GFB_Admin_Audit::boot();
 

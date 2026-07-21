@@ -54,6 +54,28 @@ Am Block **Formular** (`gfb/form`) → Inspector **E-Mail-Benachrichtigung**:
 
 ---
 
+## Formular: Bestätigungsmail an die ausfüllende Person (Autoresponder + Double-Opt-in)
+
+Am Block **Formular** → Inspector **Bestätigungsmail an Absender/in**. Spezifikation: [`docs/BESTAETIGUNGSMAIL-SPEC.md`](docs/BESTAETIGUNGSMAIL-SPEC.md).
+
+| Einstellung | Kurz |
+|-------------|------|
+| **Modus** | `keine` (Standard), `sofort` (Quittung direkt nach Absenden) oder `mit Bestätigungslink` (Double-Opt-in: erst Link-Mail, die Voll-Quittung folgt nach dem Klick). |
+| **Empfänger** | Explizite Wahl eines E-Mail-Felds des Formulars (Dropdown). Ohne gewähltes/gültiges Feld kein Versand; die Einsendung läuft normal. |
+| **Inhalt** | Zwei Container-Blöcke im Formular: **Bestätigungsmail – Inhalt** und **Bestätigungslink-Mail – Inhalt** (Absatz, Überschrift, Liste, Bild, Trenner, Knopf). Platzhalter `{{feldname}}`, `{{label_feldname}}`; der Block **Alle Feldwerte** fügt die Daten-Tabelle ein. Link-Mail: Pflicht-Platzhalter `{{bestaetigungslink}}` (fehlt er, hängt der Server den Link an). Leerer/fehlender Container → eingebaute Standard-Vorlage. |
+
+**Sicherheit / Datenschutz (Kurzfassung):**
+
+- **From ist fest** `noreply@site-domain` (Filter `gfb_receipt_from`/`gfb_receipt_from_name`), nie die feldgesteuerte Absenderlogik der Betreiber-Mail. Return-Path wird gesetzt; zuverlässige Zustellung setzt SPF/DKIM/DMARC voraus.
+- **Sofort-Modus nur mit erzwungenem Captcha** (serverseitig) – sonst wäre das Formular eine anonyme Mail-Kanone.
+- **Send-Gate** atomar und fail-closed: 50 Mails/Stunde/Site, 10/Stunde/IP, 3/Stunde/Empfängeradresse (Filter `gfb_receipt_gate_limits`).
+- **Vertrauliche Felder** erscheinen im Sofort-Modus nur als «vertraulich gespeichert»; Klartext erst in der Quittung nach bestätigter Adresse. Dateien nie als Anhang – nur Dateiname.
+- **Bestätigungslink:** 7 Tage gültig, Einmal-Nutzung, Token nur als gepfefferter Hash gespeichert, Bestätigung ausschliesslich per POST auf einer datenfreien Landeseite.
+- **Retention:** Nie bestätigte Einsendungen werden nach 45 Tagen gelöscht (Filter `gfb_receipt_retention_days`).
+- **Status pro Einsendung** im Backend: «an Mailserver übergeben» / «Übergabe fehlgeschlagen» – nie «zugestellt». Der DOI-Klick ist der einzige positive Zustellnachweis.
+
+---
+
 ## Spam-Schutz (Friendly Captcha)
 
 Optionaler, **serverseitig geprüfter** Spam-Schutz über [Friendly Captcha](https://friendlycaptcha.com/de/) – einen EU-Anbieter (Deutschland). Statt Bilderrätsel löst der Browser eine **Proof-of-Work**-Aufgabe. Friendly Captcha setzt **keine Cookies**, betreibt **kein Fingerprinting**, **kein Tracking** und führt **keinen Drittlandtransfer** durch.

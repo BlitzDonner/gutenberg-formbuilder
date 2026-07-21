@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/receipt-mail",
+  "version": "2.10.0",
+  "title": "Bestätigungsmail – Inhalt",
+  "category": "gfb-form",
+  "ancestor": ["gfb/form"],
+  "icon": {
+    "src": "email",
+    "foreground": "#1b2627"
+  },
+  "description": "Inhalt der Bestätigungsmail an die ausfüllende Person (nur Editor, erscheint nie im Formular). Platzhalter: {{feldname}}, {{label_feldname}}; Block «Alle Feldwerte» fügt die Daten-Tabelle ein.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "innerBlocks": true
+  },
+  "editorScript": "gfb-editor"
+}

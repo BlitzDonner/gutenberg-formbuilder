@@ -203,7 +203,7 @@ class GFB_Admin_Submissions {
 		$list_url = add_query_arg(
 			array_merge(
 				array( 'page' => self::PAGE_SLUG ),
-				self::list_context_for_urls( self::parse_list_form_filter(), self::parse_list_sort() )
+				self::list_context_for_urls( self::parse_list_form_filter(), self::parse_list_sort(), self::parse_list_orderby() )
 			),
 			admin_url( 'admin.php' )
 		);
@@ -230,6 +230,34 @@ class GFB_Admin_Submissions {
 		$ua = isset( $row->user_agent ) ? (string) $row->user_agent : '';
 		if ( '' !== $ua ) {
 			echo '<dt>' . esc_html__( 'User-Agent', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html( $ua ) . '</dd>';
+		}
+
+		// Double-Opt-in-Status (E4): «unbestätigt» ist für den Betreiber sichtbar,
+		// der Klick weist die Postfachkontrolle nach.
+		$confirm_status = isset( $row->confirm_status ) ? (string) $row->confirm_status : '';
+		if ( 'pending' === $confirm_status ) {
+			echo '<dt>' . esc_html__( 'E-Mail-Bestätigung', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html__( 'unbestätigt', 'gutenberg-formbuilder' ) . '</dd>';
+		} elseif ( 'confirmed' === $confirm_status ) {
+			$used_at = isset( $row->confirm_used_at ) && $row->confirm_used_at ? self::format_datetime( $row->confirm_used_at ) : '';
+			echo '<dt>' . esc_html__( 'E-Mail-Bestätigung', 'gutenberg-formbuilder' ) . '</dt><dd>'
+				. esc_html( '' !== $used_at
+					/* translators: %s: Datum/Uhrzeit des Bestätigungsklicks */
+					? sprintf( __( 'bestätigt am %s', 'gutenberg-formbuilder' ), $used_at )
+					: __( 'bestätigt', 'gutenberg-formbuilder' ) )
+				. '</dd>';
+		}
+
+		// Versandstatus der Bestätigungsmail (E7): «übergeben» heisst nie «zugestellt».
+		$receipt_status = isset( $row->receipt_mail_status ) ? (string) $row->receipt_mail_status : '';
+		if ( '' !== $receipt_status ) {
+			$receipt_at   = isset( $row->receipt_mail_at ) && $row->receipt_mail_at ? self::format_datetime( $row->receipt_mail_at ) : '';
+			$receipt_text = ( 'handed_off' === $receipt_status )
+				? __( 'an Mailserver übergeben', 'gutenberg-formbuilder' )
+				: __( 'Übergabe fehlgeschlagen', 'gutenberg-formbuilder' );
+			if ( '' !== $receipt_at ) {
+				$receipt_text .= ' (' . $receipt_at . ')';
+			}
+			echo '<dt>' . esc_html__( 'Bestätigungsmail', 'gutenberg-formbuilder' ) . '</dt><dd>' . esc_html( $receipt_text ) . '</dd>';
 		}
 		echo '</dl></div>';
 
@@ -391,6 +419,11 @@ class GFB_Admin_Submissions {
 		if ( ! $mysql_datetime ) {
 			return '';
 		}
+		// MySQL-Nullwert ('0000-00-00 …') ist «kein Datum» – strtotime würde
+		// daraus einen absurden, aber gültigen Zeitstempel machen (Jahr -0001).
+		if ( 0 === strpos( (string) $mysql_datetime, '0000-00-00' ) ) {
+			return '';
+		}
 		$ts = strtotime( (string) $mysql_datetime );
 		if ( false === $ts ) {
 			return (string) $mysql_datetime;
@@ -399,6 +432,83 @@ class GFB_Admin_Submissions {
 			__( 'd.m.Y H:i', 'gutenberg-formbuilder' ),
 			$ts
 		);
+	}
+
+	/**
+	 * DOI-Ampelzustand einer Listen-Zeile.
+	 *
+	 * Zeitvergleich als lexikografischer Vergleich zweier UTC-Strings im
+	 * Format Y-m-d H:i:s – dieselbe Zeitquelle wie der CAS/Expiry-Vergleich
+	 * der Engine (confirm_expires_at wird per gmdate() gespeichert und gegen
+	 * UTC_TIMESTAMP() verglichen; hier ist gmdate() das «jetzt»). Kein neuer
+	 * Zeitpfad, keine Zeitzonen-Umrechnung.
+	 *
+	 * @param string $confirm_status     '' | pending | confirmed (Fremdes → none).
+	 * @param string $confirm_expires_at UTC-Datetime oder leer/NULL.
+	 * @param string $now_utc            Optional: «jetzt» (UTC, Y-m-d H:i:s) für Tests.
+	 * @return string none|pending|expired|confirmed
+	 */
+	public static function doi_status_for_row( $confirm_status, $confirm_expires_at, $now_utc = '' ) {
+		$status = is_string( $confirm_status ) ? $confirm_status : '';
+		if ( 'confirmed' === $status ) {
+			return 'confirmed';
+		}
+		if ( 'pending' !== $status ) {
+			// '' (kein DOI) und unbekannte Statuswerte defensiv als «kein DOI».
+			return 'none';
+		}
+		$expires = is_string( $confirm_expires_at ) ? trim( $confirm_expires_at ) : '';
+		// Dieselbe Nullwert-Bedingung wie format_datetime() (Präfix '0000-00-00'):
+		// Farb- und Textzweig bleiben so zwingend konsistent.
+		if ( '' === $expires || 0 === strpos( $expires, '0000-00-00' ) ) {
+			// Offen mit unbekanntem Ablauf → orange (defensiver Randfall).
+			return 'pending';
+		}
+		$now = ( is_string( $now_utc ) && '' !== $now_utc ) ? $now_utc : gmdate( 'Y-m-d H:i:s' );
+		// Erreicht/überschritten → rot (konsistent zum CAS: nur «> jetzt» ist noch gültig).
+		return ( $expires > $now ) ? 'pending' : 'expired';
+	}
+
+	/**
+	 * Ampel-Zelle der DOI-Spalte: genau EIN farbiger Punkt pro Zeile, die
+	 * Information nie nur über Farbe – title-Attribut plus visually-hidden-Text
+	 * (Core-Klasse screen-reader-text). Reine Anzeige, kein Klickziel.
+	 *
+	 * @param object $row Listen-Zeile (confirm_status, confirm_expires_at, confirm_used_at).
+	 * @return string HTML (escaped).
+	 */
+	private static function doi_status_cell( $row ) {
+		$status  = isset( $row->confirm_status ) ? (string) $row->confirm_status : '';
+		$expires = isset( $row->confirm_expires_at ) ? (string) $row->confirm_expires_at : '';
+		$used    = isset( $row->confirm_used_at ) ? (string) $row->confirm_used_at : '';
+		$state   = self::doi_status_for_row( $status, $expires );
+
+		if ( 'confirmed' === $state ) {
+			$used_disp = self::format_datetime( $used );
+			$text      = '' !== $used_disp
+				/* translators: %s: Datum/Uhrzeit des Bestätigungsklicks */
+				? sprintf( __( 'Bestätigt am %s', 'gutenberg-formbuilder' ), $used_disp )
+				: __( 'Bestätigt', 'gutenberg-formbuilder' );
+		} elseif ( 'pending' === $state ) {
+			$exp_disp = self::format_datetime( $expires );
+			$text     = '' !== $exp_disp
+				/* translators: %s: Ablaufdatum des Bestätigungslinks */
+				? sprintf( __( 'Bestätigung offen bis %s', 'gutenberg-formbuilder' ), $exp_disp )
+				: __( 'Bestätigung offen (Ablauf unbekannt)', 'gutenberg-formbuilder' );
+		} elseif ( 'expired' === $state ) {
+			$text = sprintf(
+				/* translators: %s: Ablaufdatum des Bestätigungslinks */
+				__( 'Nicht rechtzeitig bestätigt (abgelaufen am %s)', 'gutenberg-formbuilder' ),
+				self::format_datetime( $expires )
+			);
+		} else {
+			$text = __( 'Kein Bestätigungslink', 'gutenberg-formbuilder' );
+		}
+
+		return '<span class="gfb-doi-status" title="' . esc_attr( $text ) . '">'
+			. '<span class="gfb-doi-dot gfb-doi-dot--' . esc_attr( $state ) . '" aria-hidden="true"></span>'
+			. '<span class="screen-reader-text">' . esc_html( $text ) . '</span>'
+			. '</span>';
 	}
 
 	/**
@@ -448,11 +558,12 @@ class GFB_Admin_Submissions {
 	/**
 	 * Query-Parameter für Links (Filter + Sortierung), ohne `page`.
 	 *
-	 * @param string $filter_form_id sanitize_key.
-	 * @param string $sort           parse_list_sort-Wert.
+	 * @param string               $filter_form_id sanitize_key.
+	 * @param string               $sort           parse_list_sort-Wert.
+	 * @param array<string,string> $col_sort       Optional: Spalten-Sortierung aus parse_list_orderby().
 	 * @return array<string,string>
 	 */
-	private static function list_context_for_urls( $filter_form_id, $sort ) {
+	private static function list_context_for_urls( $filter_form_id, $sort, array $col_sort = array() ) {
 		$args = array();
 		if ( '' !== $filter_form_id ) {
 			$args['gfb_filter_form_id'] = $filter_form_id;
@@ -460,7 +571,157 @@ class GFB_Admin_Submissions {
 		if ( 'date_desc' !== $sort ) {
 			$args['gfb_sort'] = $sort;
 		}
+		if ( ! empty( $col_sort['orderby'] ) ) {
+			$args['orderby'] = $col_sort['orderby'];
+			$args['order']   = ( 'asc' === ( $col_sort['order'] ?? '' ) ) ? 'asc' : 'desc';
+		}
 		return $args;
+	}
+
+	/**
+	 * Whitelist der sortierbaren Listen-Spalten: Spaltenschlüssel → ORDER-BY-
+	 * Fragment (Platzhalter %ORDER%) plus Erstrichtung beim ersten Klick.
+	 * Nur diese Fragmente gelangen in die Query – nie Roh-Input.
+	 *
+	 * «Absender» fehlt bewusst: Der angezeigte Wert entsteht heuristisch aus
+	 * dem Payload-JSON und kann verschlüsselt sein – keine sortierbare
+	 * Klartext-DB-Spalte, kein Entschlüsseln für Sortierzwecke.
+	 *
+	 * @return array<string,array{sql:string,default_order:string}>
+	 */
+	private static function sortable_list_columns() {
+		return array(
+			'id'   => array(
+				'sql'           => 'id %ORDER%',
+				'default_order' => 'desc',
+			),
+			'date' => array(
+				'sql'           => 'created_at %ORDER%, id %ORDER%',
+				'default_order' => 'desc',
+			),
+			'page' => array(
+				'sql'           => 'post_id %ORDER%, id DESC',
+				'default_order' => 'asc',
+			),
+			'form' => array(
+				'sql'           => 'form_title %ORDER%, form_id %ORDER%, created_at DESC, id DESC',
+				'default_order' => 'asc',
+			),
+			'doi'  => array(
+				'sql'           => '(' . self::doi_rank_sql() . ') %ORDER%, id DESC',
+				'default_order' => 'asc',
+			),
+		);
+	}
+
+	/**
+	 * Deterministischer DOI-Status-Rang in SQL, analog zur Ampel-Logik
+	 * (doi_status_for_row): 1 = bestätigt, 2 = offen (Ablauf künftig oder
+	 * unbekannt), 3 = abgelaufen, 4 = kein DOI/unbekannt. Zeitquelle
+	 * UTC_TIMESTAMP() – identisch zum CAS/Expiry-Vergleich der Engine.
+	 *
+	 * @return string SQL-CASE-Ausdruck (nur Konstanten, kein Input).
+	 */
+	private static function doi_rank_sql() {
+		return "CASE"
+			. " WHEN confirm_status = 'confirmed' THEN 1"
+			. " WHEN confirm_status = 'pending' AND ( confirm_expires_at IS NULL OR confirm_expires_at = '0000-00-00 00:00:00' OR confirm_expires_at > UTC_TIMESTAMP() ) THEN 2"
+			. " WHEN confirm_status = 'pending' THEN 3"
+			. " ELSE 4 END";
+	}
+
+	/**
+	 * Spalten-Sortierung aus GET (Core-Muster orderby/order), strikt über die
+	 * Whitelist: unbekannter/manipulierter orderby → leer (Default Datum
+	 * absteigend greift); order nur asc/desc, sonst Erstrichtung der Spalte.
+	 *
+	 * @return array{orderby:string,order:string}
+	 */
+	private static function parse_list_orderby() {
+		$cols    = self::sortable_list_columns();
+		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : '';
+		if ( '' === $orderby || ! isset( $cols[ $orderby ] ) ) {
+			return array(
+				'orderby' => '',
+				'order'   => 'desc',
+			);
+		}
+		$order = isset( $_GET['order'] ) ? strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) : '';
+		if ( ! in_array( $order, array( 'asc', 'desc' ), true ) ) {
+			$order = $cols[ $orderby ]['default_order'];
+		}
+		return array(
+			'orderby' => $orderby,
+			'order'   => $order,
+		);
+	}
+
+	/**
+	 * ORDER-BY-SQL für eine Whitelist-Spalte. Richtung wird ausschliesslich
+	 * als ASC/DESC-Konstante eingesetzt.
+	 *
+	 * @param string $orderby Spaltenschlüssel aus der Whitelist.
+	 * @param string $order   asc|desc.
+	 * @return string ORDER-BY-Fragment oder leer bei unbekanntem Schlüssel.
+	 */
+	private static function order_sql_for_column_sort( $orderby, $order ) {
+		$cols = self::sortable_list_columns();
+		if ( ! isset( $cols[ $orderby ] ) ) {
+			return '';
+		}
+		$dir = ( 'asc' === $order ) ? 'ASC' : 'DESC';
+		return str_replace( '%ORDER%', $dir, $cols[ $orderby ]['sql'] );
+	}
+
+	/**
+	 * Spaltenkopf nach dem Core-Muster der Listen-Tabellen: sortierbare
+	 * Spalten als Link mit sortable/sorted-Klassen, Pfeil-Indikatoren und
+	 * aria-sort am aktiven th; nicht sortierbare Spalten als schlichtes th.
+	 *
+	 * @param string               $key       Spaltenschlüssel (Whitelist) oder beliebig für unsortierbar.
+	 * @param string               $label     Sichtbare Beschriftung (bereits übersetzt).
+	 * @param array<string,string> $col_sort  Aktive Sortierung aus parse_list_orderby().
+	 * @param array<string,string> $base_args URL-Basis (page, Filter, Dropdown-Sort) ohne orderby/order/paged.
+	 * @param string               $style     Optionales style-Attribut (Spaltenbreite, Bestandsmuster).
+	 * @return string HTML (escaped).
+	 */
+	private static function sortable_column_header( $key, $label, array $col_sort, array $base_args, $style = '' ) {
+		$cols       = self::sortable_list_columns();
+		$style_attr = '' !== $style ? ' style="' . esc_attr( $style ) . '"' : '';
+
+		if ( ! isset( $cols[ $key ] ) ) {
+			return '<th scope="col" class="manage-column"' . $style_attr . '>' . esc_html( $label ) . '</th>';
+		}
+
+		$is_current = ( isset( $col_sort['orderby'] ) && $col_sort['orderby'] === $key );
+		if ( $is_current ) {
+			$current    = ( 'asc' === $col_sort['order'] ) ? 'asc' : 'desc';
+			$next_order = ( 'asc' === $current ) ? 'desc' : 'asc';
+			$classes    = 'manage-column sorted ' . $current;
+			$aria_sort  = ' aria-sort="' . ( 'asc' === $current ? 'ascending' : 'descending' ) . '"';
+		} else {
+			$next_order = $cols[ $key ]['default_order'];
+			// Core-Konvention: unsortierte Spalte trägt die Gegenrichtung der
+			// Erstrichtung als Klasse (steuert den Indikator-Pfeil).
+			$classes   = 'manage-column sortable ' . ( 'asc' === $next_order ? 'desc' : 'asc' );
+			$aria_sort = '';
+		}
+
+		$url = add_query_arg(
+			array_merge(
+				$base_args,
+				array(
+					'orderby' => $key,
+					'order'   => $next_order,
+				)
+			),
+			admin_url( 'admin.php' )
+		);
+
+		return '<th scope="col" class="' . esc_attr( $classes ) . '"' . $aria_sort . $style_attr . '>'
+			. '<a href="' . esc_url( $url ) . '"><span>' . esc_html( $label ) . '</span>'
+			. '<span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span>'
+			. '</a></th>';
 	}
 
 	/**
@@ -488,7 +749,15 @@ class GFB_Admin_Submissions {
 
 		$filter_form_id = self::parse_list_form_filter();
 		$sort           = self::parse_list_sort();
-		$order_sql      = self::order_sql_for_list_sort( $sort );
+		$col_sort       = self::parse_list_orderby();
+		// Spaltenkopf-Sortierung (orderby/order) hat Vorrang; ohne sie greift
+		// das Dropdown bzw. der Standard Datum absteigend. Beide Wege liefern
+		// ausschliesslich Whitelist-SQL, ORDER BY läuft vor LIMIT (Gesamtbestand).
+		if ( '' !== $col_sort['orderby'] ) {
+			$order_sql = self::order_sql_for_column_sort( $col_sort['orderby'], $col_sort['order'] );
+		} else {
+			$order_sql = self::order_sql_for_list_sort( $sort );
+		}
 
 		$per_page = 20;
 		$paged    = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
@@ -515,7 +784,8 @@ class GFB_Admin_Submissions {
 			$form_groups = array();
 		}
 
-		$sql = "SELECT id, created_at, post_id, form_id, form_title, payload FROM {$table}";
+		// DOI-Spalten direkt mitselektieren (Ampel-Spalte, keine N+1-Zusatzqueries).
+		$sql = "SELECT id, created_at, post_id, form_id, form_title, payload, confirm_status, confirm_expires_at, confirm_used_at FROM {$table}";
 		if ( '' !== $filter_form_id ) {
 			$sql .= ' WHERE form_id = %s';
 		}
@@ -533,7 +803,7 @@ class GFB_Admin_Submissions {
 			$rows = array();
 		}
 
-		$list_ctx = self::list_context_for_urls( $filter_form_id, $sort );
+		$list_ctx = self::list_context_for_urls( $filter_form_id, $sort, $col_sort );
 
 		echo '<form method="get" class="gfb-admin-filters" action="' . esc_url( admin_url( 'admin.php' ) ) . '">';
 		echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '" />';
@@ -582,13 +852,25 @@ class GFB_Admin_Submissions {
 
 		echo '<div class="gfb-admin-table-wrap">';
 		echo '<table class="wp-list-table widefat fixed striped gfb-admin-table">';
+		// Basis-Args der Sortier-Links: page + Filter + Dropdown-Sort, ohne
+		// orderby/order (setzt jeder Link selbst) und ohne paged (Umsortieren
+		// beginnt auf Seite 1, Core-Verhalten).
+		$header_base_args = array_merge(
+			array( 'page' => self::PAGE_SLUG ),
+			self::list_context_for_urls( $filter_form_id, $sort )
+		);
+
 		echo '<thead><tr>';
-		echo '<th scope="col" class="manage-column" style="width:5rem">' . esc_html__( 'ID', 'gutenberg-formbuilder' ) . '</th>';
-		echo '<th scope="col" class="manage-column">' . esc_html__( 'Datum', 'gutenberg-formbuilder' ) . '</th>';
-		echo '<th scope="col" class="manage-column">' . esc_html__( 'Seite', 'gutenberg-formbuilder' ) . '</th>';
-		echo '<th scope="col" class="manage-column">' . esc_html__( 'Formular', 'gutenberg-formbuilder' ) . '</th>';
-		echo '<th scope="col" class="manage-column">' . esc_html__( 'Absender', 'gutenberg-formbuilder' ) . '</th>';
-		echo '<th scope="col" class="manage-column" style="width:8rem">' . esc_html__( 'Aktionen', 'gutenberg-formbuilder' ) . '</th>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sortable_column_header escaped intern (alle Zweige).
+		echo self::sortable_column_header( 'id', __( 'ID', 'gutenberg-formbuilder' ), $col_sort, $header_base_args, 'width:5rem' );
+		echo self::sortable_column_header( 'date', __( 'Datum', 'gutenberg-formbuilder' ), $col_sort, $header_base_args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::sortable_column_header( 'page', __( 'Seite', 'gutenberg-formbuilder' ), $col_sort, $header_base_args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::sortable_column_header( 'form', __( 'Formular', 'gutenberg-formbuilder' ), $col_sort, $header_base_args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		// «Absender» bewusst unsortierbar: Wert stammt heuristisch aus dem
+		// Payload-JSON (potenziell verschlüsselt) – keine Klartext-DB-Spalte.
+		echo self::sortable_column_header( 'sender', __( 'Absender', 'gutenberg-formbuilder' ), $col_sort, $header_base_args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::sortable_column_header( 'doi', __( 'DOI', 'gutenberg-formbuilder' ), $col_sort, $header_base_args, 'width:4rem' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::sortable_column_header( 'actions', __( 'Aktionen', 'gutenberg-formbuilder' ), $col_sort, $header_base_args, 'width:8rem' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '</tr></thead><tbody>';
 
 		foreach ( $rows as $row ) {
@@ -615,12 +897,13 @@ class GFB_Admin_Submissions {
 			echo '<td>' . esc_html( $post_title ) . '</td>';
 			echo '<td class="gfb-admin-cell-form">';
 			if ( '' !== $row_title ) {
-				echo esc_html( $row_title ) . '<br><small class="gfb-admin-form-id"><code>' . esc_html( (string) $row->form_id ) . '</code></small>';
+				echo '<span class="gfb-admin-form-ident"><span class="gfb-admin-form-title">' . esc_html( $row_title ) . '</span><small class="gfb-admin-form-id"><code>' . esc_html( (string) $row->form_id ) . '</code></small></span>';
 			} else {
 				echo '<code>' . esc_html( (string) $row->form_id ) . '</code>';
 			}
 			echo '</td>';
 			echo '<td class="gfb-admin-cell-sender">' . wp_kses_post( $sender_cell ) . '</td>';
+			echo '<td class="gfb-admin-cell-doi">' . self::doi_status_cell( $row ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped intern
 			echo '<td><a href="' . esc_url( $detail_url ) . '">' . esc_html__( 'Ansehen', 'gutenberg-formbuilder' ) . '</a></td>';
 			echo '</tr>';
 		}
@@ -706,7 +989,7 @@ class GFB_Admin_Submissions {
 			'email_address',
 		);
 		foreach ( $data as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			$nk = self::normalize_payload_field_key( $key );
@@ -722,7 +1005,7 @@ class GFB_Admin_Submissions {
 			}
 		}
 		foreach ( $data as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			if ( GFB_Crypto::is_field_envelope( $value ) ) {
@@ -750,7 +1033,7 @@ class GFB_Admin_Submissions {
 		$first = '';
 		$last  = '';
 		foreach ( $data as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			$nk = self::normalize_payload_field_key( $key );
@@ -767,7 +1050,7 @@ class GFB_Admin_Submissions {
 			}
 		}
 		foreach ( $data as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			$nk = self::normalize_payload_field_key( $key );
@@ -787,7 +1070,7 @@ class GFB_Admin_Submissions {
 			return trim( $first . ' ' . $last );
 		}
 		foreach ( $data as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			$nk = self::normalize_payload_field_key( $key );
@@ -822,7 +1105,7 @@ class GFB_Admin_Submissions {
 			if ( ! is_array( $data ) ) {
 				$data = array();
 			}
-			unset( $data['_gfb_labels'] );
+			unset( $data['_gfb_labels'], $data['_gfb_email_hmacs'] );
 		}
 
 		list( , $email_disp ) = self::extract_sender_email_from_payload( $data );

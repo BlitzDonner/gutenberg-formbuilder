@@ -66,6 +66,22 @@
       "type": "string",
       "default": ""
     },
+    "receiptMode": {
+      "type": "string",
+      "default": "none"
+    },
+    "receiptEmailField": {
+      "type": "string",
+      "default": ""
+    },
+    "receiptSubject": {
+      "type": "string",
+      "default": ""
+    },
+    "doiSubject": {
+      "type": "string",
+      "default": ""
+    },
     "appearanceMode": {
       "type": "string",
       "default": "theme"

@@ -468,6 +468,9 @@ class GFB_Admin_Settings {
 		// 2b) Spam-Schutz (CAPTCHA) – Friendly Captcha
 		self::render_captcha_section();
 
+		// 2c) Bestätigungsmail (Autoresponder + Double-Opt-in): Zustellbarkeit + Datenschutz
+		self::render_receipt_mail_section();
+
 		// 3) Capability-Matrix
 		echo '</details><details class="gfb-settings-card" id="gfb-berechtigungen"><summary><h2>' . esc_html__( 'Berechtigungen', 'gutenberg-formbuilder' ) . '</h2></summary>';
 		echo '<p>' . esc_html__( 'Legt fest, welche WordPress-Rolle welche Aktion mit den Formular-Einträgen ausführen darf.', 'gutenberg-formbuilder' ) . '</p>';
@@ -969,6 +972,56 @@ class GFB_Admin_Settings {
 		echo '<textarea id="' . esc_attr( $id ) . '" readonly rows="' . (int) $rows . '" class="large-text code" onclick="this.select();" style="width:100%;">' . esc_textarea( $text ) . '</textarea>';
 		echo '<p class="description" style="margin:.2rem 0 0;"><em>' . esc_html__( '(unverbindliche Vorlage, keine Rechtsberatung)', 'gutenberg-formbuilder' ) . '</em></p>';
 		echo '</div></details>';
+	}
+
+	/**
+	 * Karte «Bestätigungsmail»: Betreiber-Hinweise zu Zustellbarkeit
+	 * (SPF/DKIM/DMARC, Return-Path, Bounces, Freemail), Auftragsbearbeitung
+	 * (AVV), Beweiswert des DOI-Klicks und kopierbarer Datenschutz-Baustein.
+	 * Reine Informations-Karte ohne POST-Aktionen; die Konfiguration liegt am
+	 * Formular-Block, die technischen Defaults an Filtern (gfb_receipt_*).
+	 *
+	 * @return void
+	 */
+	private static function render_receipt_mail_section() {
+		echo '</details><details class="gfb-settings-card" id="gfb-bestaetigungsmail"><summary><h2>' . esc_html__( 'Bestätigungsmail an Absender/innen', 'gutenberg-formbuilder' ) . '</h2></summary>';
+
+		echo '<p>' . esc_html__( 'Formulare können der ausfüllenden Person eine Eingangsbestätigung senden – sofort oder erst nach Klick auf einen Bestätigungslink (Double-Opt-in). Der Modus wird pro Formular am Block eingestellt (Bereich «Bestätigungsmail an Absender/in»).', 'gutenberg-formbuilder' ) . '</p>';
+
+		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Zuverlässige Zustellung ist Betreiber-Aufgabe', 'gutenberg-formbuilder' ) . '</strong></p>';
+		echo '<ul style="margin:.2rem 0 .8rem 1.2rem;list-style:disc;">';
+		echo '<li>' . esc_html__( 'Die Mails werden mit fester Absenderadresse noreply@ihrer-domain über den Mailweg der Website verschickt (wp_mail). Für zuverlässige Zustellung braucht die Domain ein SMTP-Setup mit SPF, DKIM und DMARC – ohne diese Nachweise landen Autoresponder oft im Spam.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Der Return-Path (Rückläufer-Adresse) wird auf die Absenderadresse gesetzt. Richten Sie dieses Postfach ein oder leiten Sie es um, damit Bounces (unzustellbare Mails) sichtbar werden.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Keine Freemail-Domain (gmail.com, gmx.ch usw.) als Absenderadresse verwenden – deren DMARC-Richtlinien lassen Fremdversand scheitern.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Der Status in den Formular-Einträgen bedeutet «an Mailserver übergeben» – nicht «zugestellt». Der einzige positive Zustellnachweis ist der Klick auf den Bestätigungslink.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '</ul>';
+
+		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Missbrauchsschutz (automatisch aktiv)', 'gutenberg-formbuilder' ) . '</strong></p>';
+		echo '<ul style="margin:.2rem 0 .8rem 1.2rem;list-style:disc;">';
+		echo '<li>' . esc_html__( 'Der Sofort-Modus versendet nur, wenn für das Formular ein Captcha erzwungen ist – sonst wäre das Formular als anonyme Mail-Kanone missbrauchbar.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Ein mehrschichtiges Sende-Limit begrenzt den Versand: 50 Bestätigungsmails pro Stunde und Website, 10 pro Stunde und IP-Adresse, 3 pro Stunde und Empfängeradresse (Filter gfb_receipt_gate_limits).', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Nie bestätigte Einsendungen im Link-Modus werden nach 45 Tagen automatisch gelöscht (Filter gfb_receipt_retention_days).', 'gutenberg-formbuilder' ) . '</li>';
+		echo '</ul>';
+
+		echo '<p style="margin:0 0 .4rem;"><strong>' . esc_html__( 'Datenschutz und Recht', 'gutenberg-formbuilder' ) . '</strong></p>';
+		echo '<ul style="margin:.2rem 0 .8rem 1.2rem;list-style:disc;">';
+		echo '<li>' . esc_html__( 'Wird ein externer SMTP-Dienst genutzt, ist er Auftragsbearbeiter (Art. 9 revDSG, Art. 28 DSGVO): AVV abschliessen, Serverstandort und TLS prüfen, EU-/CH-Anbieter bevorzugen.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Der Klick auf den Bestätigungslink belegt die Kontrolle über das Postfach – er ist keine rechtsverbindliche Willenserklärung. Für bindende Erklärungen geeignetere Mittel verwenden.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Vertrauliche Felder stehen im Sofort-Modus nur als Hinweis «vertraulich gespeichert» in der Mail; im Klartext erst nach bestätigter Adresse (Double-Opt-in).', 'gutenberg-formbuilder' ) . '</li>';
+		echo '</ul>';
+
+		self::render_captcha_snippet_block(
+			'gfb-receipt-privacy-snippet',
+			__( 'Textbaustein für Ihre Datenschutzerklärung (Bestätigungsmail) anzeigen', 'gutenberg-formbuilder' ),
+			__( 'Diesen Text kopieren Sie in Ihre öffentliche Datenschutzerklärung, wenn Sie die Bestätigungsmail einsetzen.', 'gutenberg-formbuilder' ),
+			GFB_Receipt_Mail::privacy_text_snippet(),
+			14,
+			__( 'Vor dem Veröffentlichen die Platzhalter in eckigen Klammern ersetzen: Aufbewahrungsfrist gemäss Ihrer Konfiguration sowie Anbieter und Sitz Ihres SMTP-Dienstes.', 'gutenberg-formbuilder' )
+		);
+
+		// Eigener Copy-Handler: das Skript der CAPTCHA-Karte läuft beim Parsen
+		// und erreicht diesen später gerenderten Button nicht mehr.
+		echo "<script>(function(){var b=document.querySelector('#gfb-bestaetigungsmail .gfb-captcha-copy');if(!b)return;b.addEventListener('click',function(){var ta=document.getElementById(b.getAttribute('data-target'));if(!ta)return;ta.removeAttribute('hidden');ta.focus();ta.select();var done=function(){var o=b.textContent;b.textContent=b.getAttribute('data-done');setTimeout(function(){b.textContent=o;},1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){try{document.execCommand('copy');done();}catch(e){}});}else{try{document.execCommand('copy');done();}catch(e){}}});})();</script>";
 	}
 
 	/**

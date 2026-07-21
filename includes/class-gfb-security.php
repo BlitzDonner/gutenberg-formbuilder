@@ -617,6 +617,34 @@ class GFB_Security {
 	 * ------------------------------------------------------------------ */
 
 	/**
+	 * Deterministischer, gepfefferter HMAC eines E-Mail-Werts (lower/trim).
+	 * Wird als Suchindex im Payload mitgespeichert (_gfb_email_hmacs), damit
+	 * Exporter/Eraser auch verschlüsselte E-Mail-Felder finden – die
+	 * LIKE-Suche greift auf Ciphertext nicht.
+	 *
+	 * @param string $email E-Mail-Adresse.
+	 * @return string 64 Hex-Zeichen.
+	 */
+	public static function email_search_hash( $email ) {
+		$norm = strtolower( trim( (string) $email ) );
+		return hash_hmac( 'sha256', $norm, wp_salt( 'auth' ) . '|gfb-email-index-v1' );
+	}
+
+	/**
+	 * WHERE-Klausel-Werte für die Personen-Suche: Klartext-LIKE plus HMAC-LIKE.
+	 *
+	 * @param string $email_address E-Mail.
+	 * @return array{plain:string,hash:string}
+	 */
+	private static function personal_data_like_patterns( $email_address ) {
+		global $wpdb;
+		return array(
+			'plain' => '%' . $wpdb->esc_like( (string) $email_address ) . '%',
+			'hash'  => '%' . $wpdb->esc_like( self::email_search_hash( (string) $email_address ) ) . '%',
+		);
+	}
+
+	/**
 	 * @param array<string,array<string,mixed>> $exporters
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -650,11 +678,15 @@ class GFB_Security {
 	public static function export_personal_data( $email_address, $page = 1 ) {
 		global $wpdb;
 		$table = $wpdb->prefix . 'gfb_submissions';
+		// Zwei Suchwege: Klartext-LIKE plus gepfefferter E-Mail-HMAC – so werden
+		// auch Einsendungen mit verschlüsseltem E-Mail-Feld gefunden.
+		$like  = self::personal_data_like_patterns( $email_address );
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT id, created_at, post_id, form_id, form_title, payload, ip_address, user_agent FROM {$table} WHERE payload LIKE %s ORDER BY id ASC LIMIT 200 OFFSET %d",
-				'%' . $wpdb->esc_like( (string) $email_address ) . '%',
+				"SELECT id, created_at, post_id, form_id, form_title, payload, ip_address, user_agent FROM {$table} WHERE payload LIKE %s OR payload LIKE %s ORDER BY id ASC LIMIT 200 OFFSET %d",
+				$like['plain'],
+				$like['hash'],
 				( max( 1, (int) $page ) - 1 ) * 200
 			)
 		);
@@ -693,8 +725,27 @@ class GFB_Security {
 					),
 				);
 				foreach ( $payload as $k => $v ) {
-					if ( '_gfb_labels' === $k ) {
+					// Interne Schlüssel (_gfb_labels, _gfb_email_hmacs) nicht exportieren.
+					if ( 0 === strpos( (string) $k, '_gfb' ) ) {
 						continue;
+					}
+					// Vertrauliche Werte für die betroffene Person entschlüsselt
+					// ausgeben – oder klar gekennzeichnet, wenn nicht möglich.
+					if ( GFB_Crypto::is_field_envelope( $v ) ) {
+						$plain = GFB_Crypto::decrypt_field( $v, 'field:' . sanitize_key( (string) $k ) );
+						$v     = ( false === $plain )
+							? __( '[verschlüsselt gespeichert – Entschlüsselung nicht möglich]', 'gutenberg-formbuilder' )
+							: $plain;
+					} elseif ( is_array( $v ) && isset( $v['_ref'] ) && 0 === strpos( (string) $v['_ref'], 'gfb-file:' ) ) {
+						$file_id = isset( $v['file_id'] ) ? (int) $v['file_id'] : 0;
+						$file    = ( $file_id > 0 && class_exists( 'GFB_File_Storage' ) ) ? GFB_File_Storage::get( $file_id ) : null;
+						$v       = $file
+							? sprintf(
+								/* translators: %s: Dateiname */
+								__( 'Hochgeladene Datei: %s (verschlüsselt gespeichert)', 'gutenberg-formbuilder' ),
+								(string) $file->original_name
+							)
+							: __( 'Hochgeladene Datei (verschlüsselt gespeichert)', 'gutenberg-formbuilder' );
 					}
 					$items[] = array(
 						'name'  => (string) $k,
@@ -725,17 +776,26 @@ class GFB_Security {
 	public static function erase_personal_data( $email_address, $page = 1 ) {
 		global $wpdb;
 		$table = $wpdb->prefix . 'gfb_submissions';
+		// Suche wie im Exporter: Klartext-LIKE plus gepfefferter E-Mail-HMAC.
+		$like  = self::personal_data_like_patterns( $email_address );
 		$ids   = $wpdb->get_col(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT id FROM {$table} WHERE payload LIKE %s ORDER BY id ASC LIMIT 200",
-				'%' . $wpdb->esc_like( (string) $email_address ) . '%'
+				"SELECT id FROM {$table} WHERE payload LIKE %s OR payload LIKE %s ORDER BY id ASC LIMIT 200",
+				$like['plain'],
+				$like['hash']
 			)
 		);
 
 		$removed = 0;
 		if ( is_array( $ids ) ) {
 			foreach ( $ids as $id ) {
+				// Erst verschlüsselte Datei-Anhänge (Storage + DB-Reihen) löschen,
+				// dann die Einsendung selbst – mit ihr verschwinden auch die
+				// DOI-Token-Spalten der Zeile.
+				if ( class_exists( 'GFB_File_Storage' ) ) {
+					GFB_File_Storage::delete_for_submission( (int) $id );
+				}
 				$ok = $wpdb->delete( $table, array( 'id' => (int) $id ), array( '%d' ) );
 				if ( false !== $ok ) {
 					++$removed;

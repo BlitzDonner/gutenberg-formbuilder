@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/doi-mail",
+  "version": "2.10.0",
+  "title": "Bestätigungslink-Mail – Inhalt",
+  "category": "gfb-form",
+  "ancestor": ["gfb/form"],
+  "icon": {
+    "src": "email-alt",
+    "foreground": "#1b2627"
+  },
+  "description": "Inhalt der Link-Mail im Modus «mit Bestätigungslink» (nur Editor, erscheint nie im Formular). Pflicht-Platzhalter: {{bestaetigungslink}}; fehlt er, hängt der Server den Link automatisch an.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "innerBlocks": true
+  },
+  "editorScript": "gfb-editor"
+}

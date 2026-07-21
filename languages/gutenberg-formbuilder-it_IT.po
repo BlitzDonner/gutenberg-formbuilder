@@ -447,3 +447,115 @@ msgstr "Prova token: server di aggiornamento non raggiungibile – riprova più 
 msgid "Token testen: Kein Token hinterlegt."
 msgstr "Prova token: nessun token salvato."
 
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse"
+msgstr "Confermi il suo indirizzo e-mail"
+
+msgid "Ihre Einsendung bei %s ist eingegangen"
+msgstr "Il suo invio su %s è stato ricevuto"
+
+msgid "Ihre Einsendung bei %s ist bestätigt"
+msgstr "Il suo invio su %s è confermato"
+
+msgid "Ihre Einsendung ist eingegangen"
+msgstr "Il suo invio è stato ricevuto"
+
+msgid "Vielen Dank. Diese E-Mail bestätigt den Eingang Ihrer Angaben:"
+msgstr "Grazie. Questa e-mail conferma la ricezione dei suoi dati:"
+
+msgid "Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses E-Mail-Postfach Ihnen gehört – erst danach erhalten Sie die vollständige Eingangsbestätigung."
+msgstr "Il suo invio è stato ricevuto. Confermi con un clic che questa casella di posta le appartiene – solo dopo riceverà la conferma di ricezione completa."
+
+msgid "Der Link ist 7 Tage gültig und funktioniert nur einmal."
+msgstr "Il link è valido per 7 giorni e funziona una sola volta."
+
+msgid "Diese Angaben wurden über ein Formular auf %s übermittelt:"
+msgstr "Questi dati sono stati trasmessi tramite un modulo su %s:"
+
+msgid "vertraulich gespeichert"
+msgstr "salvato in modo confidenziale"
+
+msgid "verschlüsselt gespeichert"
+msgstr "salvato in forma cifrata"
+
+msgid "Datei #%d"
+msgstr "File #%d"
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann hat jemand Ihre E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; Sie können dort jederzeit die Löschung verlangen – antworten Sie dazu auf diese E-Mail oder nutzen Sie die Kontaktangaben der Website."
+msgstr "Non ha compilato questo modulo? Allora qualcuno ha inserito il suo indirizzo e-mail. L’invio è conservato dal gestore di questo sito; può richiederne la cancellazione in qualsiasi momento – risponda a questa e-mail o utilizzi i contatti del sito."
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann ignorieren Sie diese E-Mail. Ohne Bestätigung gilt Ihre Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht."
+msgstr "Non ha compilato questo modulo? Ignori semplicemente questa e-mail. Senza conferma il suo indirizzo non risulta confermato e l’invio non confermato viene cancellato automaticamente dopo un termine fisso."
+
+msgid "Bestätigung"
+msgstr "Conferma"
+
+msgid "E-Mail-Adresse bestätigen"
+msgstr "Confermare l’indirizzo e-mail"
+
+msgid "Mit einem Klick auf den Knopf bestätigen Sie, dass dieses E-Mail-Postfach Ihnen gehört. Erst danach erhalten Sie die vollständige Eingangsbestätigung per E-Mail."
+msgstr "Cliccando sul pulsante conferma che questa casella di posta le appartiene. Solo dopo riceverà la conferma di ricezione completa per e-mail."
+
+msgid "Jetzt bestätigen"
+msgstr "Conferma ora"
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann schliessen Sie diese Seite einfach – ohne Bestätigung passiert nichts."
+msgstr "Non ha compilato questo modulo? Chiuda semplicemente questa pagina – senza conferma non succede nulla."
+
+msgid "Vielen Dank – Adresse bestätigt"
+msgstr "Grazie – indirizzo confermato"
+
+
+msgid "Bestätigung nicht möglich"
+msgstr "Conferma non possibile"
+
+msgid "Dieser Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet."
+msgstr "Questo link di conferma non è valido, è scaduto o è già stato utilizzato."
+
+msgid "Ihre Bestätigung ist erfasst."
+msgstr "La sua conferma è stata registrata."
+
+msgid "Die Quittung wurde an Ihren Mailserver übergeben."
+msgstr "La ricevuta è stata consegnata al suo server di posta."
+
+msgid "Der Seitenbetreiber hat Ihre Meldung erhalten."
+msgstr "Il gestore del sito ha ricevuto la sua segnalazione."
+
+msgid "Sie sind dem Bestätigungslink aus unserer E-Mail gefolgt."
+msgstr "Ha seguito il link di conferma della nostra e-mail."
+
+msgid "Das Ergebnis Ihrer Bestätigung:"
+msgstr "L’esito della sua conferma:"
+
+msgid "Formular – Bestätigungsseite"
+msgstr "Modulo – Pagina di conferma"
+
+msgid "Formular – Bestätigungs-Ergebnis"
+msgstr "Modulo – Esito della conferma"
+
+msgid "Landeseite des Bestätigungslinks (Double-Opt-in): neutraler Text und Bestätigungs-Knopf. Feldwerte stehen hier by design nie zur Verfügung."
+msgstr "Pagina di destinazione del link di conferma (double opt-in): testo neutro e pulsante di conferma. Per progettazione, i valori dei campi non sono mai disponibili qui."
+
+msgid "Ergebnisseite nach dem Bestätigungs-Klick: erfasst oder uniform neutral abgelehnt (abgelaufen/ungültig/benutzt). Feldwerte stehen hier by design nie zur Verfügung."
+msgstr "Pagina di esito dopo il clic di conferma: registrata, oppure rifiuto uniforme e neutro (scaduto/non valido/già usato). Per progettazione, i valori dei campi non sono mai disponibili qui."
+
+msgid "DOI"
+msgstr "DOI"
+
+msgid "Kein Bestätigungslink"
+msgstr "Nessun link di conferma"
+
+msgid "Bestätigt am %s"
+msgstr "Confermato il %s"
+
+msgid "Bestätigt"
+msgstr "Confermato"
+
+msgid "Bestätigung offen bis %s"
+msgstr "Conferma in attesa fino al %s"
+
+msgid "Bestätigung offen (Ablauf unbekannt)"
+msgstr "Conferma in attesa (scadenza sconosciuta)"
+
+msgid "Nicht rechtzeitig bestätigt (abgelaufen am %s)"
+msgstr "Non confermato in tempo (scaduto il %s)"

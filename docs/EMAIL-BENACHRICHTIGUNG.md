@@ -83,7 +83,17 @@ Dropdown **Absender-E-Mail**:
 
 **Beispiel:** `Einsendung von {{label_email}}` oder `{{vorname}} {{nachname}}` (technische Feldnamen).
 
-**Hinweis:** Wenn die From-Adresse aus einem Besucher-Feld kommt, kann der Versand je nach SPF/DMARC des Hosts fehlschlagen oder als Spam eingestuft werden. Für zuverlässige Zustellung oft Admin-E-Mail als From und ggf. später Reply-To-Erweiterung prüfen.
+**Hinweis Zustellbarkeit (gilt für Betreiber-Mail und Bestätigungsmail):**
+
+- **SPF, DKIM, DMARC:** Zuverlässige Zustellung setzt ein SMTP-Setup voraus, bei dem die Site-Domain diese drei Nachweise besteht. Ohne sie landen automatisch erzeugte Mails oft im Spam oder werden abgewiesen.
+- **From-Adresse:** Kommt die From-Adresse aus einem Besucher-Feld, scheitert der Versand je nach DMARC-Richtlinie der fremden Domain. Die **Bestätigungsmail** an die ausfüllende Person nutzt deshalb **immer** eine feste, betreiber-eigene Adresse (`noreply@site-domain`, Filter `gfb_receipt_from`) – nie ein Besucher-Feld. Keine Freemail-Domain (gmail.com, gmx.ch …) als From verwenden.
+- **Return-Path / Bounces:** Die Bestätigungsmail setzt den Return-Path auf die From-Adresse (Filter `gfb_receipt_return_path`). Dieses Postfach einrichten oder umleiten, damit unzustellbare Mails (Bounces) sichtbar werden. Harte Bounces zitieren den Mail-Inhalt – ein Grund mehr, weshalb vertrauliche Werte im Sofort-Modus unterdrückt bleiben.
+- **«Übergeben» heisst nicht «zugestellt»:** Der Status in den Formular-Einträgen bestätigt nur die Übergabe an den Mailserver. Der einzige positive Zustellnachweis ist der Klick auf den Bestätigungslink (Double-Opt-in).
+- **AVV:** Ein externer SMTP-Dienst ist Auftragsbearbeiter (Art. 9 revDSG, Art. 28 DSGVO) – AVV abschliessen, Serverstandort und TLS prüfen, EU-/CH-Anbieter bevorzugen.
+
+**Kopplung an den Double-Opt-in-Modus:** Die beiden Betreiber-Mails des Bestätigungslink-Modus («unbestätigt eingegangen» beim Absenden, «jetzt bestätigt» nach dem Klick) sind Ausprägungen dieser Betreiber-Benachrichtigung. Sie werden nur versendet, wenn **E-Mail nach Absenden senden** (`emailNotificationEnabled`) aktiviert ist – ist die Benachrichtigung aus, gehen keine Betreiber-Mails, der Bestätigungslink an die ausfüllende Person funktioniert unabhängig davon. Der Editor warnt bei dieser Kombination.
+
+**Landeseiten des Bestätigungslinks gestalten:** Ab WordPress 6.7 sind die zwei Seiten des Bestätigungslinks im Website-Editor unter «Templates» anpassbar («Formular – Bestätigungsseite», «Formular – Bestätigungs-Ergebnis»). Der Block «Bestätigungs-Status» rendert dort Knopf bzw. Ergebnis-Meldung und gibt nie Feldwerte aus. Remote-Bilder laden auf diesen Seiten bewusst nicht (Sicherheits-Policy self-only gegen Token-Leck). Bei WordPress-Versionen vor 6.7 erscheint die eingebaute Minimalseite. Details: [`BESTAETIGUNGSMAIL-SPEC.md`](BESTAETIGUNGSMAIL-SPEC.md), Abschnitt 13.
 
 ---
 

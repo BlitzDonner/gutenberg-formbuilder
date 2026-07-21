@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/all-fields",
+  "version": "2.10.0",
+  "title": "Alle Feldwerte",
+  "category": "gfb-form",
+  "ancestor": ["gfb/receipt-mail"],
+  "icon": {
+    "src": "editor-table",
+    "foreground": "#1b2627"
+  },
+  "description": "Platzhalter-Block: fügt in der Bestätigungsmail an dieser Stelle die Tabelle aller übermittelten Feldwerte ein (vertrauliche Felder je nach Modus nur als Hinweis).",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "multiple": false
+  },
+  "editorScript": "gfb-editor"
+}

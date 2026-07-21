@@ -270,7 +270,11 @@
 			if ( ! b || ! b.name ) {
 				return;
 			}
-			if ( b.name === 'gfb/form-success' ) {
+			if (
+				b.name === 'gfb/form-success' ||
+				b.name === 'gfb/receipt-mail' ||
+				b.name === 'gfb/doi-mail'
+			) {
 				return;
 			}
 			if ( b.name.indexOf( 'gfb/field-' ) === 0 && b.name !== 'gfb/field-submit' ) {
@@ -304,6 +308,13 @@
 		}
 		blocks.forEach( function ( b ) {
 			if ( ! b || ! b.name ) {
+				return;
+			}
+			if (
+				b.name === 'gfb/form-success' ||
+				b.name === 'gfb/receipt-mail' ||
+				b.name === 'gfb/doi-mail'
+			) {
 				return;
 			}
 			if ( b.name === 'gfb/field-email' ) {
@@ -535,6 +546,305 @@
 						} )
 				  )
 				: null
+		);
+	}
+
+	/**
+	 * Rekursiv: enthält der Block-Baum ein vertraulich markiertes Feld?
+	 *
+	 * @param {Array} blocks
+	 * @return {boolean}
+	 */
+	function gfbBlocksHaveSensitiveField( blocks ) {
+		if ( ! blocks || ! blocks.length ) {
+			return false;
+		}
+		for ( var i = 0; i < blocks.length; i++ ) {
+			var b = blocks[ i ];
+			if ( ! b || ! b.name ) {
+				continue;
+			}
+			if (
+				b.name.indexOf( 'gfb/field-' ) === 0 &&
+				b.attributes &&
+				b.attributes.sensitive === true
+			) {
+				return true;
+			}
+			if ( b.innerBlocks && gfbBlocksHaveSensitiveField( b.innerBlocks ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Rekursiv: erster Block eines Typs im Baum (oder null).
+	 *
+	 * @param {Array} blocks
+	 * @param {string} name
+	 * @return {object|null}
+	 */
+	function gfbFindBlockOfType( blocks, name ) {
+		if ( ! blocks || ! blocks.length ) {
+			return null;
+		}
+		for ( var i = 0; i < blocks.length; i++ ) {
+			var b = blocks[ i ];
+			if ( ! b ) {
+				continue;
+			}
+			if ( b.name === name ) {
+				return b;
+			}
+			if ( b.innerBlocks ) {
+				var found = gfbFindBlockOfType( b.innerBlocks, name );
+				if ( found ) {
+					return found;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Rekursiv: kommt {{bestaetigungslink}} in einem String-Attribut vor?
+	 * (Pflicht-Platzhalter der Link-Mail; RichText-Werte werden über String()
+	 * verglichen.)
+	 *
+	 * @param {Array} blocks
+	 * @return {boolean}
+	 */
+	function gfbBlocksContainConfirmPlaceholder( blocks ) {
+		if ( ! blocks || ! blocks.length ) {
+			return false;
+		}
+		for ( var i = 0; i < blocks.length; i++ ) {
+			var b = blocks[ i ];
+			if ( ! b ) {
+				continue;
+			}
+			var attrs = b.attributes || {};
+			for ( var key in attrs ) {
+				if ( ! Object.prototype.hasOwnProperty.call( attrs, key ) ) {
+					continue;
+				}
+				var v = attrs[ key ];
+				if ( v == null ) {
+					continue;
+				}
+				var s = '';
+				try {
+					s = String( v );
+				} catch ( err ) {
+					s = '';
+				}
+				if ( s.indexOf( '{{bestaetigungslink}}' ) !== -1 ) {
+					return true;
+				}
+			}
+			if ( b.innerBlocks && gfbBlocksContainConfirmPlaceholder( b.innerBlocks ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Sofort-Modus verlangt serverseitig ein erzwungenes Captcha (Blocker 2).
+	 * Liefert true, wenn das Captcha für dieses Formular wirksam ist.
+	 *
+	 * @param {object} attributes gfb/form-Attribute.
+	 * @return {boolean}
+	 */
+	function gfbCaptchaEffectiveForForm( attributes ) {
+		var hasKeys =
+			typeof gfbEditorAssets !== 'undefined' && gfbEditorAssets.captchaHasKeys === '1';
+		var globalActive =
+			typeof gfbEditorAssets !== 'undefined' && gfbEditorAssets.captchaGlobalActive === '1';
+		var mode = attributes.captchaMode || 'inherit';
+		if ( mode === 'off' ) {
+			return false;
+		}
+		if ( mode === 'on' ) {
+			return hasKeys;
+		}
+		return globalActive;
+	}
+
+	/**
+	 * Inspector-Bereich «Bestätigungsmail an Absender/in» am gfb/form-Block.
+	 *
+	 * @param {object} attributes
+	 * @param {function} setAttributes
+	 * @param {Array<{name:string,label:string}>} emailFieldRows
+	 * @param {{hasSensitive:boolean,hasReceiptBlock:boolean,hasDoiBlock:boolean}} info
+	 * @return {*}
+	 */
+	function renderReceiptMailControls( attributes, setAttributes, emailFieldRows, info ) {
+		var mode = attributes.receiptMode || 'none';
+		var active = mode === 'instant' || mode === 'doi';
+
+		var recipientOptions = [
+			{
+				label: __( '— E-Mail-Feld wählen —', 'gutenberg-formbuilder' ),
+				value: '',
+			},
+		];
+		emailFieldRows.forEach( function ( row ) {
+			var optLabel = row.label ? row.label + ' (' + row.name + ')' : row.name;
+			recipientOptions.push( { label: optLabel, value: row.name } );
+		} );
+
+		var notices = [];
+		if ( active && ! emailFieldRows.length ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'warning', isDismissible: false, key: 'no-email-field' },
+					__(
+						'Dieses Formular hat kein E-Mail-Feld. Ohne E-Mail-Feld wird keine Bestätigungsmail versendet; die Einsendung läuft normal.',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+		if ( active && emailFieldRows.length && ! attributes.receiptEmailField ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'warning', isDismissible: false, key: 'no-recipient' },
+					__(
+						'Kein Empfänger-Feld gewählt – es wird keine Bestätigungsmail versendet; die Einsendung läuft normal.',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+		if ( mode === 'instant' && ! gfbCaptchaEffectiveForForm( attributes ) ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'warning', isDismissible: false, key: 'captcha-required' },
+					__(
+						'Der Sofort-Modus versendet nur mit erzwungenem Captcha (Missbrauchsschutz). Captcha für dieses Formular auf «Immer an» stellen und die Schlüssel unter «Sicherheit & Einstellungen» hinterlegen – sonst unterdrückt der Server den Versand.',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+		if ( mode === 'instant' && info.hasSensitive ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'info', isDismissible: false, key: 'sensitive-instant' },
+					__(
+						'Dieses Formular enthält vertrauliche Felder. Im Sofort-Modus stehen sie in der Mail nur als Hinweis «vertraulich gespeichert»; im Klartext erst nach bestätigter Adresse (Modus «mit Bestätigungslink»).',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+		if ( active && ! info.hasReceiptBlock ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'info', isDismissible: false, key: 'no-receipt-block' },
+					__(
+						'Ohne den Block «Bestätigungsmail – Inhalt» im Formular wird die eingebaute Standard-Vorlage verwendet. Block einfügen, um die Mail zu gestalten.',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+		if ( mode === 'doi' && ! info.hasDoiBlock ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'info', isDismissible: false, key: 'no-doi-block' },
+					__(
+						'Ohne den Block «Bestätigungslink-Mail – Inhalt» im Formular wird die eingebaute Standard-Vorlage der Link-Mail verwendet.',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+		if ( mode === 'doi' && attributes.emailNotificationEnabled !== true ) {
+			notices.push(
+				el(
+					Notice,
+					{ status: 'warning', isDismissible: false, key: 'doi-no-operator-mail' },
+					__(
+						'Die E-Mail-Benachrichtigung ist deaktiviert. Die beiden Betreiber-Mails des Bestätigungslink-Modus («unbestätigt eingegangen», «jetzt bestätigt») sind Teil der Betreiber-Benachrichtigung und entfallen dann – der Bestätigungslink an die ausfüllende Person funktioniert unabhängig davon.',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		}
+
+		return el(
+			PanelBody,
+			{
+				title: __( 'Bestätigungsmail an Absender/in', 'gutenberg-formbuilder' ),
+				initialOpen: false,
+			},
+			el( SelectControl, {
+				label: __( 'Modus', 'gutenberg-formbuilder' ),
+				help: __(
+					'Sofort: Quittung direkt nach dem Absenden. Mit Bestätigungslink: erst Link-Mail, die vollständige Quittung folgt nach dem Klick (Double-Opt-in).',
+					'gutenberg-formbuilder'
+				),
+				value: mode,
+				options: [
+					{ label: __( 'Keine', 'gutenberg-formbuilder' ), value: 'none' },
+					{ label: __( 'Sofort', 'gutenberg-formbuilder' ), value: 'instant' },
+					{ label: __( 'Mit Bestätigungslink (Double-Opt-in)', 'gutenberg-formbuilder' ), value: 'doi' },
+				],
+				onChange: function ( v ) {
+					setAttributes( { receiptMode: v === 'instant' || v === 'doi' ? v : 'none' } );
+				},
+			} ),
+			active
+				? el( SelectControl, {
+						label: __( 'Empfänger (E-Mail-Feld des Formulars)', 'gutenberg-formbuilder' ),
+						help: __(
+							'Die Bestätigungsmail geht an die Adresse aus diesem Feld der Einsendung.',
+							'gutenberg-formbuilder'
+						),
+						value: attributes.receiptEmailField || '',
+						options: recipientOptions,
+						onChange: function ( v ) {
+							setAttributes( { receiptEmailField: v || '' } );
+						},
+				  } )
+				: null,
+			active
+				? el( TextControl, {
+						label: __( 'Betreff der Bestätigungsmail', 'gutenberg-formbuilder' ),
+						help: __(
+							'Leer = Standardbetreff. Platzhalter: {{feldname}} und {{label_feldname}}.',
+							'gutenberg-formbuilder'
+						),
+						value: attributes.receiptSubject || '',
+						onChange: function ( v ) {
+							setAttributes( { receiptSubject: v == null ? '' : String( v ) } );
+						},
+				  } )
+				: null,
+			mode === 'doi'
+				? el( TextControl, {
+						label: __( 'Betreff der Link-Mail', 'gutenberg-formbuilder' ),
+						help: __(
+							'Leer = Standardbetreff der Bestätigungslink-Mail.',
+							'gutenberg-formbuilder'
+						),
+						value: attributes.doiSubject || '',
+						onChange: function ( v ) {
+							setAttributes( { doiSubject: v == null ? '' : String( v ) } );
+						},
+				  } )
+				: null,
+			notices.length ? el( 'div', null, notices ) : null
 		);
 	}
 
@@ -1645,6 +1955,32 @@
 				[ props.clientId ]
 			);
 
+			/* Zustand für die Editor-Warnungen der Bestätigungsmail. */
+			var receiptInfo = useSelect(
+				function ( select ) {
+					var fallback = {
+						hasSensitive: false,
+						hasReceiptBlock: false,
+						hasDoiBlock: false,
+					};
+					try {
+						var block = select( 'core/block-editor' ).getBlock( props.clientId );
+						if ( ! block ) {
+							return fallback;
+						}
+						var inner = block.innerBlocks || [];
+						return {
+							hasSensitive: gfbBlocksHaveSensitiveField( inner ),
+							hasReceiptBlock: !! gfbFindBlockOfType( inner, 'gfb/receipt-mail' ),
+							hasDoiBlock: !! gfbFindBlockOfType( inner, 'gfb/doi-mail' ),
+						};
+					} catch ( errReceipt ) {
+						return fallback;
+					}
+				},
+				[ props.clientId ]
+			);
+
 			var thankYouPageOptions = [
 				{
 					label: __( 'Formularseite mit Erfolgshinweis (Standard)', 'gutenberg-formbuilder' ),
@@ -1806,6 +2142,7 @@
 						} )
 					),
 					renderEmailNotificationControls( attributes, setAttributes, emailFieldRows || [] ),
+					renderReceiptMailControls( attributes, setAttributes, emailFieldRows || [], receiptInfo ),
 					el( PanelBody, {
 						title: __( 'Spam-Schutz (CAPTCHA)', 'gutenberg-formbuilder' ),
 						initialOpen: false,
@@ -2010,6 +2347,196 @@
 								replaceBlocks( [ clientId ], [ para ] );
 							},
 					  } )
+			);
+		},
+		save: function () {
+			return null;
+		},
+	} );
+
+	/**
+	 * Gemeinsame Registrierung der beiden Mail-Container (gfb/receipt-mail,
+	 * gfb/doi-mail): InnerBlocks-Muster wie gfb/form-success, begrenztes
+	 * Gutenberg-Set (E6), Frontend rendert '' über den PHP-render_callback.
+	 *
+	 * @param {string} blockName
+	 * @param {{title:string,intro:string,allowed:Array<string>,template:Array,noticeCheck:function(Array):Array}} options
+	 */
+	function gfbRegisterMailRegionBlock( blockName, options ) {
+		registerBlockType( blockName, {
+			supports: {
+				innerBlocks: true,
+			},
+			edit: function ( props ) {
+				var blockProps = useBlockProps( {
+					className: 'gfb-mail-region-editor',
+				} );
+				var innerBlocksState = useSelect(
+					function ( select ) {
+						try {
+							var b = select( 'core/block-editor' ).getBlock( props.clientId );
+							return b && b.innerBlocks ? b.innerBlocks : [];
+						} catch ( err ) {
+							return [];
+						}
+					},
+					[ props.clientId ]
+				);
+				var innerBlocksProps = useInnerBlocksProps(
+					{ className: 'gfb-mail-region-editor__inner' },
+					{
+						allowedBlocks: options.allowed,
+						template: options.template,
+						templateLock: false,
+					}
+				);
+				var notices = options.noticeCheck( innerBlocksState );
+				return el(
+					'div',
+					blockProps,
+					el(
+						'p',
+						{ className: 'gfb-mail-region-editor__title' },
+						options.title
+					),
+					el(
+						'p',
+						{ className: 'gfb-mail-region-editor__intro' },
+						options.intro
+					),
+					notices.length ? el( 'div', null, notices ) : null,
+					el( 'div', innerBlocksProps )
+				);
+			},
+			save: function () {
+				return el( InnerBlocks.Content );
+			},
+		} );
+	}
+
+	gfbRegisterMailRegionBlock( 'gfb/receipt-mail', {
+		title: __( 'Bestätigungsmail – Inhalt (nur Editor, erscheint nie im Formular)', 'gutenberg-formbuilder' ),
+		intro: __(
+			'Inhalt der Bestätigungsmail an die ausfüllende Person. Platzhalter: {{feldname}} und {{label_feldname}}; der Block «Alle Feldwerte» fügt die Daten-Tabelle ein.',
+			'gutenberg-formbuilder'
+		),
+		allowed: [
+			'core/paragraph',
+			'core/heading',
+			'core/list',
+			'core/image',
+			'core/separator',
+			'core/buttons',
+			'gfb/all-fields',
+		],
+		template: [
+			[ 'core/heading', { level: 2, content: __( 'Ihre Einsendung ist eingegangen', 'gutenberg-formbuilder' ) } ],
+			[ 'core/paragraph', { content: __( 'Vielen Dank. Diese E-Mail bestätigt den Eingang Ihrer Angaben:', 'gutenberg-formbuilder' ) } ],
+			[ 'gfb/all-fields' ],
+		],
+		noticeCheck: function ( innerBlocks ) {
+			if ( innerBlocks.length && ! gfbFindBlockOfType( innerBlocks, 'gfb/all-fields' ) ) {
+				return [
+					el(
+						Notice,
+						{ status: 'info', isDismissible: false, key: 'no-all-fields' },
+						__(
+							'Ohne den Block «Alle Feldwerte» enthält die Mail keine automatische Daten-Tabelle – die Tabelle wird nicht angehängt (bewusste Gestaltungsfreiheit).',
+							'gutenberg-formbuilder'
+						)
+					),
+				];
+			}
+			return [];
+		},
+	} );
+
+	gfbRegisterMailRegionBlock( 'gfb/doi-mail', {
+		title: __( 'Bestätigungslink-Mail – Inhalt (nur Editor, erscheint nie im Formular)', 'gutenberg-formbuilder' ),
+		intro: __(
+			'Inhalt der Link-Mail im Modus «mit Bestätigungslink». Pflicht-Platzhalter: {{bestaetigungslink}}. Feldwerte erscheinen in dieser Mail nicht – die vollständige Quittung folgt erst nach dem Klick.',
+			'gutenberg-formbuilder'
+		),
+		allowed: [
+			'core/paragraph',
+			'core/heading',
+			'core/list',
+			'core/image',
+			'core/separator',
+			'core/buttons',
+		],
+		template: [
+			[ 'core/heading', { level: 2, content: __( 'Bitte bestätigen Sie Ihre E-Mail-Adresse', 'gutenberg-formbuilder' ) } ],
+			[ 'core/paragraph', { content: __( 'Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses Postfach Ihnen gehört:', 'gutenberg-formbuilder' ) } ],
+			[ 'core/paragraph', { content: '{{bestaetigungslink}}' } ],
+			[ 'core/paragraph', { content: __( 'Der Link ist 7 Tage gültig und funktioniert nur einmal.', 'gutenberg-formbuilder' ) } ],
+		],
+		noticeCheck: function ( innerBlocks ) {
+			if ( innerBlocks.length && ! gfbBlocksContainConfirmPlaceholder( innerBlocks ) ) {
+				return [
+					el(
+						Notice,
+						{ status: 'warning', isDismissible: false, key: 'no-confirm-link' },
+						__(
+							'Der Platzhalter {{bestaetigungslink}} fehlt. Die Mail geht nie ohne Link raus – der Server hängt ihn dann automatisch am Ende an.',
+							'gutenberg-formbuilder'
+						)
+					),
+				];
+			}
+			return [];
+		},
+	} );
+
+	registerBlockType( 'gfb/confirm-status', {
+		edit: function () {
+			var blockProps = useBlockProps( {
+				className: 'gfb-confirm-status-editor',
+			} );
+			return el(
+				'div',
+				blockProps,
+				el(
+					'p',
+					{ className: 'gfb-confirm-status-editor__label' },
+					__( 'Bestätigungs-Status (dynamisch)', 'gutenberg-formbuilder' )
+				),
+				el(
+					'p',
+					{ className: 'gfb-confirm-status-editor__hint' },
+					__(
+						'Hier rendert der Server je nach Zustand den Bestätigungs-Knopf (Landeseite) oder die Ergebnis-Meldung (erfasst / abgelaufen-ungültig-benutzt). Feldwerte erscheinen nie. Der Block gehört in die Templates «Formular – Bestätigungsseite» und «Formular – Bestätigungs-Ergebnis».',
+						'gutenberg-formbuilder'
+					)
+				)
+			);
+		},
+		save: function () {
+			return null;
+		},
+	} );
+
+	registerBlockType( 'gfb/all-fields', {
+		edit: function () {
+			var blockProps = useBlockProps( {
+				className: 'gfb-all-fields-editor',
+			} );
+			return el(
+				'div',
+				blockProps,
+				el(
+					'p',
+					{ className: 'gfb-all-fields-editor__label' },
+					__( 'Alle Feldwerte', 'gutenberg-formbuilder' )
+				),
+				el(
+					'p',
+					{ className: 'gfb-all-fields-editor__hint' },
+					__(
+						'Hier fügt der Server die Tabelle aller übermittelten Feldwerte ein. Vertrauliche Felder erscheinen im Sofort-Modus nur als «vertraulich gespeichert», Dateien als Dateiname mit Hinweis.',
+						'gutenberg-formbuilder'
+					)
+				)
 			);
 		},
 		save: function () {

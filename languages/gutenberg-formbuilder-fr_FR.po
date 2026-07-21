@@ -447,3 +447,115 @@ msgstr "Tester le jeton : serveur de mises à jour injoignable – veuillez rée
 msgid "Token testen: Kein Token hinterlegt."
 msgstr "Tester le jeton : aucun jeton enregistré."
 
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse"
+msgstr "Veuillez confirmer votre adresse e-mail"
+
+msgid "Ihre Einsendung bei %s ist eingegangen"
+msgstr "Votre envoi sur %s a bien été reçu"
+
+msgid "Ihre Einsendung bei %s ist bestätigt"
+msgstr "Votre envoi sur %s est confirmé"
+
+msgid "Ihre Einsendung ist eingegangen"
+msgstr "Votre envoi a bien été reçu"
+
+msgid "Vielen Dank. Diese E-Mail bestätigt den Eingang Ihrer Angaben:"
+msgstr "Merci. Cet e-mail confirme la réception de vos informations :"
+
+msgid "Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses E-Mail-Postfach Ihnen gehört – erst danach erhalten Sie die vollständige Eingangsbestätigung."
+msgstr "Votre envoi a bien été reçu. Veuillez confirmer d’un clic que cette boîte de réception vous appartient – vous recevrez ensuite l’accusé de réception complet."
+
+msgid "Der Link ist 7 Tage gültig und funktioniert nur einmal."
+msgstr "Le lien est valable 7 jours et ne fonctionne qu’une seule fois."
+
+msgid "Diese Angaben wurden über ein Formular auf %s übermittelt:"
+msgstr "Ces informations ont été transmises via un formulaire sur %s :"
+
+msgid "vertraulich gespeichert"
+msgstr "enregistré de manière confidentielle"
+
+msgid "verschlüsselt gespeichert"
+msgstr "enregistré chiffré"
+
+msgid "Datei #%d"
+msgstr "Fichier #%d"
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann hat jemand Ihre E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; Sie können dort jederzeit die Löschung verlangen – antworten Sie dazu auf diese E-Mail oder nutzen Sie die Kontaktangaben der Website."
+msgstr "Vous n’avez pas rempli ce formulaire ? Quelqu’un a alors saisi votre adresse e-mail. L’envoi est conservé par l’exploitant de ce site ; vous pouvez en demander la suppression à tout moment – répondez à cet e-mail ou utilisez les coordonnées du site."
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann ignorieren Sie diese E-Mail. Ohne Bestätigung gilt Ihre Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht."
+msgstr "Vous n’avez pas rempli ce formulaire ? Ignorez simplement cet e-mail. Sans confirmation, votre adresse n’est pas considérée comme confirmée et l’envoi non confirmé est supprimé automatiquement après un délai fixe."
+
+msgid "Bestätigung"
+msgstr "Confirmation"
+
+msgid "E-Mail-Adresse bestätigen"
+msgstr "Confirmer l’adresse e-mail"
+
+msgid "Mit einem Klick auf den Knopf bestätigen Sie, dass dieses E-Mail-Postfach Ihnen gehört. Erst danach erhalten Sie die vollständige Eingangsbestätigung per E-Mail."
+msgstr "En cliquant sur le bouton, vous confirmez que cette boîte de réception vous appartient. Vous recevrez ensuite l’accusé de réception complet par e-mail."
+
+msgid "Jetzt bestätigen"
+msgstr "Confirmer maintenant"
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann schliessen Sie diese Seite einfach – ohne Bestätigung passiert nichts."
+msgstr "Vous n’avez pas rempli ce formulaire ? Fermez simplement cette page – sans confirmation, il ne se passe rien."
+
+msgid "Vielen Dank – Adresse bestätigt"
+msgstr "Merci – adresse confirmée"
+
+
+msgid "Bestätigung nicht möglich"
+msgstr "Confirmation impossible"
+
+msgid "Dieser Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet."
+msgstr "Ce lien de confirmation est invalide, expiré ou a déjà été utilisé."
+
+msgid "Ihre Bestätigung ist erfasst."
+msgstr "Votre confirmation a été enregistrée."
+
+msgid "Die Quittung wurde an Ihren Mailserver übergeben."
+msgstr "L’accusé de réception a été remis à votre serveur de messagerie."
+
+msgid "Der Seitenbetreiber hat Ihre Meldung erhalten."
+msgstr "L’exploitant du site a bien reçu votre message."
+
+msgid "Sie sind dem Bestätigungslink aus unserer E-Mail gefolgt."
+msgstr "Vous avez suivi le lien de confirmation de notre e-mail."
+
+msgid "Das Ergebnis Ihrer Bestätigung:"
+msgstr "Le résultat de votre confirmation :"
+
+msgid "Formular – Bestätigungsseite"
+msgstr "Formulaire – Page de confirmation"
+
+msgid "Formular – Bestätigungs-Ergebnis"
+msgstr "Formulaire – Résultat de la confirmation"
+
+msgid "Landeseite des Bestätigungslinks (Double-Opt-in): neutraler Text und Bestätigungs-Knopf. Feldwerte stehen hier by design nie zur Verfügung."
+msgstr "Page d’arrivée du lien de confirmation (double opt-in) : texte neutre et bouton de confirmation. Par conception, les valeurs des champs ne sont jamais disponibles ici."
+
+msgid "Ergebnisseite nach dem Bestätigungs-Klick: erfasst oder uniform neutral abgelehnt (abgelaufen/ungültig/benutzt). Feldwerte stehen hier by design nie zur Verfügung."
+msgstr "Page de résultat après le clic de confirmation : enregistré, ou refus uniforme et neutre (expiré/invalide/utilisé). Par conception, les valeurs des champs ne sont jamais disponibles ici."
+
+msgid "DOI"
+msgstr "DOI"
+
+msgid "Kein Bestätigungslink"
+msgstr "Aucun lien de confirmation"
+
+msgid "Bestätigt am %s"
+msgstr "Confirmé le %s"
+
+msgid "Bestätigt"
+msgstr "Confirmé"
+
+msgid "Bestätigung offen bis %s"
+msgstr "Confirmation en attente jusqu’au %s"
+
+msgid "Bestätigung offen (Ablauf unbekannt)"
+msgstr "Confirmation en attente (échéance inconnue)"
+
+msgid "Nicht rechtzeitig bestätigt (abgelaufen am %s)"
+msgstr "Non confirmé à temps (expiré le %s)"

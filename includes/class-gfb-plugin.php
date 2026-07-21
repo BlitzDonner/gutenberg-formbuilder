@@ -93,6 +93,11 @@ class GFB_Plugin {
 				'editorChromeStylesUrl'     => GFB_PLUGIN_URL . 'assets/gfb-editor.css',
 				'version'                   => GFB_PLUGIN_VERSION,
 				'adminEmail'                => sanitize_email( (string) get_option( 'admin_email' ) ),
+				// Für die Editor-Warnungen der Bestätigungsmail (Sofort-Modus
+				// verlangt serverseitig erzwungenes Captcha). Strings statt bool:
+				// wp_localize_script castet Werte zu Strings.
+				'captchaHasKeys'            => GFB_Captcha::has_keys() ? '1' : '0',
+				'captchaGlobalActive'       => GFB_Captcha::is_configured() ? '1' : '0',
 			)
 		);
 
@@ -193,6 +198,29 @@ class GFB_Plugin {
 				'render_callback' => static function () {
 					return '';
 				},
+			)
+		);
+
+		// Bestätigungsmail-Container + Platzhalter-Block: nur Editor-sichtbar,
+		// im Frontend rendert '' (die Mail-Engine liest die Inner-Blocks direkt
+		// aus dem gespeicherten Block-Baum, siehe GFB_Receipt_Mail).
+		foreach ( array( 'receipt-mail', 'doi-mail', 'all-fields' ) as $mail_slug ) {
+			register_block_type(
+				GFB_PLUGIN_DIR . 'blocks/' . $mail_slug,
+				array(
+					'render_callback' => static function () {
+						return '';
+					},
+				)
+			);
+		}
+
+		// Bestätigungs-Status der DOI-Landeseiten-Templates: rendert serverseitig
+		// den Zustand des laufenden gfb_confirm-Requests, sonst ''.
+		register_block_type(
+			GFB_PLUGIN_DIR . 'blocks/confirm-status',
+			array(
+				'render_callback' => array( 'GFB_Receipt_Mail', 'render_confirm_status_block' ),
 			)
 		);
 
@@ -966,28 +994,62 @@ class GFB_Plugin {
 	}
 
 	/**
-	 * Innere Blöcke des Formulars in Felder vs. Erfolgsbereiche splitten.
+	 * Innere Blöcke des Formulars in Felder, Erfolgsbereiche und
+	 * Bestätigungsmail-Container (Eimer «confirmation») splitten.
 	 *
 	 * @param array<int,array<string,mixed>> $inner_blocks Geparste innerBlocks des gfb/form-Blocks.
-	 * @return array{fields:array<int,array<string,mixed>>,success:array<int,array<string,mixed>>}
+	 * @return array{fields:array<int,array<string,mixed>>,success:array<int,array<string,mixed>>,confirmation:array<int,array<string,mixed>>}
 	 */
 	private static function split_form_inner_blocks( $inner_blocks ) {
-		$fields  = array();
-		$success = array();
+		$fields       = array();
+		$success      = array();
+		$confirmation = array();
 		foreach ( $inner_blocks as $b ) {
 			if ( ! is_array( $b ) ) {
 				continue;
 			}
-			if ( 'gfb/form-success' === ( $b['blockName'] ?? '' ) ) {
+			$name = $b['blockName'] ?? '';
+			if ( 'gfb/form-success' === $name ) {
 				$success[] = $b;
+			} elseif ( 'gfb/receipt-mail' === $name || 'gfb/doi-mail' === $name ) {
+				// Mail-Container erscheinen nie im Formular-Frontend.
+				$confirmation[] = $b;
 			} else {
 				$fields[] = $b;
 			}
 		}
 		return array(
-			'fields'  => $fields,
-			'success' => $success,
+			'fields'       => $fields,
+			'success'      => $success,
+			'confirmation' => $confirmation,
 		);
+	}
+
+	/**
+	 * Inner-Blocks eines Mail-Regionblocks (gfb/receipt-mail oder gfb/doi-mail)
+	 * aus dem gespeicherten Block-Baum eines Formulars.
+	 *
+	 * @param int    $post_id Post-ID.
+	 * @param string $form_id Formular-ID.
+	 * @param string $region  gfb/receipt-mail oder gfb/doi-mail.
+	 * @return array<int,array<string,mixed>>|null Inner-Blocks (ggf. leer) oder null, wenn der Container fehlt.
+	 */
+	public static function get_form_mail_region_blocks( $post_id, $form_id, $region ) {
+		if ( ! in_array( $region, array( 'gfb/receipt-mail', 'gfb/doi-mail' ), true ) ) {
+			return null;
+		}
+		$form_block = self::locate_form_block_for_post( $post_id, $form_id );
+		if ( null === $form_block || empty( $form_block['innerBlocks'] ) || ! is_array( $form_block['innerBlocks'] ) ) {
+			return null;
+		}
+		foreach ( $form_block['innerBlocks'] as $b ) {
+			if ( is_array( $b ) && $region === ( $b['blockName'] ?? '' ) ) {
+				$inner = isset( $b['innerBlocks'] ) && is_array( $b['innerBlocks'] ) ? $b['innerBlocks'] : array();
+				// Leerer Container zählt als «Standard-Vorlage verwenden».
+				return empty( $inner ) ? null : $inner;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1050,7 +1112,8 @@ class GFB_Plugin {
 
 		$out = array();
 		foreach ( $payload as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			// Interne Schlüssel (_gfb_labels, _gfb_email_hmacs) nie ausgeben.
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			$k = sanitize_key( (string) $key );
@@ -1288,7 +1351,8 @@ class GFB_Plugin {
 		$fields = array();
 		foreach ( $inner_blocks as $block ) {
 			$name  = $block['blockName'] ?? '';
-			if ( 'gfb/form-success' === $name ) {
+			// Erfolgsbereich und Mail-Container geraten nie ins Feldschema.
+			if ( in_array( $name, array( 'gfb/form-success', 'gfb/receipt-mail', 'gfb/doi-mail' ), true ) ) {
 				continue;
 			}
 			$attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();

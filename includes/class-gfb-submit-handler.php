@@ -45,6 +45,9 @@ class GFB_Submit_Handler {
 		$table_name      = $wpdb->prefix . 'gfb_submissions';
 		$charset_collate = $wpdb->get_charset_collate();
 
+		// Schema-Version 3: Spalten für Bestätigungsmail + Double-Opt-in
+		// (docs/BESTAETIGUNGSMAIL-SPEC.md Abschnitt 4). confirm_token_hash hält
+		// nur den gepfefferten HMAC des Tokens (indiziert, Lookup ohne LIKE).
 		$sql = "CREATE TABLE {$table_name} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -54,8 +57,15 @@ class GFB_Submit_Handler {
 			payload LONGTEXT NOT NULL,
 			ip_address VARCHAR(45) NOT NULL DEFAULT '',
 			user_agent TEXT NULL,
+			confirm_status VARCHAR(20) NOT NULL DEFAULT '',
+			confirm_token_hash CHAR(64) NOT NULL DEFAULT '',
+			confirm_expires_at DATETIME NULL DEFAULT NULL,
+			confirm_used_at DATETIME NULL DEFAULT NULL,
+			receipt_mail_status VARCHAR(20) NOT NULL DEFAULT '',
+			receipt_mail_at DATETIME NULL DEFAULT NULL,
 			PRIMARY KEY (id),
-			KEY form_lookup (post_id, form_id)
+			KEY form_lookup (post_id, form_id),
+			KEY confirm_token (confirm_token_hash)
 		) {$charset_collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -63,22 +73,23 @@ class GFB_Submit_Handler {
 	}
 
 	/**
-	 * Fügt u. a. Spalte `form_title` nach Updates hinzu (ohne erneute Plugin-Aktivierung).
+	 * Fügt neue Spalten nach Updates hinzu (ohne erneute Plugin-Aktivierung).
+	 * Version 2: form_title. Version 3: Bestätigungsmail/DOI-Spalten.
 	 *
 	 * @return void
 	 */
 	public static function maybe_upgrade_submissions_db() {
 		$ver = (int) get_option( 'gfb_submissions_db_version', 1 );
-		if ( $ver >= 2 ) {
+		if ( $ver >= 3 ) {
 			return;
 		}
 		self::install_submissions_table();
-		update_option( 'gfb_submissions_db_version', 2 );
+		update_option( 'gfb_submissions_db_version', 3 );
 	}
 
 	public static function activate() {
 		self::install_submissions_table();
-		update_option( 'gfb_submissions_db_version', 2 );
+		update_option( 'gfb_submissions_db_version', 3 );
 
 		// Begleit-Tabellen.
 		GFB_File_Storage::install_table();
@@ -97,6 +108,12 @@ class GFB_Submit_Handler {
 		// Re-Wrap-Cron registrieren (rotation, idle).
 		if ( ! wp_next_scheduled( 'gfb_rewrap_cron' ) ) {
 			wp_schedule_event( time() + 600, 'hourly', 'gfb_rewrap_cron' );
+		}
+
+		// Retention-Cron der Bestätigungsmail (nie bestätigte Einsendungen,
+		// abgelaufene Token, Gate-Zähler).
+		if ( class_exists( 'GFB_Receipt_Mail' ) ) {
+			GFB_Receipt_Mail::maybe_schedule_cron();
 		}
 
 		GFB_Audit::record( 'plugin_activated', 'system', '', array() );
@@ -281,6 +298,7 @@ class GFB_Submit_Handler {
 		$payload         = array();
 		$pending_file_ids = array();
 		$errors          = array();
+		$plain_snapshot  = array();
 
 		foreach ( $schema as $field ) {
 			$res = self::process_field_value( $field, $pending_file_ids );
@@ -290,6 +308,11 @@ class GFB_Submit_Handler {
 					'message' => $res->get_error_message(),
 				);
 				continue;
+			}
+			// Klartext-Snapshot VOR der Verschlüsselung – Grundlage für die
+			// Bestätigungsmail (sauberer als Entschlüsseln am Sendepunkt).
+			if ( is_string( $res ) ) {
+				$plain_snapshot[ $field['name'] ] = $res;
 			}
 			// Sensitive Werte (string oder array) verschlüsseln.
 			if ( ! empty( $field['sensitive'] ) && is_string( $res ) && '' !== $res && 'file' !== $field['type'] ) {
@@ -369,6 +392,23 @@ class GFB_Submit_Handler {
 		}
 		$payload['_gfb_labels'] = $label_snapshot;
 
+		// DSGVO-Suchindex: deterministischer, gepfefferter HMAC jedes E-Mail-Werts.
+		// Damit finden Exporter/Eraser auch Einsendungen, deren E-Mail-Feld
+		// verschlüsselt gespeichert ist (LIKE auf Ciphertext greift nicht).
+		$email_hmacs = array();
+		foreach ( $schema as $field ) {
+			if ( 'email' !== ( $field['type'] ?? '' ) || empty( $field['name'] ) ) {
+				continue;
+			}
+			$mail_value = isset( $plain_snapshot[ $field['name'] ] ) ? trim( (string) $plain_snapshot[ $field['name'] ] ) : '';
+			if ( '' !== $mail_value && is_email( $mail_value ) ) {
+				$email_hmacs[ GFB_Security::email_search_hash( $mail_value ) ] = true;
+			}
+		}
+		if ( ! empty( $email_hmacs ) ) {
+			$payload['_gfb_email_hmacs'] = array_keys( $email_hmacs );
+		}
+
 		global $wpdb;
 		$table_name   = $wpdb->prefix . 'gfb_submissions';
 
@@ -441,7 +481,31 @@ class GFB_Submit_Handler {
 		 */
 		do_action( 'gfb_after_submission_insert', $submission_id, $payload, $form_attrs, $post_id, $form_id );
 
-		self::send_notification_mail( $post_id, $form_id, $payload, $form_title_stored, $form_attrs );
+		// DOI-Modus: Betreiber-Mail 1 trägt den Vermerk «unbestätigt eingegangen» (E9).
+		$receipt_mode  = GFB_Receipt_Mail::mode_from_attrs( $form_attrs );
+		$operator_note = '';
+		if ( GFB_Receipt_Mail::MODE_DOI === $receipt_mode ) {
+			$operator_note = sprintf(
+				/* translators: %d: Nummer der Einsendung */
+				__( 'Status: unbestätigt eingegangen – die absendende Person hat ihre E-Mail-Adresse für Eintrag #%d noch nicht bestätigt.', 'gutenberg-formbuilder' ),
+				$submission_id
+			);
+		}
+		self::send_notification_mail( $post_id, $form_id, $payload, $form_title_stored, $form_attrs, $operator_note );
+
+		// Bestätigungsmail an die ausfüllende Person (Sofort-Modus oder Link-Mail).
+		// Fehler brechen den Submit nie ab – die Einsendung ist gespeichert.
+		GFB_Receipt_Mail::handle_after_submission(
+			$submission_id,
+			$post_id,
+			$form_id,
+			$form_attrs,
+			$payload,
+			$schema,
+			$form_title_stored,
+			$plain_snapshot
+		);
+
 		self::redirect_with_state(
 			$post_id,
 			$form_id,
@@ -599,9 +663,10 @@ class GFB_Submit_Handler {
 	 * @param array<string,mixed> $payload    Form data.
 	 * @param string              $form_title Optional display name.
 	 * @param array<string,mixed> $form_attrs gfb/form block attributes.
+	 * @param string              $note       Optionaler Status-Vermerk (DOI: «unbestätigt eingegangen»).
 	 * @return void
 	 */
-	private static function send_notification_mail( $post_id, $form_id, $payload, $form_title = '', array $form_attrs = array() ) {
+	private static function send_notification_mail( $post_id, $form_id, $payload, $form_title = '', array $form_attrs = array(), $note = '' ) {
 		$enabled = ! empty( $form_attrs['emailNotificationEnabled'] );
 		if ( ! $enabled ) {
 			return;
@@ -615,9 +680,30 @@ class GFB_Submit_Handler {
 		$labels = isset( $payload['_gfb_labels'] ) && is_array( $payload['_gfb_labels'] ) ? $payload['_gfb_labels'] : array();
 		$subject = self::build_notification_subject( $post_id, $form_id, $form_title, $form_attrs, $payload, $labels );
 		$body    = self::build_notification_body( $payload, $labels );
+		if ( '' !== $note ) {
+			$body = sanitize_text_field( $note ) . "\n\n" . $body;
+		}
 		$headers = self::build_notification_headers( $form_attrs, $payload, $labels );
 
 		wp_mail( $recipients, $subject, $body, $headers );
+	}
+
+	/**
+	 * Betreiber-Mail 2 im Double-Opt-in («jetzt bestätigt», E9). Öffentlicher
+	 * Einstieg für GFB_Receipt_Mail; nutzt dieselbe Benachrichtigungs-Mechanik,
+	 * vertrauliche Werte bleiben über format_notification_field_value()
+	 * «[verschlüsselt]».
+	 *
+	 * @param int                 $post_id    Post id.
+	 * @param string              $form_id    Form id.
+	 * @param array<string,mixed> $payload    Gespeicherter Payload.
+	 * @param string              $form_title Anzeigename.
+	 * @param array<string,mixed> $form_attrs gfb/form block attributes.
+	 * @param string              $note       Status-Vermerk.
+	 * @return void
+	 */
+	public static function send_receipt_operator_mail( $post_id, $form_id, array $payload, $form_title, array $form_attrs, $note ) {
+		self::send_notification_mail( $post_id, $form_id, $payload, $form_title, $form_attrs, $note );
 	}
 
 	/**
@@ -701,7 +787,8 @@ class GFB_Submit_Handler {
 	private static function build_notification_body( array $payload, array $labels ) {
 		$lines = array();
 		foreach ( $payload as $key => $value ) {
-			if ( '_gfb_labels' === $key ) {
+			// Interne Schlüssel (_gfb_labels, _gfb_email_hmacs) nie in die Mail.
+			if ( 0 === strpos( (string) $key, '_gfb' ) ) {
 				continue;
 			}
 			$display_key = isset( $labels[ $key ] ) ? $labels[ $key ] : $key;
@@ -1215,6 +1302,9 @@ class GFB_Submit_Handler {
 			// Audit-Rechenschaft auch im Erfolgsfall (C6/E6/US-6): $base_ctx
 			// enthaelt nur Form-/Modus-Status, kein rohes Token, kein Secret.
 			GFB_Audit::record( 'captcha_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'pass' ) ) );
+			// Tatsaechliches Verifikationsergebnis dieses Requests an die
+			// Receipt-Engine durchreichen: Nur «pass» erlaubt den Sofort-Versand.
+			GFB_Receipt_Mail::set_captcha_request_result( 'pass' );
 			return;
 		}
 
@@ -1226,7 +1316,10 @@ class GFB_Submit_Handler {
 				self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CAPTCHA_UNREACHABLE );
 			}
 			// soft: Ausfallsicherung – Submit geht bei nicht erreichbarem
-			// Anbieter ausnahmsweise ueber die uebrige Kette weiter.
+			// Anbieter ausnahmsweise ueber die uebrige Kette weiter. Die
+			// Bestaetigungsmail im Sofort-Modus bleibt dabei fail-closed:
+			// «unreachable» ist kein «pass» (Chloe M-1).
+			GFB_Receipt_Mail::set_captcha_request_result( 'unreachable' );
 			return;
 		}
 

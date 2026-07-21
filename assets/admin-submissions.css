@@ -3,8 +3,11 @@
  * Selektoren mit #wpbody-content .wrap… damit sie gegen Core-Admin-Styles gewinnen.
  */
 
+/* Listen-Ansicht skaliert mit der vollen Seitenbreite (Wunsch 21.07.2026);
+   die Detailansicht behält bewusst das 960-px-Limit der Basisklasse
+   (lange Feldwerte bleiben lesbar, profitiert nicht von voller Breite). */
 #wpbody-content .wrap.gfb-admin.gfb-admin-list {
-	max-width: 1200px;
+	max-width: none;
 }
 
 #wpbody-content .wrap.gfb-admin {
@@ -111,12 +114,21 @@
 	word-break: break-word;
 }
 
-#wpbody-content .wrap.gfb-admin .gfb-admin-meta-grid code {
-	font-size: 0.8125rem;
-	background: var(--gfb-bg-subtle);
-	padding: 0.15rem 0.45rem;
-	border-radius: 6px;
-	border: 1px solid var(--gfb-border);
+/* Technische Kennungen (Formular-ID, Datei-Fingerprints): unauffälliger
+   kleiner Grautext statt Tag/Pille (Wunsch 21.07.2026). Monospace bleibt –
+   erkennbar als technischer Wert. Farbe #646970 (var(--gfb-muted)) auf Weiss
+   ≈ 5.3:1: erfüllt WCAG AA (4.5:1) auch bei 11px. background/padding/border
+   explizit neutralisiert, sonst greift die Pillen-Optik des Core-code-Stylings. */
+#wpbody-content .wrap.gfb-admin .gfb-admin-meta-grid code,
+#wpbody-content .wrap.gfb-admin .gfb-admin-field-list code,
+#wpbody-content .wrap.gfb-admin table.gfb-admin-table code {
+	font-size: 11px;
+	background: transparent;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	color: var(--gfb-muted);
+	letter-spacing: 0.01em;
 }
 
 /* Feldliste (Detail) */
@@ -247,13 +259,7 @@
 	background: rgba(29,35,39,0.04);
 }
 
-#wpbody-content .wrap.gfb-admin table.gfb-admin-table code {
-	font-size: 0.8125rem;
-	background: var(--gfb-bg-subtle);
-	padding: 0.12rem 0.4rem;
-	border-radius: 6px;
-	border: 1px solid var(--gfb-border);
-}
+/* (code-Darstellung der Tabelle: siehe gemeinsame Kennungen-Regel oben.) */
 
 #wpbody-content .wrap.gfb-admin table.gfb-admin-table a {
 	color: var(--gfb-border-focus);
@@ -313,6 +319,13 @@
 #wpbody-content .wrap.gfb-admin .gfb-admin-filters .gfb-admin-filter-label select {
 	min-width: 12rem;
 	max-width: 100%;
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-admin-cell-form .gfb-admin-form-ident {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	column-gap: 0.5rem;
 }
 
 #wpbody-content .wrap.gfb-admin .gfb-admin-cell-form .gfb-admin-form-id {
@@ -682,4 +695,36 @@
 #wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table thead th,
 #wpbody-content .wrap.gfb-settings .gfb-settings-card .gfb-caps-table tbody td {
 	padding-left: 0.8rem;
+}
+
+/* DOI-Ampel in der Einsendungsliste: reine Anzeige (kein Klickziel), genau
+   ein Punkt pro Zeile. Farben aus der WP-Admin-Palette, für den Nicht-Text-
+   Kontrast (WCAG 1.4.11, >= 3:1 auf Weiss) dunkel genug gewählt; die
+   Information trägt zusätzlich title + screen-reader-text, nie nur Farbe. */
+#wpbody-content .wrap.gfb-admin .gfb-admin-cell-doi {
+	text-align: center;
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-doi-dot {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	vertical-align: middle;
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-doi-dot--none {
+	background: #646970; /* grau: kein DOI */
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-doi-dot--confirmed {
+	background: #007017; /* gruen: bestaetigt */
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-doi-dot--pending {
+	background: #b45309; /* orange: Bestaetigung offen */
+}
+
+#wpbody-content .wrap.gfb-admin .gfb-doi-dot--expired {
+	background: #d63638; /* rot: nicht rechtzeitig bestaetigt */
 }

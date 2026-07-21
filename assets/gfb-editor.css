@@ -57,3 +57,72 @@
 	line-height: 1.45;
 	color: color-mix(in srgb, CanvasText 82%, transparent);
 }
+
+/* Editor: Mail-Container (gfb/receipt-mail, gfb/doi-mail) – nur Editor-Chrome,
+   der Inhalt erscheint nie im Formular-Frontend. */
+.block-editor-block-list__block .gfb-mail-region-editor {
+	border: 1px dashed color-mix(in srgb, CanvasText 28%, transparent);
+	border-radius: 10px;
+	padding: 0.75rem 1rem;
+}
+
+.gfb-mail-region-editor__title {
+	margin: 0 0 0.15rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 82%, transparent);
+}
+
+.gfb-mail-region-editor__intro {
+	margin: 0 0 0.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 70%, transparent);
+}
+
+.gfb-mail-region-editor__inner > .block-list-appender {
+	margin-top: 0.5rem;
+}
+
+/* Editor: Platzhalter-Block «Alle Feldwerte» in der Bestätigungsmail. */
+.block-editor-block-list__block .gfb-all-fields-editor {
+	border: 1px dashed color-mix(in srgb, CanvasText 28%, transparent);
+	border-radius: 8px;
+	padding: 0.5rem 0.75rem;
+}
+
+.gfb-all-fields-editor__label {
+	margin: 0 0 0.15rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.45;
+}
+
+.gfb-all-fields-editor__hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 70%, transparent);
+}
+
+/* Editor: Platzhalter-Block «Bestätigungs-Status» in den DOI-Landeseiten-Templates. */
+.block-editor-block-list__block .gfb-confirm-status-editor {
+	border: 1px dashed color-mix(in srgb, CanvasText 28%, transparent);
+	border-radius: 8px;
+	padding: 0.5rem 0.75rem;
+}
+
+.gfb-confirm-status-editor__label {
+	margin: 0 0 0.15rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.45;
+}
+
+.gfb-confirm-status-editor__hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 70%, transparent);
+}

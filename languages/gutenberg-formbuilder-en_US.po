@@ -448,3 +448,115 @@ msgstr "Test token: update server unreachable – please try again later."
 msgid "Token testen: Kein Token hinterlegt."
 msgstr "Test token: no token stored."
 
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse"
+msgstr "Please confirm your email address"
+
+msgid "Ihre Einsendung bei %s ist eingegangen"
+msgstr "Your submission to %s has been received"
+
+msgid "Ihre Einsendung bei %s ist bestätigt"
+msgstr "Your submission to %s is confirmed"
+
+msgid "Ihre Einsendung ist eingegangen"
+msgstr "Your submission has been received"
+
+msgid "Vielen Dank. Diese E-Mail bestätigt den Eingang Ihrer Angaben:"
+msgstr "Thank you. This email confirms receipt of your details:"
+
+msgid "Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses E-Mail-Postfach Ihnen gehört – erst danach erhalten Sie die vollständige Eingangsbestätigung."
+msgstr "Your submission has been received. Please confirm with one click that this mailbox belongs to you – only then will you receive the complete confirmation of receipt."
+
+msgid "Der Link ist 7 Tage gültig und funktioniert nur einmal."
+msgstr "The link is valid for 7 days and works only once."
+
+msgid "Diese Angaben wurden über ein Formular auf %s übermittelt:"
+msgstr "These details were submitted via a form on %s:"
+
+msgid "vertraulich gespeichert"
+msgstr "stored confidentially"
+
+msgid "verschlüsselt gespeichert"
+msgstr "stored encrypted"
+
+msgid "Datei #%d"
+msgstr "File #%d"
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann hat jemand Ihre E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; Sie können dort jederzeit die Löschung verlangen – antworten Sie dazu auf diese E-Mail oder nutzen Sie die Kontaktangaben der Website."
+msgstr "Did you not fill in this form? Then someone entered your email address. The submission is held by the operator of this website; you can request its deletion at any time – reply to this email or use the contact details on the website."
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann ignorieren Sie diese E-Mail. Ohne Bestätigung gilt Ihre Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht."
+msgstr "Did you not fill in this form? Then simply ignore this email. Without confirmation your address is not considered confirmed, and the unconfirmed submission is deleted automatically after a fixed period."
+
+msgid "Bestätigung"
+msgstr "Confirmation"
+
+msgid "E-Mail-Adresse bestätigen"
+msgstr "Confirm email address"
+
+msgid "Mit einem Klick auf den Knopf bestätigen Sie, dass dieses E-Mail-Postfach Ihnen gehört. Erst danach erhalten Sie die vollständige Eingangsbestätigung per E-Mail."
+msgstr "By clicking the button you confirm that this mailbox belongs to you. Only then will you receive the complete confirmation of receipt by email."
+
+msgid "Jetzt bestätigen"
+msgstr "Confirm now"
+
+msgid "Sie haben dieses Formular nicht ausgefüllt? Dann schliessen Sie diese Seite einfach – ohne Bestätigung passiert nichts."
+msgstr "Did you not fill in this form? Then simply close this page – nothing happens without confirmation."
+
+msgid "Vielen Dank – Adresse bestätigt"
+msgstr "Thank you – address confirmed"
+
+
+msgid "Bestätigung nicht möglich"
+msgstr "Confirmation not possible"
+
+msgid "Dieser Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet."
+msgstr "This confirmation link is invalid, expired, or has already been used."
+
+msgid "Ihre Bestätigung ist erfasst."
+msgstr "Your confirmation has been recorded."
+
+msgid "Die Quittung wurde an Ihren Mailserver übergeben."
+msgstr "The receipt has been handed over to your mail server."
+
+msgid "Der Seitenbetreiber hat Ihre Meldung erhalten."
+msgstr "The site operator has received your submission."
+
+msgid "Sie sind dem Bestätigungslink aus unserer E-Mail gefolgt."
+msgstr "You have followed the confirmation link from our email."
+
+msgid "Das Ergebnis Ihrer Bestätigung:"
+msgstr "The result of your confirmation:"
+
+msgid "Formular – Bestätigungsseite"
+msgstr "Form – Confirmation page"
+
+msgid "Formular – Bestätigungs-Ergebnis"
+msgstr "Form – Confirmation result"
+
+msgid "Landeseite des Bestätigungslinks (Double-Opt-in): neutraler Text und Bestätigungs-Knopf. Feldwerte stehen hier by design nie zur Verfügung."
+msgstr "Landing page of the confirmation link (double opt-in): neutral text and confirmation button. By design, field values are never available here."
+
+msgid "Ergebnisseite nach dem Bestätigungs-Klick: erfasst oder uniform neutral abgelehnt (abgelaufen/ungültig/benutzt). Feldwerte stehen hier by design nie zur Verfügung."
+msgstr "Result page after the confirmation click: recorded, or uniformly and neutrally declined (expired/invalid/used). By design, field values are never available here."
+
+msgid "DOI"
+msgstr "DOI"
+
+msgid "Kein Bestätigungslink"
+msgstr "No confirmation link"
+
+msgid "Bestätigt am %s"
+msgstr "Confirmed on %s"
+
+msgid "Bestätigt"
+msgstr "Confirmed"
+
+msgid "Bestätigung offen bis %s"
+msgstr "Confirmation pending until %s"
+
+msgid "Bestätigung offen (Ablauf unbekannt)"
+msgstr "Confirmation pending (expiry unknown)"
+
+msgid "Nicht rechtzeitig bestätigt (abgelaufen am %s)"
+msgstr "Not confirmed in time (expired on %s)"

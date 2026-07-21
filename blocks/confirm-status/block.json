@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/confirm-status",
+  "version": "2.10.0",
+  "title": "Bestätigungs-Status",
+  "category": "gfb-form",
+  "icon": {
+    "src": "yes",
+    "foreground": "#1b2627"
+  },
+  "description": "Dynamischer Status der Bestätigungsseite (Double-Opt-in): rendert den Bestätigungs-Knopf bzw. die Ergebnis-Meldung. Nur in den Templates «Formular – Bestätigungsseite» und «Formular – Bestätigungs-Ergebnis» sinnvoll; gibt nie Feldwerte aus.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "gfb-editor"
+}
