@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "gfb/confirm-button",
+  "version": "2.10.0",
+  "title": "Bestätigungs-Knopf",
+  "category": "gfb-form",
+  "ancestor": ["gfb/doi-mail"],
+  "icon": {
+    "src": "button",
+    "foreground": "#1b2627"
+  },
+  "description": "Knopf der Bestätigungslink-Mail: Der Server setzt den Bestätigungslink beim Versand immer selbst – bewusst kein URL-Feld (der Link-Dialog akzeptiert Platzhalter nicht). Beschriftung und Farben sind anpassbar.",
+  "textdomain": "gutenberg-formbuilder",
+  "attributes": {
+    "text": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "background": true,
+      "text": true,
+      "gradients": false
+    }
+  },
+  "editorScript": "gfb-editor"
+}

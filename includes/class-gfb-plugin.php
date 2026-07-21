@@ -204,7 +204,7 @@ class GFB_Plugin {
 		// Bestätigungsmail-Container + Platzhalter-Block: nur Editor-sichtbar,
 		// im Frontend rendert '' (die Mail-Engine liest die Inner-Blocks direkt
 		// aus dem gespeicherten Block-Baum, siehe GFB_Receipt_Mail).
-		foreach ( array( 'receipt-mail', 'doi-mail', 'all-fields' ) as $mail_slug ) {
+		foreach ( array( 'receipt-mail', 'doi-mail', 'all-fields', 'confirm-button' ) as $mail_slug ) {
 			register_block_type(
 				GFB_PLUGIN_DIR . 'blocks/' . $mail_slug,
 				array(

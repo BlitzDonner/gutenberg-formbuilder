@@ -126,3 +126,37 @@
 	line-height: 1.45;
 	color: color-mix(in srgb, CanvasText 70%, transparent);
 }
+
+/* Editor: Bestätigungs-Knopf der Link-Mail (gfb/confirm-button). Farben aus
+   den Block-Supports (background/text) liegen auf dem Wrapper und erben auf
+   den Knopf; ohne eigene Wahl gilt die Mail-Default-Optik. */
+.block-editor-block-list__block .gfb-confirm-button-editor {
+	text-align: center;
+}
+
+.gfb-confirm-button-editor__button {
+	display: inline-block;
+	padding: 13px 28px;
+	border-radius: 6px;
+	background-color: #1b2627;
+	color: #ffffff;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+/* Gewählte Support-Farben (liegen auf dem Block-Wrapper) auf den Knopf erben. */
+.gfb-confirm-button-editor.has-background .gfb-confirm-button-editor__button {
+	background-color: inherit;
+}
+
+.gfb-confirm-button-editor.has-text-color .gfb-confirm-button-editor__button {
+	color: inherit;
+}
+
+.gfb-confirm-button-editor__hint {
+	margin: 0.35rem 0 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: color-mix(in srgb, CanvasText 70%, transparent);
+}

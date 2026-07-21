@@ -8,6 +8,7 @@
 	var useSelect = wp.data.useSelect;
 	var InspectorControls = wp.blockEditor.InspectorControls;
 	var InnerBlocks = wp.blockEditor.InnerBlocks;
+	var RichText = wp.blockEditor.RichText;
 	var useInnerBlocksProps = wp.blockEditor.useInnerBlocksProps;
 	var useBlockProps = wp.blockEditor.useBlockProps;
 	var useBlockPropsSave = useBlockProps.save;
@@ -2582,7 +2583,7 @@
 	gfbRegisterMailRegionBlock( 'gfb/doi-mail', {
 		title: __( 'Bestätigungslink-Mail – Inhalt (nur Editor, erscheint nie im Formular)', 'gutenberg-formbuilder' ),
 		intro: __(
-			'Inhalt der Link-Mail im Modus «mit Bestätigungslink». Pflicht-Platzhalter: {{bestaetigungslink}}. Feldwerte erscheinen in dieser Mail nicht – die vollständige Quittung folgt erst nach dem Klick.',
+			'Inhalt der Link-Mail im Modus «mit Bestätigungslink». Der Block «Bestätigungs-Knopf» trägt den Link (in Textabsätzen geht auch der Platzhalter {{bestaetigungslink}}). Feldwerte erscheinen in dieser Mail nicht – die vollständige Quittung folgt erst nach dem Klick.',
 			'gutenberg-formbuilder'
 		),
 		allowed: [
@@ -2592,27 +2593,65 @@
 			'core/image',
 			'core/separator',
 			'core/buttons',
+			'gfb/confirm-button',
 		],
 		template: [
 			[ 'core/heading', { level: 2, content: __( 'Bitte bestätigen Sie Ihre E-Mail-Adresse', 'gutenberg-formbuilder' ) } ],
 			[ 'core/paragraph', { content: __( 'Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses Postfach Ihnen gehört:', 'gutenberg-formbuilder' ) } ],
-			[ 'core/paragraph', { content: '{{bestaetigungslink}}' } ],
+			[ 'gfb/confirm-button' ],
 			[ 'core/paragraph', { content: __( 'Der Link ist 7 Tage gültig und funktioniert nur einmal.', 'gutenberg-formbuilder' ) } ],
 		],
 		noticeCheck: function ( innerBlocks ) {
-			if ( innerBlocks.length && ! gfbBlocksContainConfirmPlaceholder( innerBlocks ) ) {
+			var covered =
+				gfbBlocksContainConfirmPlaceholder( innerBlocks ) ||
+				!! gfbFindBlockOfType( innerBlocks, 'gfb/confirm-button' );
+			if ( innerBlocks.length && ! covered ) {
 				return [
 					el(
 						Notice,
 						{ status: 'warning', isDismissible: false, key: 'no-confirm-link' },
 						__(
-							'Der Platzhalter {{bestaetigungslink}} fehlt. Die Mail geht nie ohne Link raus – der Server hängt ihn dann automatisch am Ende an.',
+							'Weder der Block «Bestätigungs-Knopf» noch der Platzhalter {{bestaetigungslink}} ist vorhanden. Die Mail geht nie ohne Link raus – der Server hängt ihn dann automatisch am Ende an.',
 							'gutenberg-formbuilder'
 						)
 					),
 				];
 			}
 			return [];
+		},
+	} );
+
+	registerBlockType( 'gfb/confirm-button', {
+		edit: function ( props ) {
+			var blockProps = useBlockProps( {
+				className: 'gfb-confirm-button-editor',
+			} );
+			return el(
+				'div',
+				blockProps,
+				el(
+					'span',
+					{ className: 'gfb-confirm-button-editor__button' },
+					el( RichText, {
+						tagName: 'span',
+						value: props.attributes.text || '',
+						allowedFormats: [],
+						withoutInteractiveFormatting: true,
+						placeholder: __( 'Jetzt bestätigen', 'gutenberg-formbuilder' ),
+						onChange: function ( v ) {
+							props.setAttributes( { text: v == null ? '' : String( v ) } );
+						},
+					} )
+				),
+				el(
+					'p',
+					{ className: 'gfb-confirm-button-editor__hint' },
+					__( 'Link wird beim Versand automatisch gesetzt.', 'gutenberg-formbuilder' )
+				)
+			);
+		},
+		save: function () {
+			return null;
 		},
 	} );
 

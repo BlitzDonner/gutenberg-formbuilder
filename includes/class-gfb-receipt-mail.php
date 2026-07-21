@@ -77,6 +77,9 @@ class GFB_Receipt_Mail {
 	 * @return void
 	 */
 	public static function boot() {
+		// Bestätigungsroute: Frontend-Einstieg (kundenfreundliche URL ohne
+		// wp-admin) plus admin-post-Alias für bereits verschickte alte Links.
+		add_action( 'template_redirect', array( __CLASS__, 'maybe_handle_confirm_request' ), 0 );
 		add_action( 'admin_post_gfb_confirm', array( __CLASS__, 'handle_confirm' ) );
 		add_action( 'admin_post_nopriv_gfb_confirm', array( __CLASS__, 'handle_confirm' ) );
 		add_action( self::CRON_HOOK, array( __CLASS__, 'cron_retention' ) );
@@ -439,20 +442,24 @@ class GFB_Receipt_Mail {
 	}
 
 	/**
-	 * Bestätigungslink. HTTPS wird erzwungen, sobald die Site HTTPS spricht.
+	 * Bestätigungslink als Frontend-URL (Änderung 21.07.2026): eine
+	 * wp-admin-URL in einer Kundenmail wirkt wie Admin-Zugang/Phishing und
+	 * wird von Firmen-Mailfiltern abgestraft. Bewusst Query-Variante ohne
+	 * Rewrite-Rules (kein Flush, keine Permalink-Bruchflächen); beide
+	 * Parameter kollisionssicher mit gfb-Präfix. HTTPS wird erzwungen,
+	 * sobald die Site HTTPS spricht.
 	 *
 	 * @param int    $submission_id Zeilen-ID.
 	 * @param string $token         Roh-Token.
-	 * @return string
+	 * @return string z. B. https://site/?gfb-bestaetigung=3&gfb-token=…
 	 */
 	private static function confirm_url( $submission_id, $token ) {
 		$url = add_query_arg(
 			array(
-				'action' => 'gfb_confirm',
-				's'      => (int) $submission_id,
-				't'      => rawurlencode( (string) $token ),
+				'gfb-bestaetigung' => (int) $submission_id,
+				'gfb-token'        => rawurlencode( (string) $token ),
 			),
-			admin_url( 'admin-post.php' )
+			home_url( '/' )
 		);
 		if ( 0 === strpos( home_url(), 'https://' ) ) {
 			$url = set_url_scheme( $url, 'https' );
@@ -461,20 +468,52 @@ class GFB_Receipt_Mail {
 	}
 
 	/**
-	 * Route admin_post(_nopriv)_gfb_confirm.
-	 * GET: datenfreie, idempotente Landeseite (kein State-Wechsel).
-	 * POST: atomarer Compare-and-swap, dann Voll-Quittung + Betreiber-Mail 2.
-	 * Ausgabe über Site-Editor-Template (WP 6.7+) oder die Minimalseite (Fallback).
+	 * Frontend-Einstieg (template_redirect, früh): übernimmt bei gesetztem
+	 * Parameter gfb-bestaetigung den Bestätigungsfluss. Ein gemeinsamer Kern
+	 * (run_confirm_flow) für beide Einstiege – keine Duplikation.
+	 *
+	 * @return void
+	 */
+	public static function maybe_handle_confirm_request() {
+		if ( ! isset( $_REQUEST['gfb-bestaetigung'] ) ) {
+			return;
+		}
+		$sid   = absint( wp_unslash( $_REQUEST['gfb-bestaetigung'] ) );
+		$token = isset( $_REQUEST['gfb-token'] ) ? (string) wp_unslash( $_REQUEST['gfb-token'] ) : '';
+		self::run_confirm_flow( $sid, $token );
+	}
+
+	/**
+	 * Alias-Einstieg admin_post(_nopriv)_gfb_confirm (Abwärtskompatibilität):
+	 * bereits verschickte Mails tragen die alte admin-post-URL mit s/t und
+	 * müssen die 7 Tage Token-Gültigkeit überleben. Identisches Verhalten –
+	 * gleicher Kern wie der Frontend-Einstieg.
 	 *
 	 * @return void
 	 */
 	public static function handle_confirm() {
+		$sid   = isset( $_REQUEST['s'] ) ? absint( wp_unslash( $_REQUEST['s'] ) ) : 0;
+		$token = isset( $_REQUEST['t'] ) ? (string) wp_unslash( $_REQUEST['t'] ) : '';
+		self::run_confirm_flow( $sid, $token );
+	}
+
+	/**
+	 * Gemeinsamer Bestätigungs-Kern beider Einstiege.
+	 * GET: datenfreie, idempotente Landeseite (kein State-Wechsel).
+	 * POST: atomarer Compare-and-swap, dann Voll-Quittung + Betreiber-Mail 2.
+	 * Ausgabe über Site-Editor-Template (WP 6.7+) oder die Minimalseite (Fallback).
+	 * Beendet den Request immer (exit).
+	 *
+	 * @param int    $sid   Zeilen-ID aus dem jeweiligen Einstieg.
+	 * @param string $token Roh-Token aus dem jeweiligen Einstieg.
+	 * @return void
+	 */
+	private static function run_confirm_flow( $sid, $token ) {
 		$switched = self::switch_mail_locale( '', 0 );
 
-		$sid   = isset( $_REQUEST['s'] ) ? absint( $_REQUEST['s'] ) : 0;
-		$token = isset( $_REQUEST['t'] ) ? (string) wp_unslash( $_REQUEST['t'] ) : '';
+		$sid = absint( $sid );
 		// Roh-Token nie in Logs; hier nur Formprüfung (base64url, begrenzte Länge).
-		$token = preg_match( '/^[A-Za-z0-9_-]{20,100}$/', $token ) ? $token : '';
+		$token = preg_match( '/^[A-Za-z0-9_-]{20,100}$/', (string) $token ) ? (string) $token : '';
 
 		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
@@ -1020,10 +1059,11 @@ class GFB_Receipt_Mail {
 
 		if ( 'landing' === $state ) {
 			$out  = '<p class="gfb-confirm-status__text">' . esc_html__( 'Mit einem Klick auf den Knopf bestätigen Sie, dass dieses E-Mail-Postfach Ihnen gehört. Erst danach erhalten Sie die vollständige Eingangsbestätigung per E-Mail.', 'gutenberg-formbuilder' ) . '</p>';
-			$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="gfb-confirm-status__form">';
-			$out .= '<input type="hidden" name="action" value="gfb_confirm" />';
-			$out .= '<input type="hidden" name="s" value="' . esc_attr( (string) $sid ) . '" />';
-			$out .= '<input type="hidden" name="t" value="' . esc_attr( isset( $ctx['token'] ) ? (string) $ctx['token'] : '' ) . '" />';
+			// POST an die Frontend-URL (form-action 'self' der CSP deckt das):
+			// gleiche Parameter wie der Mail-Link, gemeinsamer Kern beider Einstiege.
+			$out .= '<form method="post" action="' . esc_url( home_url( '/' ) ) . '" class="gfb-confirm-status__form">';
+			$out .= '<input type="hidden" name="gfb-bestaetigung" value="' . esc_attr( (string) $sid ) . '" />';
+			$out .= '<input type="hidden" name="gfb-token" value="' . esc_attr( isset( $ctx['token'] ) ? (string) $ctx['token'] : '' ) . '" />';
 			$out .= '<input type="hidden" name="gfb_confirm_nonce" value="' . esc_attr( wp_create_nonce( 'gfb_confirm_' . $sid ) ) . '" />';
 			$out .= '<div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button gfb-confirm-status__button">' . esc_html__( 'Jetzt bestätigen', 'gutenberg-formbuilder' ) . '</button></div>';
 			$out .= '</form>';
@@ -1513,6 +1553,25 @@ class GFB_Receipt_Mail {
 					$html .= self::render_all_fields_table( $ctx, $text_lines );
 					break;
 
+				case 'gfb/confirm-button':
+					// Dedizierter Bestätigungs-Knopf (21.07.2026): Der Server setzt
+					// den Link IMMER selbst – der Gutenberg-Link-Dialog akzeptiert
+					// {{bestaetigungslink}} nicht als URL. Ohne confirm_url im
+					// Kontext (falscher Ort) rendert der Block nichts.
+					if ( '' !== (string) $ctx['confirm_url'] ) {
+						$label = isset( $attrs['text'] ) ? trim( wp_strip_all_tags( (string) $attrs['text'] ) ) : '';
+						if ( '' === $label ) {
+							$label = __( 'Jetzt bestätigen', 'gutenberg-formbuilder' );
+						}
+						$label = mb_substr( self::replace_placeholders_text( $label, $ctx ), 0, 120 );
+						$bg    = self::mail_button_color( isset( $attrs['style']['color']['background'] ) ? $attrs['style']['color']['background'] : '', '#1b2627' );
+						$fg    = self::mail_button_color( isset( $attrs['style']['color']['text'] ) ? $attrs['style']['color']['text'] : '', '#ffffff' );
+						$html .= '<tr><td style="padding:6px 0 20px;" align="center"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:6px;background-color:' . esc_attr( $bg ) . ';" align="center"><a href="' . esc_url( $ctx['confirm_url'] ) . '" style="display:inline-block;padding:13px 28px;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:bold;color:' . esc_attr( $fg ) . ';text-decoration:none;border-radius:6px;">' . esc_html( $label ) . '</a></td></tr></table></td></tr>';
+						$text_lines[] = $label . ': ' . $ctx['confirm_url'];
+						$text_lines[] = '';
+					}
+					break;
+
 				default:
 					// Unbekannte Blöcke: nur in Kinder absteigen, kein Fremd-Markup
 					// in die Mail übernehmen (mail-sichere Strenge).
@@ -1783,8 +1842,16 @@ class GFB_Receipt_Mail {
 					'innerBlocks' => array(),
 					'innerHTML'   => '<h2>' . esc_html__( 'Bitte bestätigen Sie Ihre E-Mail-Adresse', 'gutenberg-formbuilder' ) . '</h2>',
 				),
+				// Erklärender Absatz VOR dem Knopf (Spam-Vermeidung: nicht Knopf-only).
 				$p( esc_html__( 'Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses E-Mail-Postfach Ihnen gehört – erst danach erhalten Sie die vollständige Eingangsbestätigung.', 'gutenberg-formbuilder' ) ),
-				$p( '{{bestaetigungslink}}' ),
+				// Dedizierter Knopf statt nacktem Platzhalter-Absatz (21.07.2026);
+				// die Plaintext-Fassung erhält die URL-Zeile über den Knopf-Zweig.
+				array(
+					'blockName'   => 'gfb/confirm-button',
+					'attrs'       => array(),
+					'innerBlocks' => array(),
+					'innerHTML'   => '',
+				),
 				$p( esc_html__( 'Der Link ist 7 Tage gültig und funktioniert nur einmal.', 'gutenberg-formbuilder' ) ),
 			);
 		}
@@ -2077,7 +2144,9 @@ class GFB_Receipt_Mail {
 	}
 
 	/**
-	 * Kommt {{bestaetigungslink}} irgendwo in den Blöcken vor (Text oder href)?
+	 * Ist der Bestätigungslink im Container abgedeckt? Erfüllt durch den
+	 * Block gfb/confirm-button ODER den Text-Platzhalter {{bestaetigungslink}}
+	 * (Text oder href). Fehlt beides, hängt der Server den Link an.
 	 *
 	 * @param array<int,array> $blocks Geparste Blöcke.
 	 * @return bool
@@ -2086,6 +2155,9 @@ class GFB_Receipt_Mail {
 		foreach ( $blocks as $block ) {
 			if ( ! is_array( $block ) ) {
 				continue;
+			}
+			if ( 'gfb/confirm-button' === ( $block['blockName'] ?? '' ) ) {
+				return true;
 			}
 			$inner = isset( $block['innerHTML'] ) ? (string) $block['innerHTML'] : '';
 			if ( false !== stripos( $inner, '{{bestaetigungslink}}' ) || preg_match( '/\{\{\s*bestaetigungslink\s*\}\}/i', $inner ) ) {
@@ -2096,6 +2168,23 @@ class GFB_Receipt_Mail {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Farbwert für den Mail-Knopf: nur Hex-Werte (3/4/6/8-stellig), sonst
+	 * Default. Preset-Slugs der Theme-Palette werden im Mail-Kontext bewusst
+	 * nicht aufgelöst (kein Theme-CSS in Mails) – dann greift der Default.
+	 *
+	 * @param string $raw     Rohwert aus dem Block-Support (style.color.*).
+	 * @param string $default Default-Hex.
+	 * @return string
+	 */
+	private static function mail_button_color( $raw, $default ) {
+		$raw = trim( (string) $raw );
+		if ( preg_match( '/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/', $raw ) ) {
+			return $raw;
+		}
+		return $default;
 	}
 
 	/* ------------------------------------------------------------------ *
