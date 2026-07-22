@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
-## [2.10.0] – Unreleased
+## [2.10.0] – 2026-07-22
 
 ### Neu
 
