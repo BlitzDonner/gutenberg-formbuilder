@@ -590,19 +590,48 @@ class GFB_Receipt_Mail {
 	}
 
 	/**
-	 * Löst das Bestätigungs-Template über die WP-API auf. get_block_template()
-	 * liefert die im Site Editor gespeicherte User-Customization (wp_template-
-	 * Post) mit Vorrang vor dem per register_block_template() registrierten
-	 * Plugin-Default. Ohne WP 6.7 (kein register_block_template) → null,
-	 * die Minimalseite bleibt der Fallback.
+	 * Löst das Bestätigungs-Template über die WP-API auf.
 	 *
-	 * @param string $template_id z. B. gutenberg-formbuilder//gfb-confirm.
+	 * Bugfix (Beta-Befund 21.07.2026): Der Core-REST-Controller des Site
+	 * Editors speichert die Customization eines plugin-registrierten Templates
+	 * als wp_template-CPT unter der ID des AKTIVEN THEMES
+	 * ({stylesheet}//{slug}, wp_theme-Term = Theme) – NICHT unter der
+	 * Plugin-ID. Die frühere Abfrage nur über die Plugin-ID lieferte deshalb
+	 * immer den Plugin-Default (source=plugin), nie die Anpassung.
+	 *
+	 * Rangfolge: 1) Theme-ID mit source «custom» (Site-Editor-Anpassung) oder
+	 * «theme» (ein Theme, das selbst ein gleichnamiges Template ausliefert,
+	 * ist ebenfalls bewusste Gestaltung) → gewinnt. 2) Plugin-ID als Fallback
+	 * (Default aus register_block_template). Ohne WP 6.7 → null, die
+	 * Minimalseite bleibt der Fallback.
+	 *
+	 * @param string $template_id Plugin-ID, z. B. gutenberg-formbuilder//gfb-confirm.
 	 * @return object|null Template-Objekt mit content oder null.
 	 */
 	private static function resolve_confirm_template( $template_id ) {
 		if ( ! function_exists( 'register_block_template' ) || ! function_exists( 'get_block_template' ) ) {
 			return null;
 		}
+
+		// Slug aus der Plugin-ID (Teil nach //) – gilt für beide Templates
+		// (gfb-confirm und gfb-confirm-result).
+		$template_id = (string) $template_id;
+		$slug        = ( false !== strpos( $template_id, '//' ) )
+			? substr( $template_id, strpos( $template_id, '//' ) + 2 )
+			: $template_id;
+
+		// 1) Theme-ID zuerst: dort liegt die Site-Editor-Customization.
+		if ( function_exists( 'get_stylesheet' ) ) {
+			$theme_template = get_block_template( get_stylesheet() . '//' . $slug, 'wp_template' );
+			if ( $theme_template && ! empty( $theme_template->content ) ) {
+				$source = isset( $theme_template->source ) ? (string) $theme_template->source : '';
+				if ( in_array( $source, array( 'custom', 'theme' ), true ) ) {
+					return $theme_template;
+				}
+			}
+		}
+
+		// 2) Fallback: Plugin-Default über die Plugin-ID.
 		$template = get_block_template( $template_id, 'wp_template' );
 		if ( $template && ! empty( $template->content ) ) {
 			return $template;
