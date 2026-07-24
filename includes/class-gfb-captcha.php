@@ -90,17 +90,21 @@ class GFB_Captcha {
 			// Erzwingungsmodus: 'soft' (Default) verlangt ein bestandenes Captcha,
 			// laesst aber bei nicht erreichbarem Anbieter durch (Ausfallsicherung).
 			// 'strict' lehnt auch bei gestoertem Anbieter ab (fail-closed).
-			'mode'     => 'soft',
-			'provider' => self::PROVIDER,
+			'mode'      => 'soft',
+			'provider'  => self::PROVIDER,
+			// Eigener Hinweistext unter dem Widget; leer = eingebauter
+			// Standardtext (uebersetzt), siehe hint_text().
+			'hint_text' => '',
 		);
 		$opt = get_option( self::OPTION_KEY, array() );
 		if ( ! is_array( $opt ) ) {
 			$opt = array();
 		}
-		$merged             = array_merge( $defaults, $opt );
-		$merged['enabled']  = ! empty( $merged['enabled'] );
-		$merged['provider'] = self::PROVIDER;
-		$merged['mode']     = ( 'strict' === $merged['mode'] ) ? 'strict' : 'soft';
+		$merged              = array_merge( $defaults, $opt );
+		$merged['enabled']   = ! empty( $merged['enabled'] );
+		$merged['provider']  = self::PROVIDER;
+		$merged['mode']      = ( 'strict' === $merged['mode'] ) ? 'strict' : 'soft';
+		$merged['hint_text'] = is_string( $merged['hint_text'] ) ? $merged['hint_text'] : '';
 		return $merged;
 	}
 
@@ -113,11 +117,12 @@ class GFB_Captcha {
 	public static function update_settings( array $values ) {
 		$cur = self::get_settings();
 		$new = array(
-			'enabled'  => ! empty( $values['enabled'] ),
-			'site_key' => self::sanitize_key_string( (string) ( $values['site_key'] ?? $cur['site_key'] ) ),
-			'api_key'  => self::sanitize_key_string( (string) ( $values['api_key'] ?? $cur['api_key'] ) ),
-			'mode'     => ( ( $values['mode'] ?? $cur['mode'] ) === 'strict' ) ? 'strict' : 'soft',
-			'provider' => self::PROVIDER,
+			'enabled'   => ! empty( $values['enabled'] ),
+			'site_key'  => self::sanitize_key_string( (string) ( $values['site_key'] ?? $cur['site_key'] ) ),
+			'api_key'   => self::sanitize_key_string( (string) ( $values['api_key'] ?? $cur['api_key'] ) ),
+			'mode'      => ( ( $values['mode'] ?? $cur['mode'] ) === 'strict' ) ? 'strict' : 'soft',
+			'provider'  => self::PROVIDER,
+			'hint_text' => mb_substr( sanitize_text_field( (string) ( $values['hint_text'] ?? $cur['hint_text'] ) ), 0, 300 ),
 		);
 		update_option( self::OPTION_KEY, $new, false );
 	}
@@ -218,7 +223,29 @@ class GFB_Captcha {
 	 * @param string $instance_id Form-Instanz (fuer eindeutige IDs/aria).
 	 * @return string HTML.
 	 */
-	public static function render_widget( $instance_id = '0' ) {
+	/**
+	 * Hinweistext unter dem Captcha-Widget: eigener Backend-Text (Einstellung
+	 * hint_text) oder der eingebaute, übersetzte Standardtext. Ein eigener
+	 * Text gilt unverändert für alle Sprachen.
+	 *
+	 * @param string $form_id Formular-ID (Kontext für den Filter).
+	 * @return string Reiner Text (Escaping übernimmt die Ausgabestelle).
+	 */
+	public static function hint_text( $form_id = '' ) {
+		$s    = self::get_settings();
+		$text = '' !== trim( (string) $s['hint_text'] )
+			? (string) $s['hint_text']
+			: __( 'Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest.', 'gutenberg-formbuilder' );
+		/**
+		 * Hinweistext unter dem Captcha (Code-Override).
+		 *
+		 * @param string $text    Text aus Einstellung bzw. Standard.
+		 * @param string $form_id Formular-ID.
+		 */
+		return (string) apply_filters( 'gfb_captcha_hint_text', $text, $form_id );
+	}
+
+	public static function render_widget( $instance_id = '0', $form_id = '' ) {
 		// Reine Keys-Sicherung (kein Wirksamkeits-Guard): ohne Site-Key laesst
 		// sich kein Widget rendern. Die Wirksamkeit hat die Aufrufstelle bereits
 		// ueber is_active_for_form() entschieden.
@@ -228,7 +255,7 @@ class GFB_Captcha {
 		$s         = self::get_settings();
 		$dom_id    = 'gfb-captcha-' . preg_replace( '/[^a-z0-9_\-]/i', '', (string) $instance_id );
 		$label     = __( 'Spam-Schutz', 'gutenberg-formbuilder' );
-		$hint      = __( 'Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest.', 'gutenberg-formbuilder' );
+		$hint      = self::hint_text( $form_id );
 
 		ob_start();
 		?>

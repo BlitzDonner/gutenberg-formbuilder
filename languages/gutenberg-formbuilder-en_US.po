@@ -650,3 +650,9 @@ msgstr "Email"
 
 msgid "Die Vorschau erscheint nach dem ersten Speichern."
 msgstr "The preview appears after saving for the first time."
+
+msgid "Hinweistext unter dem Captcha"
+msgstr "Hint text below the captcha"
+
+msgid "Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen."
+msgstr "Empty = built-in default text (translated). A custom text is used unchanged for all languages."

@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.10.1] – 2026-07-24
+
+### Neu
+
+- **Hinweistext unter dem Captcha änderbar:** Neues Textfeld in der Captcha-Karte unter «Sicherheit & Einstellungen» («Hinweistext unter dem Captcha», Teil des bestehenden Options-Blobs `gfb_captcha_settings`, sanitize_text_field, max. 300 Zeichen). Leer bleibt der eingebaute, übersetzte Standardtext «Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest.»; ein eigener Text gilt unverändert für alle Sprachen und wird bei der Ausgabe escaped. Für Code-Overrides gibt es den Filter `gfb_captcha_hint_text( $text, $form_id )`. Der Hinweis rendert ausschliesslich im Frontend-Widget (im Editor-Canvas erscheint er nicht – eine Quelle, kein Abgleichbedarf).
+
+### Behoben
+
+- **Formulare in Site-Editor-Templates scheiterten mit «err_schema», der Fehler-Redirect strandete auf admin-post (Beta-Befund beta.rell.ch, Formular gfb_job_372).** Zwei verkettete Ursachen: (1) Die Schema-Suche brach bei fehlender/ungültiger Post-ID ab, BEVOR die FSE-Template-Quellen geprüft wurden – Formulare, die in einem Site-Editor-Template/-Part ohne verwertbare Post-ID rendern, fanden ihr eigenes Schema nicht. `locate_form_block_for_post()` gibt jetzt nur bei leerem form_id sofort auf; ohne Post-ID entfällt nur die post_content-Quelle, und die Template-Suche läuft im neuen site-weiten Modus über alle aktiven Templates und Template-Parts (Theme-Dateien UND Site-Editor-Customizations via `get_block_templates()`, request-gecacht). Zusätzlich greift der site-weite Modus als letzte Rettung auch bei gültiger Post-ID, deren post-spezifische Quellen nicht treffen (z. B. Formular in einem Custom-Template ausserhalb der Standard-Hierarchie). Die Post-ID-Ermittlung im Frontend-Renderer ist gehärtet (get_the_ID → get_queried_object_id nur auf Einzelansichten → global $post; Template-IDs und Unbrauchbares → explizit 0), und der Submit akzeptiert post_id 0 als legitimen Template-Kontext. (2) `redirect_with_state()` vertraute `get_permalink()` blind – bei ungültiger ID (false) landete der Redirect auf der aktuellen admin-post-URI und die Person sah eine leere Seite mit Query-Args. Neu mit Fallback-Kette: geprüfter Permalink → Referer (nur same-host via `wp_validate_redirect`, gfb_*-Args gestrippt, nie admin-post) → Startseite.
+
 ## [2.10.0] – 2026-07-22
 
 ### Neu

@@ -195,7 +195,11 @@ class GFB_Submit_Handler {
 		$instance   = isset( $_POST['gfb_instance_id'] ) ? sanitize_key( wp_unslash( $_POST['gfb_instance_id'] ) ) : '0';
 		$ip_address = GFB_Security::get_client_ip();
 
-		if ( ! $post_id || ! $form_id ) {
+		// Bugfix (21.07.2026): post_id 0 ist legitim – Formulare in Site-Editor-
+		// Templates rendern ohne verwertbare Post-ID und senden explizit 0;
+		// die Schema-Suche läuft dann im site-weiten Template-Modus. Pflicht
+		// bleibt allein die form_id.
+		if ( ! $form_id ) {
 			GFB_Security::log_event( 'submit_invalid_request' );
 			self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_REQUEST );
 		}
@@ -614,7 +618,33 @@ class GFB_Submit_Handler {
 			$status_slug = self::STATUS_ERR_REQUEST;
 		}
 
-		$target = $post_id ? get_permalink( $post_id ) : home_url( '/' );
+		// Bugfix (21.07.2026): get_permalink() liefert bei ungültiger/fehlender
+		// Post-ID false – add_query_arg landete dann auf der aktuellen
+		// admin-post-URI und die Person sah eine leere Seite mit Query-Args.
+		// Fallback-Kette: Referer (nur same-host via wp_validate_redirect,
+		// gfb_*-Args gestrippt, nie admin-post) → Startseite.
+		$target = '';
+		if ( $post_id ) {
+			$permalink = get_permalink( $post_id );
+			if ( is_string( $permalink ) && '' !== $permalink ) {
+				$target = $permalink;
+			}
+		}
+		if ( '' === $target ) {
+			$referer = wp_get_referer();
+			if ( $referer ) {
+				$validated = wp_validate_redirect( $referer, '' );
+				if ( is_string( $validated ) && '' !== $validated && false === strpos( $validated, 'admin-post.php' ) ) {
+					$target = remove_query_arg(
+						array( 'gfb_status', 'gfb_code', 'gfb_form', 'gfb_detail', 'gfb_draft_key' ),
+						$validated
+					);
+				}
+			}
+		}
+		if ( '' === $target ) {
+			$target = home_url( '/' );
+		}
 		if ( self::STATUS_OK === $status_slug && $thank_you_page_id > 0 ) {
 			$page = get_post( $thank_you_page_id );
 			if ( $page instanceof WP_Post && is_post_publicly_viewable( $page ) ) {

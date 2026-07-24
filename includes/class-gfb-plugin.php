@@ -628,10 +628,25 @@ class GFB_Plugin {
 			return '';
 		}
 
-		$post_id = get_the_ID();
-		if ( ! $post_id ) {
+		// Post-ID-Ermittlung gehärtet (Bugfix 21.07.2026): get_the_ID() →
+		// get_queried_object_id() (nur auf Einzelansichten, sonst wäre es eine
+		// Term-/Author-ID) → global $post. Liefert nichts Brauchbares oder nur
+		// eine Template-ID, wird explizit 0 gesendet – die Schema-Suche läuft
+		// dann im site-weiten Template-Modus.
+		$post_id = (int) get_the_ID();
+		if ( $post_id < 1 && function_exists( 'is_singular' ) && is_singular() ) {
+			$post_id = (int) get_queried_object_id();
+		}
+		if ( $post_id < 1 ) {
 			global $post;
 			$post_id = $post instanceof WP_Post ? (int) $post->ID : 0;
+		}
+		if ( $post_id > 0 ) {
+			$resolved_type = get_post_type( $post_id );
+			if ( 'wp_template' === $resolved_type || 'wp_template_part' === $resolved_type ) {
+				// Nie eine fremde/Template-ID senden.
+				$post_id = 0;
+			}
 		}
 
 		$action = esc_url( admin_url( 'admin-post.php' ) );
@@ -822,7 +837,7 @@ class GFB_Plugin {
 				// CAPTCHA-Widget als letztes Element vor dem Absenden (B1).
 				// Nur Site-Key im Markup; das Skript laedt lazy ueber gfb-captcha.
 				if ( $captcha_active ) {
-					echo GFB_Captcha::render_widget( $instance_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_widget escaped intern
+					echo GFB_Captcha::render_widget( $instance_id, $form_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_widget escaped intern
 				}
 				?>
 			</form>
@@ -1170,16 +1185,23 @@ class GFB_Plugin {
 	public static function locate_form_block_for_post( $post_id, $form_id ) {
 		$post_id = absint( $post_id );
 		$form_id = sanitize_key( (string) $form_id );
-		if ( ! $post_id || '' === $form_id ) {
+		// Bugfix (Beta-Befund 21.07.2026): Nur bei leerem form_id sofort
+		// aufgeben. Eine fehlende/ungültige Post-ID darf die Suche nicht
+		// beenden – Formulare in Site-Editor-Templates/-Parts rendern ohne
+		// verwertbare Post-ID und liegen trotzdem in den Template-Quellen.
+		if ( '' === $form_id ) {
 			return null;
 		}
 
 		$visited = array();
 		$sources = array();
 
-		$content = get_post_field( 'post_content', $post_id );
-		if ( is_string( $content ) && '' !== $content ) {
-			$sources[] = $content;
+		// Ohne Post-ID entfällt nur die post_content-Quelle.
+		if ( $post_id > 0 ) {
+			$content = get_post_field( 'post_content', $post_id );
+			if ( is_string( $content ) && '' !== $content ) {
+				$sources[] = $content;
+			}
 		}
 
 		foreach ( self::gfb_fse_template_markup_candidates_for_post( $post_id ) as $markup ) {
@@ -1205,6 +1227,21 @@ class GFB_Plugin {
 			}
 		}
 
+		// Letzte Rettung bei gültiger Post-ID: site-weiter Template-Modus,
+		// falls die post-spezifischen Quellen nicht treffen (z. B. Formular in
+		// einem Custom-Template ausserhalb der Standard-Hierarchie). Läuft nur
+		// im bisherigen Fehlerfall und ist request-gecacht.
+		// Bei post_id 0 lief der site-weite Modus bereits über die Kandidaten.
+		if ( $post_id > 0 ) {
+			foreach ( self::gfb_all_block_template_markup() as $markup ) {
+				$blocks     = parse_blocks( $markup );
+				$form_block = self::find_form_block_recursive( $blocks, $form_id, $visited );
+				if ( null !== $form_block ) {
+					return $form_block;
+				}
+			}
+		}
+
 		return null;
 	}
 
@@ -1216,13 +1253,17 @@ class GFB_Plugin {
 	 */
 	private static function gfb_fse_template_markup_candidates_for_post( $post_id ) {
 		$out = array();
-		if ( ! $post_id || ! function_exists( 'get_block_template' ) || ! current_theme_supports( 'block-templates' ) ) {
+		if ( ! function_exists( 'get_block_template' ) || ! current_theme_supports( 'block-templates' ) ) {
 			return $out;
 		}
 
-		$post = get_post( $post_id );
+		$post = $post_id > 0 ? get_post( $post_id ) : null;
 		if ( ! $post ) {
-			return $out;
+			// Site-weiter Modus (Bugfix 21.07.2026): keine post-spezifische
+			// Eingrenzung möglich → alle aktiven Templates und Template-Parts
+			// prüfen (Theme-Dateien UND wp_template/wp_template_part-
+			// Customizations aus dem Site Editor).
+			return self::gfb_all_block_template_markup();
 		}
 
 		$ptype = $post->post_type;
@@ -1268,6 +1309,43 @@ class GFB_Plugin {
 			}
 		}
 
+		return $out;
+	}
+
+	/**
+	 * Markup ALLER aktiven Templates + Parts für den site-weiten Suchmodus.
+	 * get_block_templates() liefert Theme-Dateien und Site-Editor-
+	 * Customizations bereits zusammengeführt (Customization ersetzt die
+	 * gleichnamige Theme-Datei).
+	 *
+	 * ponytail: Deckel gegen Ausufern ist ein Request-Cache (static) –
+	 * pro Request wird die Template-Liste höchstens einmal geladen. Ein
+	 * Transient-Cache des Fundorts je form_id mit Invalidierung bei
+	 * Template-Save wäre der Ausbauweg, falls die Liste auf grossen Sites
+	 * je messbar drückt.
+	 *
+	 * @return array<int,string> Block-Markup aller Templates/Parts.
+	 */
+	private static $all_templates_markup_cache = null;
+
+	private static function gfb_all_block_template_markup() {
+		if ( null !== self::$all_templates_markup_cache ) {
+			return self::$all_templates_markup_cache;
+		}
+		$out = array();
+		if ( function_exists( 'get_block_templates' ) ) {
+			foreach ( array( 'wp_template', 'wp_template_part' ) as $type ) {
+				$templates = get_block_templates( array(), $type );
+				if ( is_array( $templates ) ) {
+					foreach ( $templates as $tpl ) {
+						if ( ! empty( $tpl->content ) && is_string( $tpl->content ) ) {
+							$out[] = $tpl->content;
+						}
+					}
+				}
+			}
+		}
+		self::$all_templates_markup_cache = $out;
 		return $out;
 	}
 

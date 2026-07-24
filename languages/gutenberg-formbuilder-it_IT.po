@@ -649,3 +649,9 @@ msgstr "E-mail"
 
 msgid "Die Vorschau erscheint nach dem ersten Speichern."
 msgstr "L’anteprima appare dopo il primo salvataggio."
+
+msgid "Hinweistext unter dem Captcha"
+msgstr "Testo di avviso sotto il captcha"
+
+msgid "Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen."
+msgstr "Vuoto = testo standard integrato (tradotto). Un testo personalizzato vale invariato per tutte le lingue."

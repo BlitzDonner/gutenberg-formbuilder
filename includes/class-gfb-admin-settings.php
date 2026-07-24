@@ -179,10 +179,12 @@ class GFB_Admin_Settings {
 
 				GFB_Captcha::update_settings(
 					array(
-						'enabled'  => $enabled,
-						'site_key' => isset( $_POST['captcha_site_key'] ) ? wp_unslash( $_POST['captcha_site_key'] ) : '',
-						'api_key'  => $api_key_to_store,
-						'mode'     => $new_mode,
+						'enabled'   => $enabled,
+						'site_key'  => isset( $_POST['captcha_site_key'] ) ? wp_unslash( $_POST['captcha_site_key'] ) : '',
+						'api_key'   => $api_key_to_store,
+						'mode'      => $new_mode,
+						// Sanitize zentral in update_settings (sanitize_text_field, 300 Zeichen).
+						'hint_text' => isset( $_POST['captcha_hint_text'] ) ? wp_unslash( $_POST['captcha_hint_text'] ) : '',
 					)
 				);
 
@@ -884,6 +886,12 @@ class GFB_Admin_Settings {
 			echo ' ' . esc_html__( 'Aktuell gesetzt – zum Ändern neuen Wert eintragen, sonst leer lassen.', 'gutenberg-formbuilder' );
 		}
 		echo '</p></td></tr>';
+
+		// Hinweistext unter dem Widget (Feature 24.07.2026).
+		echo '<tr><th scope="row"><label for="gfb_captcha_hint_text">' . esc_html__( 'Hinweistext unter dem Captcha', 'gutenberg-formbuilder' ) . '</label></th><td>';
+		echo '<input type="text" id="gfb_captcha_hint_text" name="captcha_hint_text" value="' . esc_attr( $s['hint_text'] ) . '" class="regular-text" maxlength="300" />';
+		echo '<p class="description">' . esc_html__( 'Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</td></tr>';
 
 		echo '</tbody></table>';
 
