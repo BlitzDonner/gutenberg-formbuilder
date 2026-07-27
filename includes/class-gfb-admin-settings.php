@@ -212,6 +212,7 @@ class GFB_Admin_Settings {
 						'logo_id'     => isset( $_POST['receipt_logo_id'] ) ? wp_unslash( $_POST['receipt_logo_id'] ) : 0,
 						'logo_url'    => isset( $_POST['receipt_logo_url'] ) ? wp_unslash( $_POST['receipt_logo_url'] ) : '',
 						'logo_link'   => isset( $_POST['receipt_logo_link'] ) ? wp_unslash( $_POST['receipt_logo_link'] ) : '',
+						'logo_align'  => isset( $_POST['receipt_logo_align'] ) ? wp_unslash( $_POST['receipt_logo_align'] ) : 'center',
 						'footer_text' => isset( $_POST['receipt_footer_text'] ) ? wp_unslash( $_POST['receipt_footer_text'] ) : '',
 					)
 				);
@@ -1225,6 +1226,20 @@ class GFB_Admin_Settings {
 		echo '<tr><th scope="row">' . esc_html__( 'Logo-Link', 'gutenberg-formbuilder' ) . '</th><td>';
 		echo '<input type="url" name="receipt_logo_link" value="' . esc_attr( $branding['logo_link'] ) . '" class="regular-text" placeholder="https://" />';
 		echo '<p class="description">' . esc_html__( 'Wird aufs Logo gelegt (z. B. Ihre Startseite). Leer = Logo ohne Link.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '</td></tr>';
+
+		// Ausrichtung des Logos im Mail-Kopf.
+		$logo_align = isset( $branding['logo_align'] ) ? (string) $branding['logo_align'] : 'center';
+		echo '<tr><th scope="row">' . esc_html__( 'Logo-Ausrichtung', 'gutenberg-formbuilder' ) . '</th><td>';
+		foreach ( array(
+			'left'   => __( 'Linksbündig', 'gutenberg-formbuilder' ),
+			'center' => __( 'Mittig', 'gutenberg-formbuilder' ),
+			'right'  => __( 'Rechtsbündig', 'gutenberg-formbuilder' ),
+		) as $align_value => $align_label ) {
+			echo '<label style="margin-right:1.2rem"><input type="radio" name="receipt_logo_align" value="' . esc_attr( $align_value ) . '" '
+				. checked( $logo_align, $align_value, false ) . ' /> ' . esc_html( $align_label ) . '</label>';
+		}
+		echo '<p class="description">' . esc_html__( 'Gilt für den Logo-Kopf aller Bestätigungsmails.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '</td></tr>';
 
 		// Footer-Identität: kleiner visueller Editor (klassischer TinyMCE via

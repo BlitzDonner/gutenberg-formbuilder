@@ -1409,7 +1409,7 @@ class GFB_Receipt_Mail {
 			if ( '' !== $branding['logo_link'] ) {
 				$logo_img = '<a href="' . esc_url( $branding['logo_link'] ) . '">' . $logo_img . '</a>';
 			}
-			$header_default = '<tr><td align="center" style="padding:0 0 24px;">' . $logo_img . '</td></tr>';
+			$header_default = '<tr><td align="' . esc_attr( $branding['logo_align'] ) . '" style="padding:0 0 24px;">' . $logo_img . '</td></tr>';
 		}
 		/**
 		 * Kopfbereich der Person-Mails (gerenderter Default, kann leer sein).
@@ -1747,8 +1747,21 @@ class GFB_Receipt_Mail {
 			'logo_id'     => isset( $raw['logo_id'] ) ? absint( $raw['logo_id'] ) : 0,
 			'logo_url'    => self::sanitize_branding_url( isset( $raw['logo_url'] ) ? (string) $raw['logo_url'] : '' ),
 			'logo_link'   => self::sanitize_branding_url( isset( $raw['logo_link'] ) ? (string) $raw['logo_link'] : '' ),
+			'logo_align'  => self::sanitize_logo_align( isset( $raw['logo_align'] ) ? (string) $raw['logo_align'] : '' ),
 			'footer_text' => self::branding_footer_kses( isset( $raw['footer_text'] ) ? (string) $raw['footer_text'] : '' ),
 		);
+	}
+
+	/**
+	 * Ausrichtung des Logos im Mail-Kopf. Mail-Clients verstehen das align-
+	 * Attribut der Tabellenzelle zuverlässiger als CSS – darum bleibt es dabei.
+	 *
+	 * @param string $value Rohwert.
+	 * @return string left|center|right
+	 */
+	public static function sanitize_logo_align( $value ) {
+		$value = strtolower( trim( (string) $value ) );
+		return in_array( $value, array( 'left', 'center', 'right' ), true ) ? $value : 'center';
 	}
 
 	/**
@@ -1818,6 +1831,7 @@ class GFB_Receipt_Mail {
 		return array(
 			'logo_src'    => $logo_src,
 			'logo_link'   => $clean['logo_link'],
+			'logo_align'  => $clean['logo_align'],
 			'footer_html' => $clean['footer_text'],
 		);
 	}
@@ -2375,6 +2389,19 @@ class GFB_Receipt_Mail {
 		}
 		$parts['html'] = isset( $parts['html'] ) && is_string( $parts['html'] ) ? $parts['html'] : '';
 		$parts['text'] = isset( $parts['text'] ) && is_string( $parts['text'] ) ? $parts['text'] : '';
+
+		// Nur für die Vorschau: Links tot legen. Im Rahmen der Einstellungsseite
+		// führte ein Klick sonst mitten in die Website – im kleinen Fenster ein
+		// Umweg ohne Rückweg. Das Scrollen bleibt möglich (darum kein
+		// pointer-events auf dem ganzen Rahmen). Der Versandpfad nutzt
+		// build_mail() direkt und bleibt davon unberührt.
+		if ( '' !== $parts['html'] ) {
+			$block = "<style>a{pointer-events:none;cursor:default;text-decoration:none;}</style>";
+			$parts['html'] = false !== strpos( $parts['html'], '</head>' )
+				? str_replace( '</head>', $block . '</head>', $parts['html'] )
+				: $block . $parts['html'];
+		}
+
 		return $parts;
 	}
 

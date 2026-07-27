@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.11.1] – 2026-07-27
+
+### Behoben
+
+- **Vorschau der Bestätigungsmail: Links sind nicht mehr klickbar.** In der kleinen Vorschau auf der Einstellungsseite führte ein Klick mitten in die Website – im 420 Pixel hohen Rahmen ein Umweg ohne Rückweg. Die Vorschau legt Links jetzt still (Klick bleibt wirkungslos), das Scrollen bleibt erhalten. Der Versandpfad ist davon unberührt: In der tatsächlich verschickten Mail funktionieren die Links normal.
+
+### Neu
+
+- **Ausrichtung des Logos wählbar.** In der Karte «Bestätigungsmail an Absender/innen» lässt sich das Logo im Mail-Kopf neu **linksbündig, mittig** (Vorgabe) **oder rechtsbündig** setzen. Umgesetzt über das `align`-Attribut der Tabellenzelle, das Mail-Clients zuverlässiger auswerten als CSS.
+
 ## [2.11.0] – 2026-07-27
 
 ### Neu
