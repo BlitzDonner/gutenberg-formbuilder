@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.10.3] – 2026-07-27
+
+### Neu
+
+- **Overlay-Texte im Backend einstellbar.** Die Texte der beiden Absende-Overlays – Sende-Animation («Ihre Daten werden verschlüsselt …») und Erfolgs-Quittung (Titel, Text, Schliessen-Knopf) – sind neu in den Einstellungen unter «Formular (Frontend)» änderbar. Leer = eingebauter, übersetzter Standardtext; eigene Texte gelten site-weit für alle Formulare. Filter `gfb_overlay_texts` für Code-Overrides; die Werte gehen als reiner Text ins Frontend (kein HTML).
+
+### Geändert
+
+- **Standardtexte der Overlays in der Sie-Form.** Kundensites siezen – die eingebauten Texte beider Overlays tun das jetzt auch («Ihre Daten …» statt «Deine Daten …»). Wer duzt, trägt die Du-Fassung in die neuen Felder ein. Die Standardtexte sind damit erstmals auch übersetzbar (de/en/fr/it).
+
 ## [2.10.2] – 2026-07-27
 
 ### Behoben

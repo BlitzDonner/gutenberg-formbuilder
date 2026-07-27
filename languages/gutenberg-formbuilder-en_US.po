@@ -656,3 +656,39 @@ msgstr "Hint text below the captcha"
 
 msgid "Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen."
 msgstr "Empty = built-in default text (translated). A custom text is used unchanged for all languages."
+
+msgid "Ihre Daten werden verschlüsselt und sicher übermittelt …"
+msgstr "Your data is being encrypted and transmitted securely …"
+
+msgid "Erfolgreich übermittelt"
+msgstr "Successfully submitted"
+
+msgid "Ihre Daten sind verschlüsselt übermittelt worden."
+msgstr "Your data has been transmitted in encrypted form."
+
+msgid "Schliessen"
+msgstr "Close"
+
+msgid "Overlay-Texte beim Absenden"
+msgstr "Overlay texts when submitting"
+
+msgid "Leer = eingebauter Standardtext (übersetzt). Eigene Texte gelten unverändert für alle Formulare und Sprachen."
+msgstr "Empty = built-in default text (translated). Custom texts apply unchanged to all forms and languages."
+
+msgid "Text während des Absendens"
+msgstr "Text while submitting"
+
+msgid "Titel der Erfolgs-Quittung"
+msgstr "Title of the success receipt"
+
+msgid "Text der Erfolgs-Quittung"
+msgstr "Text of the success receipt"
+
+msgid "Beschriftung des Schliessen-Knopfs"
+msgstr "Label of the close button"
+
+msgid "Overlay-Texte speichern"
+msgstr "Save overlay texts"
+
+msgid "Overlay-Texte gespeichert."
+msgstr "Overlay texts saved."

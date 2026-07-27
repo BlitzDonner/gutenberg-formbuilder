@@ -110,11 +110,16 @@ class GFB_Plugin {
 		);
 
 		// Strings statt bool: wp_localize_script castet Werte zu Strings (false → "").
+		$overlay_texts = self::overlay_texts();
 		wp_localize_script(
 			'gfb-frontend',
 			'gfbFrontendConfig',
 			array(
 				'webkitDateTimeFallback' => self::is_webkit_datetime_fallback_enabled() ? '1' : '0',
+				'overlaySending'         => $overlay_texts['sending'],
+				'overlaySuccessTitle'    => $overlay_texts['success_title'],
+				'overlaySuccessText'     => $overlay_texts['success_text'],
+				'overlaySuccessClose'    => $overlay_texts['success_close'],
 			)
 		);
 
@@ -1454,6 +1459,46 @@ class GFB_Plugin {
 	 * @param array<string,mixed> $attrs Attributes.
 	 * @return array<string,mixed>|null
 	 */
+	/**
+	 * Eingebaute Standardtexte der beiden Absende-Overlays (Sie-Form).
+	 *
+	 * @return array{sending:string,success_title:string,success_text:string,success_close:string}
+	 */
+	public static function overlay_text_defaults() {
+		return array(
+			'sending'       => __( 'Ihre Daten werden verschlüsselt und sicher übermittelt …', 'gutenberg-formbuilder' ),
+			'success_title' => __( 'Erfolgreich übermittelt', 'gutenberg-formbuilder' ),
+			'success_text'  => __( 'Ihre Daten sind verschlüsselt übermittelt worden.', 'gutenberg-formbuilder' ),
+			'success_close' => __( 'Schliessen', 'gutenberg-formbuilder' ),
+		);
+	}
+
+	/**
+	 * Wirksame Texte der beiden Absende-Overlays (Sende-Animation und
+	 * Erfolgs-Quittung). Betreiber-Werte aus der Option gfb_overlay_texts;
+	 * leere Felder fallen auf die eingebauten, übersetzten Standardtexte
+	 * zurück. Die Werte gehen als reiner Text ins Frontend (textContent,
+	 * kein HTML) – Escaping übernimmt der DOM.
+	 *
+	 * @return array{sending:string,success_title:string,success_text:string,success_close:string}
+	 */
+	public static function overlay_texts() {
+		$defaults = self::overlay_text_defaults();
+		$stored   = get_option( 'gfb_overlay_texts', array() );
+		$out      = array();
+		foreach ( $defaults as $text_key => $default ) {
+			$value            = is_array( $stored ) && isset( $stored[ $text_key ] ) ? sanitize_text_field( (string) $stored[ $text_key ] ) : '';
+			$out[ $text_key ] = '' !== $value ? $value : $default;
+		}
+
+		/**
+		 * Overlay-Texte übersteuern (läuft nach Option und Defaults).
+		 *
+		 * @param array<string,string> $out sending, success_title, success_text, success_close.
+		 */
+		return apply_filters( 'gfb_overlay_texts', $out );
+	}
+
 	/**
 	 * Eingebauter Standard-Titel eines Feldtyps (label-Default aus der
 	 * serverseitigen Block-Registrierung, block.json). Fallback: der

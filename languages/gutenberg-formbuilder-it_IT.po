@@ -655,3 +655,39 @@ msgstr "Testo di avviso sotto il captcha"
 
 msgid "Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen."
 msgstr "Vuoto = testo standard integrato (tradotto). Un testo personalizzato vale invariato per tutte le lingue."
+
+msgid "Ihre Daten werden verschlüsselt und sicher übermittelt …"
+msgstr "I suoi dati vengono cifrati e trasmessi in modo sicuro …"
+
+msgid "Erfolgreich übermittelt"
+msgstr "Invio riuscito"
+
+msgid "Ihre Daten sind verschlüsselt übermittelt worden."
+msgstr "I suoi dati sono stati trasmessi in forma cifrata."
+
+msgid "Schliessen"
+msgstr "Chiudi"
+
+msgid "Overlay-Texte beim Absenden"
+msgstr "Testi degli overlay all’invio"
+
+msgid "Leer = eingebauter Standardtext (übersetzt). Eigene Texte gelten unverändert für alle Formulare und Sprachen."
+msgstr "Vuoto = testo predefinito integrato (tradotto). I testi personalizzati valgono invariati per tutti i moduli e le lingue."
+
+msgid "Text während des Absendens"
+msgstr "Testo durante l’invio"
+
+msgid "Titel der Erfolgs-Quittung"
+msgstr "Titolo della conferma di riuscita"
+
+msgid "Text der Erfolgs-Quittung"
+msgstr "Testo della conferma di riuscita"
+
+msgid "Beschriftung des Schliessen-Knopfs"
+msgstr "Etichetta del pulsante Chiudi"
+
+msgid "Overlay-Texte speichern"
+msgstr "Salvare i testi degli overlay"
+
+msgid "Overlay-Texte gespeichert."
+msgstr "Testi degli overlay salvati."

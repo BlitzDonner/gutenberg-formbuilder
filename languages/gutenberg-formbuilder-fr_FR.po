@@ -655,3 +655,39 @@ msgstr "Texte d’indication sous le captcha"
 
 msgid "Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen."
 msgstr "Vide = texte standard intégré (traduit). Un texte personnalisé est utilisé tel quel pour toutes les langues."
+
+msgid "Ihre Daten werden verschlüsselt und sicher übermittelt …"
+msgstr "Vos données sont chiffrées et transmises en toute sécurité …"
+
+msgid "Erfolgreich übermittelt"
+msgstr "Transmission réussie"
+
+msgid "Ihre Daten sind verschlüsselt übermittelt worden."
+msgstr "Vos données ont été transmises sous forme chiffrée."
+
+msgid "Schliessen"
+msgstr "Fermer"
+
+msgid "Overlay-Texte beim Absenden"
+msgstr "Textes des overlays à l’envoi"
+
+msgid "Leer = eingebauter Standardtext (übersetzt). Eigene Texte gelten unverändert für alle Formulare und Sprachen."
+msgstr "Vide = texte standard intégré (traduit). Les textes personnalisés s’appliquent tels quels à tous les formulaires et langues."
+
+msgid "Text während des Absendens"
+msgstr "Texte pendant l’envoi"
+
+msgid "Titel der Erfolgs-Quittung"
+msgstr "Titre de la confirmation de réussite"
+
+msgid "Text der Erfolgs-Quittung"
+msgstr "Texte de la confirmation de réussite"
+
+msgid "Beschriftung des Schliessen-Knopfs"
+msgstr "Libellé du bouton Fermer"
+
+msgid "Overlay-Texte speichern"
+msgstr "Enregistrer les textes des overlays"
+
+msgid "Overlay-Texte gespeichert."
+msgstr "Textes des overlays enregistrés."

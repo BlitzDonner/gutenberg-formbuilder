@@ -388,7 +388,9 @@
 
 		var message = document.createElement( 'p' );
 		message.className = 'gfb-submit-overlay__message';
-		message.textContent = 'Deine Daten werden verschlüsselt und sicher übermittelt \u2026';
+		var sendCfg = window.gfbFrontendConfig || {};
+		message.textContent =
+			sendCfg.overlaySending || 'Ihre Daten werden verschlüsselt und sicher übermittelt \u2026';
 
 		content.appendChild( cipher );
 		content.appendChild( barTrack );
@@ -780,19 +782,22 @@
 		check.className = 'gfb-success-overlay__check';
 		check.setAttribute( 'aria-hidden', 'true' );
 
+		/* Texte aus dem Backend (Einstellungen → Formular (Frontend)); Sie-Form als Fallback. */
+		var cfg = window.gfbFrontendConfig || {};
+
 		var title = document.createElement( 'h2' );
 		title.className = 'gfb-success-overlay__title';
 		title.id = 'gfb-success-overlay-title';
-		title.textContent = 'Erfolgreich übermittelt';
+		title.textContent = cfg.overlaySuccessTitle || 'Erfolgreich übermittelt';
 
 		var text = document.createElement( 'p' );
 		text.className = 'gfb-success-overlay__text';
-		text.textContent = 'Deine Daten sind verschlüsselt übermittelt worden.';
+		text.textContent = cfg.overlaySuccessText || 'Ihre Daten sind verschlüsselt übermittelt worden.';
 
 		var button = document.createElement( 'button' );
 		button.type = 'button';
 		button.className = 'gfb-success-overlay__close';
-		button.textContent = 'Schliessen';
+		button.textContent = cfg.overlaySuccessClose || 'Schliessen';
 
 		card.appendChild( check );
 		card.appendChild( title );

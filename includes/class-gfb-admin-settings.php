@@ -338,6 +338,16 @@ class GFB_Admin_Settings {
 				GFB_Audit::record( 'storage_reach_test', 'system', '', $r );
 				break;
 
+			case 'save_overlay_texts':
+				$overlay_new = array();
+				foreach ( array( 'sending', 'success_title', 'success_text', 'success_close' ) as $overlay_key ) {
+					$overlay_val                 = isset( $_POST[ 'overlay_' . $overlay_key ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'overlay_' . $overlay_key ] ) ) : '';
+					$overlay_new[ $overlay_key ] = mb_substr( $overlay_val, 0, 200 );
+				}
+				update_option( 'gfb_overlay_texts', $overlay_new, false );
+				$message = __( 'Overlay-Texte gespeichert.', 'gutenberg-formbuilder' );
+				break;
+
 			case 'save_webkit_datetime':
 				$enabled = ! empty( $_POST['webkit_datetime_fallback'] );
 				update_option( GFB_Plugin::OPTION_WEBKIT_DATETIME_FALLBACK, $enabled ? '1' : '0', false );
@@ -366,6 +376,7 @@ class GFB_Admin_Settings {
 			'save_caps'            => 'gfb-berechtigungen',
 			'storage_reach_test'   => 'gfb-privatsphaere',
 			'save_webkit_datetime' => 'gfb-frontend',
+			'save_overlay_texts'   => 'gfb-frontend',
 			'rewrap_now'           => 'gfb-rotation',
 		);
 		$fragment = isset( $anchors[ $action ] ) ? '#' . $anchors[ $action ] : '';
@@ -631,6 +642,28 @@ class GFB_Admin_Settings {
 		echo '</label></p>';
 		echo '<p class="description">' . esc_html__( 'Aktiviert (Standard): Safari erhält Texteingaben mit Musterprüfung nach den WordPress-Datumsformaten – stabiler bei 12-Stunden-Format und Validierung. Deaktiviert: native Browser-Picker bleiben erhalten.', 'gutenberg-formbuilder' ) . '</p>';
 		submit_button( __( 'Speichern', 'gutenberg-formbuilder' ) );
+		echo '</form>';
+
+		echo '<hr style="margin:1rem 0" />';
+		echo '<p><strong>' . esc_html__( 'Overlay-Texte beim Absenden', 'gutenberg-formbuilder' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Leer = eingebauter Standardtext (übersetzt). Eigene Texte gelten unverändert für alle Formulare und Sprachen.', 'gutenberg-formbuilder' ) . '</p>';
+		$overlay_stored   = get_option( 'gfb_overlay_texts', array() );
+		$overlay_defaults = GFB_Plugin::overlay_text_defaults();
+		$overlay_fields   = array(
+			'sending'       => __( 'Text während des Absendens', 'gutenberg-formbuilder' ),
+			'success_title' => __( 'Titel der Erfolgs-Quittung', 'gutenberg-formbuilder' ),
+			'success_text'  => __( 'Text der Erfolgs-Quittung', 'gutenberg-formbuilder' ),
+			'success_close' => __( 'Beschriftung des Schliessen-Knopfs', 'gutenberg-formbuilder' ),
+		);
+		echo '<form method="post">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="save_overlay_texts" />';
+		foreach ( $overlay_fields as $overlay_key => $overlay_label ) {
+			$overlay_val = is_array( $overlay_stored ) && isset( $overlay_stored[ $overlay_key ] ) ? (string) $overlay_stored[ $overlay_key ] : '';
+			echo '<p><label for="gfb-overlay-' . esc_attr( $overlay_key ) . '" style="display:block;font-weight:600;margin-bottom:.2rem;">' . esc_html( $overlay_label ) . '</label>';
+			echo '<input type="text" class="regular-text" maxlength="200" id="gfb-overlay-' . esc_attr( $overlay_key ) . '" name="overlay_' . esc_attr( $overlay_key ) . '" value="' . esc_attr( $overlay_val ) . '" placeholder="' . esc_attr( $overlay_defaults[ $overlay_key ] ) . '" /></p>';
+		}
+		submit_button( __( 'Overlay-Texte speichern', 'gutenberg-formbuilder' ) );
 		echo '</form>';
 
 		// 5) Key-Rotation
