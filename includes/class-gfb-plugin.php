@@ -797,14 +797,14 @@ class GFB_Plugin {
 		if ( $show_success_panels ) :
 			?>
 		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<div class="gfb-form-success-output" data-gfb-success-root="1">
+			<div class="gfb-form-success-output" id="gfb-erfolg-<?php echo esc_attr( $form_id ); ?>" data-gfb-success-root="1" role="status" tabindex="-1">
 				<?php echo $safe_success; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_kses (Erfolgs-Whitelist) ?>
 			</div>
 		</div>
 			<?php
 		else :
 			?>
-		<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+		<div id="gfb-form-<?php echo esc_attr( $form_id ); ?>" <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<?php if ( $show_notice ) : ?>
 				<div class="gfb-notice gfb-notice-<?php echo esc_attr( $status ); ?>">
 					<?php echo esc_html( $status_msg ); ?>
@@ -1454,6 +1454,26 @@ class GFB_Plugin {
 	 * @param array<string,mixed> $attrs Attributes.
 	 * @return array<string,mixed>|null
 	 */
+	/**
+	 * Eingebauter Standard-Titel eines Feldtyps (label-Default aus der
+	 * serverseitigen Block-Registrierung, block.json). Fallback: der
+	 * übergebene technische Name.
+	 *
+	 * @param string $block_name Blockname, z. B. gfb/field-email.
+	 * @param string $fallback   Technischer Feldname als Notnagel.
+	 * @return string
+	 */
+	private static function field_type_default_label( $block_name, $fallback ) {
+		$block_type = WP_Block_Type_Registry::get_instance()->get_registered( $block_name );
+		if ( $block_type && isset( $block_type->attributes['label']['default'] ) ) {
+			$default = sanitize_text_field( (string) $block_type->attributes['label']['default'] );
+			if ( '' !== $default ) {
+				return $default;
+			}
+		}
+		return (string) $fallback;
+	}
+
 	private static function block_to_field_row( $block_name, $attrs ) {
 		$map = array(
 			'gfb/field-text'     => 'text',
@@ -1481,9 +1501,15 @@ class GFB_Plugin {
 			return null;
 		}
 
-		$label = isset( $attrs['label'] ) ? sanitize_text_field( (string) $attrs['label'] ) : $key;
-		if ( 'hidden' === $type && '' === $label ) {
-			$label = $key;
+		// Immer ein menschenlesbares Label (Entscheid Stefan 27.07.2026):
+		// explizit gesetztes Label gewinnt; fehlt es oder ist es bewusst leer
+		// (Formular ohne sichtbares Label), greift der eingebaute Standard-
+		// Titel des Feldtyps aus der Block-Registrierung. Der technische Name
+		// ist nur der letzte Notnagel. Wirkt überall, wo das Schema Labels
+		// liefert: Mail-Tabellen, Betreiber-Mail, Backend, Export.
+		$label = isset( $attrs['label'] ) ? sanitize_text_field( (string) $attrs['label'] ) : '';
+		if ( '' === $label ) {
+			$label = self::field_type_default_label( $block_name, $key );
 		}
 
 		$row = array(

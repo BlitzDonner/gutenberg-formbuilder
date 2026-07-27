@@ -645,12 +645,14 @@ class GFB_Submit_Handler {
 		if ( '' === $target ) {
 			$target = home_url( '/' );
 		}
+		$went_thank_you_page = false;
 		if ( self::STATUS_OK === $status_slug && $thank_you_page_id > 0 ) {
 			$page = get_post( $thank_you_page_id );
 			if ( $page instanceof WP_Post && is_post_publicly_viewable( $page ) ) {
 				$permalink = get_permalink( $page );
 				if ( $permalink ) {
-					$target = $permalink;
+					$target              = $permalink;
+					$went_thank_you_page = true;
 				}
 			}
 		}
@@ -678,7 +680,20 @@ class GFB_Submit_Handler {
 			$args['gfb_draft_key'] = $draft_key;
 		}
 
-		wp_safe_redirect( add_query_arg( $args, $target ) );
+		$redirect_url = add_query_arg( $args, $target );
+
+		// Anker ans Ziel: Bei Erfolg zum Erfolgsbereich, im Fehlerfall zum
+		// Formular (dort steht die Meldung). Der Browser scrollt nativ – das
+		// funktioniert ohne JavaScript; das Erfolgs-Overlay im Frontend-Script
+		// veredelt nur. Danke-Seiten brauchen keinen Anker.
+		// ponytail: Bei Mehrfacheinbindung desselben Formulars auf einer Seite
+		// ist die Anker-ID doppelt und der Sprung trifft die erste Instanz.
+		// Ausbauweg: instance_id bis in den Redirect durchreichen.
+		if ( '' !== $form_id && ! $went_thank_you_page ) {
+			$redirect_url .= ( self::STATUS_OK === $status_slug ? '#gfb-erfolg-' : '#gfb-form-' ) . $form_id;
+		}
+
+		wp_safe_redirect( $redirect_url );
 		exit;
 	}
 

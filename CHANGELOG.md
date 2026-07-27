@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.10.2] – 2026-07-27
+
+### Behoben
+
+- **Feldwert-Tabellen zeigen immer das Feldlabel.** In den Bestätigungs- und Betreiber-Mails (und überall, wo das Formular-Schema Labels liefert) erschien bei Feldern ohne eigenes Label der technische Feldname (`e_mail`, `telefon`) oder eine leere Beschriftung. Neu gilt: explizit gesetztes Label → dieses; fehlendes oder bewusst leeres Label → der eingebaute Standard-Titel des Feldtyps aus der Block-Registrierung («E-Mail», «Telefon», «Auswahl» …); der technische Name bleibt nur der Notnagel (z. B. bei versteckten Feldern ohne Standard-Titel). Bestehende Einsendungen behalten ihren historischen Label-Schnappschuss.
+
+### Neu
+
+- **Erfolg nach dem Absenden ist jetzt garantiert sichtbar.** Bleibt das Ziel des Absendens auf derselben Seite, trägt die Rückleitung neu einen Anker: Bei Erfolg springt der Browser nativ zum Erfolgsbereich (`#gfb-erfolg-{form_id}`), im Fehlerfall zum Formular mit der Meldung (`#gfb-form-{form_id}`) – das funktioniert ohne JavaScript. Zusätzlich zeigt das Frontend bei Erfolg ein viewport-zentriertes Quittungs-Overlay (Häkchen, «Erfolgreich übermittelt», Schliessen-Knopf), das aktiv geschlossen werden muss – die Bestätigung wird damit nachweislich gesehen. Schliessen (Knopf, Esc oder Klick auf den Hintergrund) führt Fokus und Scroll zum redaktionellen Erfolgsbereich (`role="status"`, fokussierbar); `prefers-reduced-motion` wird respektiert, der Submit-Anker wird nach der Quittung aus der URL entfernt. Konfigurierte Danke-Seiten bleiben unverändert ohne Overlay und Anker.
+
 ## [2.10.1] – 2026-07-24
 
 ### Neu

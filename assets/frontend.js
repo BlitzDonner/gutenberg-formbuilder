@@ -727,16 +727,115 @@
 				changed = true;
 			}
 		} );
+		/* Auch den Submit-Anker (#gfb-erfolg-…/#gfb-form-…) entfernen, damit ein
+		   Reload nicht erneut dorthin springt. Fremde Anker bleiben unberührt. */
+		var hash = window.location.hash;
+		if ( hash.indexOf( '#gfb-' ) === 0 ) {
+			hash = '';
+			changed = true;
+		}
 		if ( ! changed ) {
 			return false;
 		}
 		var qs = params.toString();
-		var next = window.location.pathname + ( qs ? '?' + qs : '' ) + window.location.hash;
+		var next = window.location.pathname + ( qs ? '?' + qs : '' ) + hash;
 		var cur = window.location.pathname + window.location.search + window.location.hash;
 		if ( next !== cur ) {
 			window.history.replaceState( {}, document.title, next );
 		}
 		return true;
+	}
+
+	/**
+	 * Erfolgs-Overlay nach dem Redirect: viewport-zentrierte Quittung, die
+	 * aktiv geschlossen werden muss – so ist die Bestätigung garantiert
+	 * gesehen. Beim Schliessen führt der Fokus zum redaktionellen
+	 * Erfolgsbereich. Ohne JavaScript übernimmt der Anker in der
+	 * Redirect-URL das Scrollen (progressive enhancement).
+	 */
+	function gfbMaybeShowSuccessOverlay() {
+		var sp = new URLSearchParams( window.location.search );
+		if ( sp.get( 'gfb_status' ) !== 'success' ) {
+			return;
+		}
+		var target = document.querySelector( '.gfb-form-success-output' );
+		if ( ! target ) {
+			/* Danke-Seite oder fremder Kontext – dort ist die Seite selbst die Bestätigung. */
+			return;
+		}
+
+		var reduceMotion =
+			window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+		var backdrop = document.createElement( 'div' );
+		backdrop.className = 'gfb-success-overlay';
+
+		var card = document.createElement( 'div' );
+		card.className = 'gfb-success-overlay__card';
+		card.setAttribute( 'role', 'alertdialog' );
+		card.setAttribute( 'aria-modal', 'true' );
+		card.setAttribute( 'aria-labelledby', 'gfb-success-overlay-title' );
+
+		var check = document.createElement( 'div' );
+		check.className = 'gfb-success-overlay__check';
+		check.setAttribute( 'aria-hidden', 'true' );
+
+		var title = document.createElement( 'h2' );
+		title.className = 'gfb-success-overlay__title';
+		title.id = 'gfb-success-overlay-title';
+		title.textContent = 'Erfolgreich übermittelt';
+
+		var text = document.createElement( 'p' );
+		text.className = 'gfb-success-overlay__text';
+		text.textContent = 'Deine Daten sind verschlüsselt übermittelt worden.';
+
+		var button = document.createElement( 'button' );
+		button.type = 'button';
+		button.className = 'gfb-success-overlay__close';
+		button.textContent = 'Schliessen';
+
+		card.appendChild( check );
+		card.appendChild( title );
+		card.appendChild( text );
+		card.appendChild( button );
+		backdrop.appendChild( card );
+		document.body.appendChild( backdrop );
+
+		function close() {
+			if ( ! backdrop.parentNode ) {
+				return;
+			}
+			document.removeEventListener( 'keydown', onKeydown, true );
+			backdrop.parentNode.removeChild( backdrop );
+			/* Zum Erfolgsbereich führen: erst Fokus ohne Scroll, dann gezielt scrollen. */
+			try {
+				target.focus( { preventScroll: true } );
+			} catch ( e ) {
+				target.focus();
+			}
+			target.scrollIntoView( { block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' } );
+		}
+
+		function onKeydown( ev ) {
+			if ( ev.key === 'Escape' ) {
+				ev.preventDefault();
+				close();
+			} else if ( ev.key === 'Tab' ) {
+				/* Einziges fokussierbares Element im Dialog – Fokus bleibt auf dem Knopf. */
+				ev.preventDefault();
+				button.focus();
+			}
+		}
+
+		button.addEventListener( 'click', close );
+		backdrop.addEventListener( 'click', function ( ev ) {
+			if ( ev.target === backdrop ) {
+				close();
+			}
+		} );
+		document.addEventListener( 'keydown', onKeydown, true );
+
+		button.focus();
 	}
 
 	/**
@@ -759,6 +858,9 @@
 	function gfbInitFrontend() {
 		/* Platzhalter zuerst: `gfb_status`/`gfb_form` stehen noch in der URL; kein Warten auf IndexedDB. */
 		gfbApplySubmitSnapshotTokens();
+
+		/* Quittung vor allem anderen: solange gfb_status noch in der URL steht. */
+		gfbMaybeShowSuccessOverlay();
 
 		var sp = new URLSearchParams( window.location.search );
 		if ( sp.get( 'gfb_status' ) === 'success' && sp.get( 'gfb_draft_key' ) ) {
