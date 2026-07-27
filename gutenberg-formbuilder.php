@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Blitz & Donner Formular
  * Description: Sicherheitszentrierter Formular-Builder für den Block-Editor mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
- * Version: 2.10.3
+ * Version: 2.11.0
  * Plugin URI: https://plugins.blitzdonner.ch
  * Author: Blitz & Donner
  * Author URI: https://plugins.blitzdonner.ch
@@ -21,9 +21,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GFB_PLUGIN_FILE', __FILE__ );
 define( 'GFB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GFB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'GFB_PLUGIN_VERSION', '2.10.3' );
+define( 'GFB_PLUGIN_VERSION', '2.11.0' );
 
 // Reihenfolge wichtig: Crypto + Capabilities + Audit zuerst, dann alles, was sie nutzt.
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-texts.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-crypto.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-capabilities.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-audit.php';
@@ -38,6 +39,7 @@ require_once GFB_PLUGIN_DIR . 'includes/class-gfb-receipt-mail.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-submissions.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-settings.php';
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-audit.php';
+require_once GFB_PLUGIN_DIR . 'includes/class-gfb-admin-texts.php';
 
 /**
  * Lädt Übersetzungen gemäss WordPress-Locale (Einstellungen → Allgemein → Sprache der Website).
@@ -76,6 +78,7 @@ GFB_Plugin::boot();
 GFB_Receipt_Mail::boot();
 GFB_Admin_Settings::boot();
 GFB_Admin_Audit::boot();
+GFB_Admin_Texts::boot();
 
 /**
  * BD Update Client: bezieht Updates vom Self-hosted Server plugins.blitzdonner.ch.

@@ -190,6 +190,29 @@ Das gerenderte `<form class="gfb-form">` trägt das Attribut **`lang="…"`** (W
 
 **Hinweis nach Absenden:** Die Erfolgs-/Fehlerzeile kommt aus der Redirect-URL (`gfb_status`, …). Nach dem Laden entfernt `frontend.js` diese Parameter mit **`history.replaceState`**, damit ein **Reload** das Formular ohne feststeckenden Hinweis zeigt. **Entwurf löschen** blendet die Notice zusätzlich aus und bereinigt die URL.
 
+## Texte anpassen
+
+Seit 2.11.0 gilt: **Jeder Satz, den eine ausfüllende Person zu sehen bekommt, ist im Backend änderbar** – unter **Formular-Einträge → Texte**. Die 83 Texte sind in sieben Gruppen geordnet:
+
+| Gruppe | Inhalt |
+|---|---|
+| Formular | Absende-Knopf, Datei-Hinweise, «verschlüsselt»-Kennzeichnung, Captcha-Beschriftung |
+| Overlays beim Absenden | Sende-Animation und Erfolgs-Quittung |
+| Meldungen nach dem Absenden | Erfolgs- und Fehlermeldungen über dem Formular |
+| Feldprüfung | Hinweise zu einzelnen Feldern (Pflichtfeld, ungültige E-Mail …) |
+| Bestätigungsmail | Betreffzeilen, Standard-Vorlagen, Bausteine der Datentabelle, Schluss-Sätze |
+| Benachrichtigung an den Betrieb | Betreffzeilen und Status-Vermerke der eigenen Mails |
+| Bestätigungsseiten | Die zwei Seiten, auf denen der Bestätigungslink landet |
+
+- **Bezeichnung der Website in Mails:** Vorgabe ist die vereinfachte **Domain** (`varellion.ch`), wählbar sind auch der Website-Titel oder eine eigene Bezeichnung. Sie erscheint in den Betreffzeilen, über der Datentabelle, in der Fusszeile und als Absendername. Filter `gfb_site_label`.
+- **Anrede-Umschalter** ganz oben: **Sie** (Vorgabe) oder **Du**. Er wechselt die Anredeform aller eingebauten Standardtexte auf einen Schlag; eigene Texte bleiben, wie sie eingetragen wurden. 27 der 83 Texte tragen überhaupt eine Anrede, der Rest ist anredefrei.
+- **Leeres Feld = eingebauter Standardtext** (übersetzt in de/en/fr/it). Der Standard steht als Platzhalter im Feld und darunter im Klartext – in der gewählten Anredeform.
+- **Ein eigener Text gilt site-weit** für alle Formulare und Sprachen. Gespeichert wird nur, was abweicht.
+- **Platzhalter sind geschützt:** Texte wie `Bitte fülle das Feld "%s" aus.` brauchen ihr `%s`. Fehlt es oder kommt eines hinzu, lehnt die Seite den Text ab und behält den bisherigen – so kann eine Textänderung die Ausgabe nicht brechen.
+- **Für Code:** Filter `gfb_text( $text, $key, $args )` übersteuert einzelne Texte; die Registry liegt in `includes/class-gfb-texts.php`.
+
+Nicht auf dieser Seite: die Oberfläche des Backends selbst (sie richtet sich an die Betreiberin und ist nur übersetzbar) sowie die Inhalte, die ohnehin im Editor entstehen – Feldbeschriftungen, Erfolgsbereich und die Mail-Container.
+
 ## Erfolgsbereich: Nachricht und Platzhalter
 
 Gilt nur, wenn im Block **Formular** **keine** Folgeseite gewählt ist und mindestens ein Block **Erfolgsbereich** (`gfb/form-success`) eingefügt wurde.

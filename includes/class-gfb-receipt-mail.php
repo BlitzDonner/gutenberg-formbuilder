@@ -361,7 +361,7 @@ class GFB_Receipt_Mail {
 			$region  = GFB_Plugin::get_form_mail_region_blocks( $post_id, $form_id, 'gfb/doi-mail' );
 			$subject = self::build_subject(
 				isset( $form_attrs['doiSubject'] ) ? (string) $form_attrs['doiSubject'] : '',
-				__( 'Bitte bestätigen Sie Ihre E-Mail-Adresse', 'gutenberg-formbuilder' ),
+				GFB_Texts::get( 'receipt.subject_doi' ),
 				$ctx
 			);
 		} else {
@@ -370,8 +370,8 @@ class GFB_Receipt_Mail {
 				isset( $form_attrs['receiptSubject'] ) ? (string) $form_attrs['receiptSubject'] : '',
 				sprintf(
 					/* translators: %s: Name der Website */
-					__( 'Ihre Einsendung bei %s ist eingegangen', 'gutenberg-formbuilder' ),
-					wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES )
+					GFB_Texts::get( 'receipt.subject_receipt' ),
+					GFB_Texts::site_label()
 				),
 				$ctx
 			);
@@ -655,7 +655,7 @@ class GFB_Receipt_Mail {
 		echo '<!DOCTYPE html><html lang="' . esc_attr( str_replace( '_', '-', determine_locale() ) ) . '"><head><meta charset="utf-8">';
 		echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
 		echo '<meta name="robots" content="noindex,nofollow">';
-		echo '<title>' . esc_html( __( 'Bestätigung', 'gutenberg-formbuilder' ) . ' – ' . $blogname ) . '</title>';
+		echo '<title>' . esc_html( GFB_Texts::get( 'confirm_page.page_title' ) . ' – ' . $blogname ) . '</title>';
 		wp_head();
 		echo '</head><body class="gfb-confirm-template-page">';
 		echo '<div class="wp-site-blocks">';
@@ -704,11 +704,11 @@ class GFB_Receipt_Mail {
 	 */
 	private static function confirm_template_content( $which ) {
 		if ( 'landing' === $which ) {
-			$heading = __( 'E-Mail-Adresse bestätigen', 'gutenberg-formbuilder' );
-			$intro   = __( 'Sie sind dem Bestätigungslink aus unserer E-Mail gefolgt.', 'gutenberg-formbuilder' );
+			$heading = GFB_Texts::get( 'confirm_page.heading_landing' );
+			$intro   = GFB_Texts::get( 'confirm_page.intro_landing' );
 		} else {
-			$heading = __( 'Bestätigung', 'gutenberg-formbuilder' );
-			$intro   = __( 'Das Ergebnis Ihrer Bestätigung:', 'gutenberg-formbuilder' );
+			$heading = GFB_Texts::get( 'confirm_page.heading_result' );
+			$intro   = GFB_Texts::get( 'confirm_page.intro_result' );
 		}
 
 		return '<!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->'
@@ -928,8 +928,8 @@ class GFB_Receipt_Mail {
 			isset( $form_attrs['receiptSubject'] ) ? (string) $form_attrs['receiptSubject'] : '',
 			sprintf(
 				/* translators: %s: Name der Website */
-				__( 'Ihre Einsendung bei %s ist bestätigt', 'gutenberg-formbuilder' ),
-				wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES )
+				GFB_Texts::get( 'receipt.subject_confirmed' ),
+				GFB_Texts::site_label()
 			),
 			$ctx
 		);
@@ -945,7 +945,7 @@ class GFB_Receipt_Mail {
 			$form_attrs,
 			sprintf(
 				/* translators: %d: Nummer der Einsendung */
-				__( 'Status: jetzt bestätigt – die absendende Person hat die Kontrolle über ihr Postfach für Eintrag #%d nachgewiesen.', 'gutenberg-formbuilder' ),
+				GFB_Texts::get( 'operator.note_doi_confirmed' ),
 				$sid
 			)
 		);
@@ -1043,7 +1043,7 @@ class GFB_Receipt_Mail {
 	 */
 	private static function render_confirm_page( $state, $sid, $token, $receipt_result = '' ) {
 		$blogname = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$title    = __( 'Bestätigung', 'gutenberg-formbuilder' );
+		$title    = GFB_Texts::get( 'confirm_page.page_title' );
 
 		echo '<!DOCTYPE html><html lang="' . esc_attr( str_replace( '_', '-', determine_locale() ) ) . '"><head><meta charset="utf-8">';
 		echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
@@ -1055,7 +1055,7 @@ class GFB_Receipt_Mail {
 		// Zustands-Markup aus der geteilten Quelle (identisch mit dem Block
 		// gfb/confirm-status im Template-Weg – ein Wortlaut, zwei Ausgabewege).
 		if ( 'landing' === $state ) {
-			echo '<h1>' . esc_html__( 'E-Mail-Adresse bestätigen', 'gutenberg-formbuilder' ) . '</h1>';
+			echo '<h1>' . esc_html( GFB_Texts::get( 'confirm_page.heading_landing' ) ) . '</h1>';
 		}
 		echo self::confirm_status_inner_html( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped intern
 			array(
@@ -1087,34 +1087,34 @@ class GFB_Receipt_Mail {
 		$sid   = isset( $ctx['sid'] ) ? (int) $ctx['sid'] : 0;
 
 		if ( 'landing' === $state ) {
-			$out  = '<p class="gfb-confirm-status__text">' . esc_html__( 'Mit einem Klick auf den Knopf bestätigen Sie, dass dieses E-Mail-Postfach Ihnen gehört. Erst danach erhalten Sie die vollständige Eingangsbestätigung per E-Mail.', 'gutenberg-formbuilder' ) . '</p>';
+			$out  = '<p class="gfb-confirm-status__text">' . esc_html( GFB_Texts::get( 'confirm_page.landing_text' ) ) . '</p>';
 			// POST an die Frontend-URL (form-action 'self' der CSP deckt das):
 			// gleiche Parameter wie der Mail-Link, gemeinsamer Kern beider Einstiege.
 			$out .= '<form method="post" action="' . esc_url( home_url( '/' ) ) . '" class="gfb-confirm-status__form">';
 			$out .= '<input type="hidden" name="gfb-bestaetigung" value="' . esc_attr( (string) $sid ) . '" />';
 			$out .= '<input type="hidden" name="gfb-token" value="' . esc_attr( isset( $ctx['token'] ) ? (string) $ctx['token'] : '' ) . '" />';
 			$out .= '<input type="hidden" name="gfb_confirm_nonce" value="' . esc_attr( wp_create_nonce( 'gfb_confirm_' . $sid ) ) . '" />';
-			$out .= '<div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button gfb-confirm-status__button">' . esc_html__( 'Jetzt bestätigen', 'gutenberg-formbuilder' ) . '</button></div>';
+			$out .= '<div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button gfb-confirm-status__button">' . esc_html( GFB_Texts::get( 'confirm_page.landing_button' ) ) . '</button></div>';
 			$out .= '</form>';
-			$out .= '<p class="gfb-confirm-status__note">' . esc_html__( 'Sie haben dieses Formular nicht ausgefüllt? Dann schliessen Sie diese Seite einfach – ohne Bestätigung passiert nichts.', 'gutenberg-formbuilder' ) . '</p>';
+			$out .= '<p class="gfb-confirm-status__note">' . esc_html( GFB_Texts::get( 'confirm_page.landing_note' ) ) . '</p>';
 			return $out;
 		}
 
 		if ( 'success' === $state ) {
-			$out  = '<h2 class="gfb-confirm-status__title">' . esc_html__( 'Vielen Dank – Adresse bestätigt', 'gutenberg-formbuilder' ) . '</h2>';
-			$out .= '<p>' . esc_html__( 'Ihre Bestätigung ist erfasst.', 'gutenberg-formbuilder' ) . '</p>';
+			$out  = '<h2 class="gfb-confirm-status__title">' . esc_html( GFB_Texts::get( 'confirm_page.result_title' ) ) . '</h2>';
+			$out .= '<p>' . esc_html( GFB_Texts::get( 'confirm_page.result_recorded' ) ) . '</p>';
 			// Wahrheitsgemäss nach tatsächlichem Übergabe-Status – die Seite
 			// behauptet nie «zugestellt» (Spec Abschnitt 7).
 			if ( 'handed_off' === ( isset( $ctx['receipt_result'] ) ? (string) $ctx['receipt_result'] : '' ) ) {
-				$out .= '<p>' . esc_html__( 'Die Quittung wurde an Ihren Mailserver übergeben.', 'gutenberg-formbuilder' ) . '</p>';
+				$out .= '<p>' . esc_html( GFB_Texts::get( 'confirm_page.result_handed_off' ) ) . '</p>';
 			} else {
-				$out .= '<p>' . esc_html__( 'Der Seitenbetreiber hat Ihre Meldung erhalten.', 'gutenberg-formbuilder' ) . '</p>';
+				$out .= '<p>' . esc_html( GFB_Texts::get( 'confirm_page.result_no_mail' ) ) . '</p>';
 			}
 			return $out;
 		}
 
-		return '<h2 class="gfb-confirm-status__title">' . esc_html__( 'Bestätigung nicht möglich', 'gutenberg-formbuilder' ) . '</h2>'
-			. '<p>' . esc_html__( 'Dieser Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet.', 'gutenberg-formbuilder' ) . '</p>';
+		return '<h2 class="gfb-confirm-status__title">' . esc_html( GFB_Texts::get( 'confirm_page.rejected_title' ) ) . '</h2>'
+			. '<p>' . esc_html( GFB_Texts::get( 'confirm_page.rejected_text' ) ) . '</p>';
 	}
 
 	/* ------------------------------------------------------------------ *
@@ -1282,7 +1282,7 @@ class GFB_Receipt_Mail {
 		 * @param string $name    Default: Blogname.
 		 * @param string $form_id Formular-ID.
 		 */
-		$name = apply_filters( 'gfb_receipt_from_name', wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ), $form_id );
+		$name = apply_filters( 'gfb_receipt_from_name', GFB_Texts::site_label(), $form_id );
 		$name = trim( preg_replace( "/[\r\n]+/", ' ', (string) $name ) );
 		$name = mb_substr( wp_strip_all_tags( $name ), 0, 120 );
 
@@ -1471,7 +1471,7 @@ class GFB_Receipt_Mail {
 			. $inner_html
 			. '</table>'
 			. '</td></tr></table>'
-			. '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;"><tr><td style="padding:14px 8px;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#8a9095;" align="center">' . esc_html( $blogname ) . '</td></tr></table>'
+			. '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;"><tr><td style="padding:14px 8px;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#8a9095;" align="center">' . esc_html( GFB_Texts::site_label() ) . '</td></tr></table>'
 			. '</td></tr></table></body></html>';
 
 		$text = trim( implode( "\n", $text_lines ) ) . "\n\n-- \n" . $blogname . "\n";
@@ -1590,7 +1590,7 @@ class GFB_Receipt_Mail {
 					if ( '' !== (string) $ctx['confirm_url'] ) {
 						$label = isset( $attrs['text'] ) ? trim( wp_strip_all_tags( (string) $attrs['text'] ) ) : '';
 						if ( '' === $label ) {
-							$label = __( 'Jetzt bestätigen', 'gutenberg-formbuilder' );
+							$label = GFB_Texts::get( 'receipt.confirm_button' );
 						}
 						$label = mb_substr( self::replace_placeholders_text( $label, $ctx ), 0, 120 );
 						$bg    = self::mail_button_color( isset( $attrs['style']['color']['background'] ) ? $attrs['style']['color']['background'] : '', '#1b2627' );
@@ -1629,8 +1629,8 @@ class GFB_Receipt_Mail {
 
 		$disclaimer = sprintf(
 			/* translators: %s: Name der Website */
-			__( 'Diese Angaben wurden über ein Formular auf %s übermittelt:', 'gutenberg-formbuilder' ),
-			wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES )
+			GFB_Texts::get( 'receipt.table_intro' ),
+			GFB_Texts::site_label()
 		);
 
 		$rows_html    = '';
@@ -1676,8 +1676,8 @@ class GFB_Receipt_Mail {
 		if ( is_array( $value ) && isset( $value['_ref'] ) && 0 === strpos( (string) $value['_ref'], 'gfb-file:' ) ) {
 			$file_id = isset( $value['file_id'] ) ? (int) $value['file_id'] : 0;
 			$file    = $file_id > 0 ? GFB_File_Storage::get( $file_id ) : null;
-			$fname   = $file ? (string) $file->original_name : sprintf( __( 'Datei #%d', 'gutenberg-formbuilder' ), $file_id );
-			return $fname . ' (' . __( 'verschlüsselt gespeichert', 'gutenberg-formbuilder' ) . ')';
+			$fname   = $file ? (string) $file->original_name : sprintf( GFB_Texts::get( 'receipt.value_file_fallback' ), $file_id );
+			return $fname . ' (' . GFB_Texts::get( 'receipt.value_file_encrypted' ) . ')';
 		}
 
 		$is_sensitive = ! empty( $ctx['sensitive'][ $key ] ) || GFB_Crypto::is_field_envelope( $value );
@@ -1685,12 +1685,12 @@ class GFB_Receipt_Mail {
 			if ( 'full' === $ctx['mode'] ) {
 				if ( GFB_Crypto::is_field_envelope( $value ) ) {
 					$plain = GFB_Crypto::decrypt_field( $value, 'field:' . $key );
-					$value = ( false === $plain ) ? __( 'vertraulich gespeichert', 'gutenberg-formbuilder' ) : $plain;
+					$value = ( false === $plain ) ? GFB_Texts::get( 'receipt.value_confidential' ) : $plain;
 				} elseif ( isset( $ctx['snapshot'][ $key ] ) ) {
 					$value = $ctx['snapshot'][ $key ];
 				}
 			} else {
-				return __( 'vertraulich gespeichert', 'gutenberg-formbuilder' );
+				return GFB_Texts::get( 'receipt.value_confidential' );
 			}
 		}
 
@@ -1701,7 +1701,7 @@ class GFB_Receipt_Mail {
 
 		// Checkbox: «1»/«0» lesbar machen.
 		if ( isset( $ctx['types'][ $key ] ) && 'checkbox' === $ctx['types'][ $key ] ) {
-			$value = ( '1' === $value ) ? __( 'Ja', 'gutenberg-formbuilder' ) : __( 'Nein', 'gutenberg-formbuilder' );
+			$value = ( '1' === $value ) ? GFB_Texts::get( 'receipt.value_yes' ) : GFB_Texts::get( 'receipt.value_no' );
 		}
 
 		$value = wp_strip_all_tags( $value );
@@ -1718,9 +1718,9 @@ class GFB_Receipt_Mail {
 	 */
 	private static function footer_text( array $ctx ) {
 		if ( 'doi' === $ctx['mode'] ) {
-			$text = __( 'Sie haben dieses Formular nicht ausgefüllt? Dann ignorieren Sie diese E-Mail. Ohne Bestätigung gilt Ihre Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht.', 'gutenberg-formbuilder' );
+			$text = GFB_Texts::get( 'receipt.footer_doi' );
 		} else {
-			$text = __( 'Sie haben dieses Formular nicht ausgefüllt? Dann hat jemand Ihre E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; Sie können dort jederzeit die Löschung verlangen – antworten Sie dazu auf diese E-Mail oder nutzen Sie die Kontaktangaben der Website.', 'gutenberg-formbuilder' );
+			$text = GFB_Texts::get( 'receipt.footer_instant' );
 		}
 		/**
 		 * Neutraler Schluss-Satz der Bestätigungsmail.
@@ -1869,10 +1869,10 @@ class GFB_Receipt_Mail {
 					'blockName'   => 'core/heading',
 					'attrs'       => array( 'level' => 2 ),
 					'innerBlocks' => array(),
-					'innerHTML'   => '<h2>' . esc_html__( 'Bitte bestätigen Sie Ihre E-Mail-Adresse', 'gutenberg-formbuilder' ) . '</h2>',
+					'innerHTML'   => '<h2>' . esc_html( GFB_Texts::get( 'receipt.template_doi_heading' ) ) . '</h2>',
 				),
 				// Erklärender Absatz VOR dem Knopf (Spam-Vermeidung: nicht Knopf-only).
-				$p( esc_html__( 'Ihre Einsendung ist eingegangen. Bitte bestätigen Sie mit einem Klick, dass dieses E-Mail-Postfach Ihnen gehört – erst danach erhalten Sie die vollständige Eingangsbestätigung.', 'gutenberg-formbuilder' ) ),
+				$p( esc_html( GFB_Texts::get( 'receipt.template_doi_intro' ) ) ),
 				// Dedizierter Knopf statt nacktem Platzhalter-Absatz (21.07.2026);
 				// die Plaintext-Fassung erhält die URL-Zeile über den Knopf-Zweig.
 				array(
@@ -1881,7 +1881,7 @@ class GFB_Receipt_Mail {
 					'innerBlocks' => array(),
 					'innerHTML'   => '',
 				),
-				$p( esc_html__( 'Der Link ist 7 Tage gültig und funktioniert nur einmal.', 'gutenberg-formbuilder' ) ),
+				$p( esc_html( GFB_Texts::get( 'receipt.template_doi_note' ) ) ),
 			);
 		}
 
@@ -1890,9 +1890,9 @@ class GFB_Receipt_Mail {
 				'blockName'   => 'core/heading',
 				'attrs'       => array( 'level' => 2 ),
 				'innerBlocks' => array(),
-				'innerHTML'   => '<h2>' . esc_html__( 'Ihre Einsendung ist eingegangen', 'gutenberg-formbuilder' ) . '</h2>',
+				'innerHTML'   => '<h2>' . esc_html( GFB_Texts::get( 'receipt.template_receipt_heading' ) ) . '</h2>',
 			),
-			$p( esc_html__( 'Vielen Dank. Diese E-Mail bestätigt den Eingang Ihrer Angaben:', 'gutenberg-formbuilder' ) ),
+			$p( esc_html( GFB_Texts::get( 'receipt.template_receipt_intro' ) ) ),
 			array(
 				'blockName'   => 'gfb/all-fields',
 				'attrs'       => array(),
@@ -2402,8 +2402,8 @@ class GFB_Receipt_Mail {
 		$demo    = self::preview_context();
 		$subject = '[Test] ' . sprintf(
 			/* translators: %s: Name der Website */
-			__( 'Ihre Einsendung bei %s ist eingegangen', 'gutenberg-formbuilder' ),
-			wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES )
+			GFB_Texts::get( 'receipt.subject_receipt' ),
+			GFB_Texts::site_label()
 		);
 		$sent = self::send_mail( $recipient, $subject, $demo['blocks'], $demo['ctx'] );
 

@@ -28,7 +28,7 @@ msgstr "Session expirée. Veuillez recharger la page et renvoyer le formulaire."
 msgid "Die Anfrage wurde als Spam erkannt."
 msgstr "La requête a été identifiée comme indésirable (spam)."
 
-msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgid "Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut."
 msgstr "Trop de requêtes. Veuillez patienter un instant et réessayer."
 
 msgid "Formularschema nicht gefunden."
@@ -37,13 +37,13 @@ msgstr "Schéma du formulaire introuvable."
 msgid "Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen."
 msgstr "Noms de champs techniques en double dans le formulaire. Veuillez dupliquer l’un des champs concernés ou modifier le libellé ou le texte indicatif."
 
-msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfen Sie die Hinweise und senden Sie erneut."
 msgstr "Le formulaire n’a pas été envoyé. Veuillez vérifier les messages et renvoyer le formulaire."
 
 msgid "Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
 msgstr "Un fichier téléversé a été refusé. Dans ce cas, le formulaire n’a pas été envoyé ; aucune nouvelle entrée n’a été enregistrée."
 
-msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgid "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut."
 msgstr "L’enregistrement a échoué. Veuillez réessayer."
 
 msgid "Die Anfrage konnte nicht verarbeitet werden."
@@ -64,10 +64,10 @@ msgstr "Nouveau formulaire (%1$s) sur l’article %2$d"
 msgid "Ungültiges verstecktes Feld."
 msgstr "Champ masqué invalide."
 
-msgid "Bitte fülle das Feld \"%s\" aus."
+msgid "Bitte füllen Sie das Feld \"%s\" aus."
 msgstr "Veuillez remplir le champ « %s »."
 
-msgid "Bitte bestätige \"%s\"."
+msgid "Bitte bestätigen Sie \"%s\"."
 msgstr "Veuillez confirmer « %s »."
 
 msgid "Das Feld \"%s\" enthält keine gültige E-Mail-Adresse."
@@ -103,7 +103,7 @@ msgstr "Sélection invalide."
 msgid "Eingabe zu lang."
 msgstr "Saisie trop longue."
 
-msgid "Bitte wähle eine Datei für \"%s\"."
+msgid "Bitte wählen Sie eine Datei für \"%s\"."
 msgstr "Veuillez choisir un fichier pour « %s »."
 
 msgid "Mehrfach-Uploads sind nicht erlaubt."
@@ -213,7 +213,7 @@ msgstr "Champs de confirmation"
 msgid "Spam-Schutz"
 msgstr "Protection anti-spam"
 
-msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgid "Bitte schliessen Sie den Spam-Schutz ab, bevor Sie das Formular absenden."
 msgstr "Veuillez terminer la protection anti-spam avant d’envoyer le formulaire."
 
 msgid "Spam-Schutz mit Friendly Captcha\n\nZum Schutz unserer Formulare vor automatisiertem Missbrauch setzen wir den Dienst Friendly Captcha (Friendly Captcha GmbH, Deutschland) ein. Das Verfahren beruht auf einem rechnerischen Nachweis (Proof-of-Work) im Browser. Es verwendet keine Cookies, erstellt keinen Geraete-Fingerabdruck und verfolgt das Nutzungsverhalten nicht. Zur Durchfuehrung der Pruefung wird die IP-Adresse innerhalb der EU verarbeitet; eine Uebermittlung in Drittlaender findet nicht statt. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag. Rechtsgrundlage ist unser berechtigtes Interesse an der Abwehr von Spam (Art. 6 Abs. 1 lit. f DSGVO bzw. die entsprechende Bestimmung des revidierten Schweizer Datenschutzgesetzes)."
@@ -282,10 +282,10 @@ msgstr "Contrat de sous-traitance inclus dans l’offre"
 msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
 msgstr "(modèle non contraignant, sans valeur de conseil juridique)"
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut."
 msgstr "La protection anti-spam n’a pas été confirmée. Veuillez terminer la vérification anti-spam dans le formulaire et renvoyer."
 
-msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."
 msgstr "La protection anti-spam est actuellement indisponible. Veuillez réessayer dans quelques minutes."
 
 msgid "API-Key"
@@ -691,3 +691,81 @@ msgstr "Enregistrer les textes des overlays"
 
 msgid "Overlay-Texte gespeichert."
 msgstr "Textes des overlays enregistrés."
+
+msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgstr "Veuillez terminer la protection anti-spam avant d’envoyer le formulaire."
+
+msgid "Deine Daten werden verschlüsselt und sicher übermittelt …"
+msgstr "Vos données sont chiffrées et transmises en toute sécurité …"
+
+msgid "Deine Daten sind verschlüsselt übermittelt worden."
+msgstr "Vos données ont été transmises sous forme chiffrée."
+
+msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgstr "Trop de requêtes. Veuillez patienter un instant et réessayer."
+
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgstr "Le formulaire n’a pas été envoyé. Veuillez vérifier les messages et renvoyer le formulaire."
+
+msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgstr "L’enregistrement a échoué. Veuillez réessayer."
+
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgstr "La protection anti-spam n’a pas été confirmée. Veuillez terminer la vérification anti-spam dans le formulaire et renvoyer."
+
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgstr "La protection anti-spam est actuellement indisponible. Veuillez réessayer dans quelques minutes."
+
+msgid "Bitte fülle das Feld \"%s\" aus."
+msgstr "Veuillez remplir le champ « %s »."
+
+msgid "Bitte bestätige \"%s\"."
+msgstr "Veuillez confirmer « %s »."
+
+msgid "Bitte wähle eine Datei für \"%s\"."
+msgstr "Veuillez choisir un fichier pour « %s »."
+
+msgid "Deine Einsendung bei %s ist eingegangen"
+msgstr "Votre envoi sur %s a bien été reçu"
+
+msgid "Bitte bestätige deine E-Mail-Adresse"
+msgstr "Veuillez confirmer votre adresse e-mail"
+
+msgid "Deine Einsendung bei %s ist bestätigt"
+msgstr "Votre envoi sur %s est confirmé"
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann hat jemand deine E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; du kannst dort jederzeit die Löschung verlangen – antworte dazu auf diese E-Mail oder nutze die Kontaktangaben der Website."
+msgstr "Vous n’avez pas rempli ce formulaire ? Quelqu’un a alors saisi votre adresse e-mail. L’envoi est conservé par l’exploitant de ce site ; vous pouvez en demander la suppression à tout moment – répondez à cet e-mail ou utilisez les coordonnées du site."
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann ignoriere diese E-Mail. Ohne Bestätigung gilt deine Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht."
+msgstr "Vous n’avez pas rempli ce formulaire ? Ignorez simplement cet e-mail. Sans confirmation, votre adresse n’est pas considérée comme confirmée et l’envoi non confirmé est supprimé automatiquement après un délai fixe."
+
+msgid "Deine Einsendung ist eingegangen. Bitte bestätige mit einem Klick, dass dieses E-Mail-Postfach dir gehört – erst danach erhältst du die vollständige Eingangsbestätigung."
+msgstr "Votre envoi a bien été reçu. Veuillez confirmer d’un clic que cette boîte de réception vous appartient – vous recevrez ensuite l’accusé de réception complet."
+
+msgid "Deine Einsendung ist eingegangen"
+msgstr "Votre envoi a bien été reçu"
+
+msgid "Vielen Dank. Diese E-Mail bestätigt den Eingang deiner Angaben:"
+msgstr "Merci. Cet e-mail confirme la réception de vos informations :"
+
+msgid "Du bist dem Bestätigungslink aus unserer E-Mail gefolgt."
+msgstr "Vous avez suivi le lien de confirmation de notre e-mail."
+
+msgid "Mit einem Klick auf den Knopf bestätigst du, dass dieses E-Mail-Postfach dir gehört. Erst danach erhältst du die vollständige Eingangsbestätigung per E-Mail."
+msgstr "En cliquant sur le bouton, vous confirmez que cette boîte de réception vous appartient. Vous recevrez ensuite l’accusé de réception complet par e-mail."
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann schliesse diese Seite einfach – ohne Bestätigung passiert nichts."
+msgstr "Vous n’avez pas rempli ce formulaire ? Fermez simplement cette page – sans confirmation, il ne se passe rien."
+
+msgid "Das Ergebnis deiner Bestätigung:"
+msgstr "Le résultat de votre confirmation :"
+
+msgid "Deine Bestätigung ist erfasst."
+msgstr "Votre confirmation a été enregistrée."
+
+msgid "Die Quittung wurde an deinen Mailserver übergeben."
+msgstr "L’accusé de réception a été remis à votre serveur de messagerie."
+
+msgid "Der Seitenbetreiber hat deine Meldung erhalten."
+msgstr "L’exploitant du site a bien reçu votre message."

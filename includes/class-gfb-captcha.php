@@ -232,10 +232,14 @@ class GFB_Captcha {
 	 * @return string Reiner Text (Escaping übernimmt die Ausgabestelle).
 	 */
 	public static function hint_text( $form_id = '' ) {
+		// Seit 2.11.0 führt die zentrale Textverwaltung diesen Satz
+		// (form.captcha_hint). Das frühere Einzelfeld gfb_captcha_settings
+		// ['hint_text'] wurde einmalig migriert; steht dort wider Erwarten noch
+		// ein Wert (Altbestand, kein Migrationslauf), hat er weiterhin Vorrang.
 		$s    = self::get_settings();
 		$text = '' !== trim( (string) $s['hint_text'] )
 			? (string) $s['hint_text']
-			: __( 'Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest.', 'gutenberg-formbuilder' );
+			: GFB_Texts::get( 'form.captcha_hint' );
 		/**
 		 * Hinweistext unter dem Captcha (Code-Override).
 		 *
@@ -254,7 +258,7 @@ class GFB_Captcha {
 		}
 		$s         = self::get_settings();
 		$dom_id    = 'gfb-captcha-' . preg_replace( '/[^a-z0-9_\-]/i', '', (string) $instance_id );
-		$label     = __( 'Spam-Schutz', 'gutenberg-formbuilder' );
+		$label     = GFB_Texts::get( 'form.captcha_label' );
 		$hint      = self::hint_text( $form_id );
 
 		ob_start();

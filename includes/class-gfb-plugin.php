@@ -32,6 +32,8 @@ class GFB_Plugin {
 	public static function boot() {
 		add_filter( 'block_categories_all', array( __CLASS__, 'register_block_category' ), 999, 2 );
 		add_action( 'init', array( 'GFB_Submit_Handler', 'maybe_upgrade_submissions_db' ), 0 );
+		// Einmalige Übernahme der 2.10.x-Einzeloptionen in die Textverwaltung.
+		add_action( 'init', array( 'GFB_Texts', 'maybe_migrate_legacy_options' ), 0 );
 		add_action( 'init', array( __CLASS__, 'register_assets' ) );
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_for_redirect_query' ), 5 );
@@ -691,8 +693,8 @@ class GFB_Plugin {
 			}
 			if ( '' === $status_msg ) {
 				$status_msg = ( 'success' === $status )
-					? __( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' )
-					: __( 'Beim Absenden ist ein Fehler aufgetreten.', 'gutenberg-formbuilder' );
+					? GFB_Texts::get( 'notice.success' )
+					: GFB_Texts::get( 'notice.generic_error' );
 			}
 			// Optionaler Detailtext (URL-Whitelist); nur serverseitig erzeugte Slugs.
 			$detail_codes = array( 'err_validation', 'err_file', 'err_external', 'err_crypto' );
@@ -1466,10 +1468,10 @@ class GFB_Plugin {
 	 */
 	public static function overlay_text_defaults() {
 		return array(
-			'sending'       => __( 'Ihre Daten werden verschlüsselt und sicher übermittelt …', 'gutenberg-formbuilder' ),
-			'success_title' => __( 'Erfolgreich übermittelt', 'gutenberg-formbuilder' ),
-			'success_text'  => __( 'Ihre Daten sind verschlüsselt übermittelt worden.', 'gutenberg-formbuilder' ),
-			'success_close' => __( 'Schliessen', 'gutenberg-formbuilder' ),
+			'sending'       => GFB_Texts::default_for( 'overlay.sending' ),
+			'success_title' => GFB_Texts::default_for( 'overlay.success_title' ),
+			'success_text'  => GFB_Texts::default_for( 'overlay.success_text' ),
+			'success_close' => GFB_Texts::default_for( 'overlay.success_close' ),
 		);
 	}
 
@@ -1483,12 +1485,9 @@ class GFB_Plugin {
 	 * @return array{sending:string,success_title:string,success_text:string,success_close:string}
 	 */
 	public static function overlay_texts() {
-		$defaults = self::overlay_text_defaults();
-		$stored   = get_option( 'gfb_overlay_texts', array() );
-		$out      = array();
-		foreach ( $defaults as $text_key => $default ) {
-			$value            = is_array( $stored ) && isset( $stored[ $text_key ] ) ? sanitize_text_field( (string) $stored[ $text_key ] ) : '';
-			$out[ $text_key ] = '' !== $value ? $value : $default;
+		$out = array();
+		foreach ( array( 'sending', 'success_title', 'success_text', 'success_close' ) as $text_key ) {
+			$out[ $text_key ] = GFB_Texts::get( 'overlay.' . $text_key );
 		}
 
 		/**

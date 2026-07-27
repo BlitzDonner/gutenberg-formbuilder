@@ -147,22 +147,22 @@ class GFB_Submit_Handler {
 	 */
 	private static function status_messages() {
 		return array(
-			self::STATUS_OK             => __( 'Danke! Das Formular wurde erfolgreich gesendet.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_REQUEST    => __( 'Ungültige Formularanfrage.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_NONCE      => __( 'Sicherheitsprüfung fehlgeschlagen. Bitte Seite neu laden und erneut absenden.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_TOKEN      => __( 'Sitzung abgelaufen. Bitte Seite neu laden und erneut absenden.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_SPAM       => __( 'Die Anfrage wurde als Spam erkannt.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_RATE       => __( 'Zu viele Anfragen. Bitte warte kurz und versuche es erneut.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_SCHEMA     => __( 'Formularschema nicht gefunden.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_DUPLICATE  => __( 'Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_VALIDATION => __( 'Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_FILE       => __( 'Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_PERSIST    => __( 'Speichern fehlgeschlagen. Bitte versuche es erneut.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_EXTERNAL   => __( 'Die Anfrage konnte nicht verarbeitet werden.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_CRYPTO     => __( 'Verschlüsselung ist auf diesem Server nicht eingerichtet. Bitte den Administrator kontaktieren.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_VIRUS      => __( 'Eine hochgeladene Datei wurde vom Virenscanner als schädlich erkannt.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_CAPTCHA             => __( 'Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut.', 'gutenberg-formbuilder' ),
-			self::STATUS_ERR_CAPTCHA_UNREACHABLE => __( 'Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut.', 'gutenberg-formbuilder' ),
+			self::STATUS_OK             => GFB_Texts::get( 'notice.success' ),
+			self::STATUS_ERR_REQUEST    => GFB_Texts::get( 'notice.err_request' ),
+			self::STATUS_ERR_NONCE      => GFB_Texts::get( 'notice.err_nonce' ),
+			self::STATUS_ERR_TOKEN      => GFB_Texts::get( 'notice.err_token' ),
+			self::STATUS_ERR_SPAM       => GFB_Texts::get( 'notice.err_spam' ),
+			self::STATUS_ERR_RATE       => GFB_Texts::get( 'notice.err_rate' ),
+			self::STATUS_ERR_SCHEMA     => GFB_Texts::get( 'notice.err_schema' ),
+			self::STATUS_ERR_DUPLICATE  => GFB_Texts::get( 'notice.err_duplicate' ),
+			self::STATUS_ERR_VALIDATION => GFB_Texts::get( 'notice.err_validation' ),
+			self::STATUS_ERR_FILE       => GFB_Texts::get( 'notice.err_file' ),
+			self::STATUS_ERR_PERSIST    => GFB_Texts::get( 'notice.err_persist' ),
+			self::STATUS_ERR_EXTERNAL   => GFB_Texts::get( 'notice.err_external' ),
+			self::STATUS_ERR_CRYPTO     => GFB_Texts::get( 'notice.err_crypto' ),
+			self::STATUS_ERR_VIRUS      => GFB_Texts::get( 'notice.err_virus' ),
+			self::STATUS_ERR_CAPTCHA             => GFB_Texts::get( 'notice.err_captcha' ),
+			self::STATUS_ERR_CAPTCHA_UNREACHABLE => GFB_Texts::get( 'notice.err_captcha_unreachable' ),
 		);
 	}
 
@@ -491,7 +491,7 @@ class GFB_Submit_Handler {
 		if ( GFB_Receipt_Mail::MODE_DOI === $receipt_mode ) {
 			$operator_note = sprintf(
 				/* translators: %d: Nummer der Einsendung */
-				__( 'Status: unbestätigt eingegangen – die absendende Person hat ihre E-Mail-Adresse für Eintrag #%d noch nicht bestätigt.', 'gutenberg-formbuilder' ),
+				GFB_Texts::get( 'operator.note_doi_pending' ),
 				$submission_id
 			);
 		}
@@ -802,7 +802,7 @@ class GFB_Submit_Handler {
 			if ( '' !== $form_title ) {
 				$subj_base = sprintf(
 					/* translators: 1: sprechender Formularname, 2: technische Formular-ID, 3: Beitrags-ID */
-					__( 'Neues Formular: %1$s (%2$s), Beitrag %3$d', 'gutenberg-formbuilder' ),
+					GFB_Texts::get( 'operator.subject_with_title' ),
 					$form_title,
 					$form_id,
 					$post_id
@@ -810,7 +810,7 @@ class GFB_Submit_Handler {
 			} else {
 				$subj_base = sprintf(
 					/* translators: 1: form id, 2: post id */
-					__( 'Neues Formular (%1$s) auf Beitrag %2$d', 'gutenberg-formbuilder' ),
+					GFB_Texts::get( 'operator.subject_without_title' ),
 					$form_id,
 					$post_id
 				);
@@ -1037,7 +1037,7 @@ class GFB_Submit_Handler {
 		} elseif ( 'hidden' === $type ) {
 			$value = sanitize_text_field( (string) $raw );
 			if ( isset( $field['hidden_value'] ) && (string) $field['hidden_value'] !== '' && (string) $field['hidden_value'] !== (string) $value ) {
-				return new WP_Error( 'gfb_hidden', __( 'Ungültiges verstecktes Feld.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_hidden', GFB_Texts::get( 'validation.hidden_invalid' ) );
 			}
 		} else {
 			$value = sanitize_text_field( (string) $raw );
@@ -1048,7 +1048,7 @@ class GFB_Submit_Handler {
 				'gfb_required',
 				sprintf(
 					/* translators: %s: field label */
-					__( 'Bitte fülle das Feld "%s" aus.', 'gutenberg-formbuilder' ),
+					GFB_Texts::get( 'validation.required' ),
 					$label
 				)
 			);
@@ -1059,7 +1059,7 @@ class GFB_Submit_Handler {
 				'gfb_required',
 				sprintf(
 					/* translators: %s: field label */
-					__( 'Bitte bestätige "%s".', 'gutenberg-formbuilder' ),
+					GFB_Texts::get( 'validation.checkbox_required' ),
 					$label
 				)
 			);
@@ -1070,7 +1070,7 @@ class GFB_Submit_Handler {
 				'gfb_email',
 				sprintf(
 					/* translators: %s: field label */
-					__( 'Das Feld "%s" enthält keine gültige E-Mail-Adresse.', 'gutenberg-formbuilder' ),
+					GFB_Texts::get( 'validation.email_invalid' ),
 					$label
 				)
 			);
@@ -1083,7 +1083,7 @@ class GFB_Submit_Handler {
 					'gfb_url',
 					sprintf(
 						/* translators: %s: field label */
-						__( 'Das Feld "%s" enthält keine gültige URL.', 'gutenberg-formbuilder' ),
+						GFB_Texts::get( 'validation.url_invalid' ),
 						$label
 					)
 				);
@@ -1094,7 +1094,7 @@ class GFB_Submit_Handler {
 					'gfb_url',
 					sprintf(
 						/* translators: %s: field label */
-						__( 'Das Feld "%s" enthält keine gültige URL.', 'gutenberg-formbuilder' ),
+						GFB_Texts::get( 'validation.url_invalid' ),
 						$label
 					)
 				);
@@ -1108,17 +1108,17 @@ class GFB_Submit_Handler {
 					'gfb_number',
 					sprintf(
 						/* translators: %s: field label */
-						__( 'Das Feld "%s" muss eine Zahl sein.', 'gutenberg-formbuilder' ),
+						GFB_Texts::get( 'validation.number_invalid' ),
 						$label
 					)
 				);
 			}
 			$num = floatval( $value );
 			if ( isset( $field['min'] ) && '' !== $field['min'] && $num < floatval( $field['min'] ) ) {
-				return new WP_Error( 'gfb_min', __( 'Zahl zu klein.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_min', GFB_Texts::get( 'validation.number_min' ) );
 			}
 			if ( isset( $field['max'] ) && '' !== $field['max'] && $num > floatval( $field['max'] ) ) {
-				return new WP_Error( 'gfb_max', __( 'Zahl zu gross.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_max', GFB_Texts::get( 'validation.number_max' ) );
 			}
 			$value = (string) $num;
 		}
@@ -1136,19 +1136,19 @@ class GFB_Submit_Handler {
 
 		if ( 'date' === $type && '' !== $value ) {
 			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
-				return new WP_Error( 'gfb_date', __( 'Ungültiges Datum.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_date', GFB_Texts::get( 'validation.date_invalid' ) );
 			}
 		}
 
 		if ( 'time' === $type && '' !== $value ) {
 			if ( ! preg_match( '/^\d{2}:\d{2}/', $value ) ) {
-				return new WP_Error( 'gfb_time', __( 'Ungültige Uhrzeit.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_time', GFB_Texts::get( 'validation.time_invalid' ) );
 			}
 		}
 
 		if ( 'datetime' === $type && '' !== $value ) {
 			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/', $value ) ) {
-				return new WP_Error( 'gfb_datetime', __( 'Ungültiges Datum/Uhrzeit.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_datetime', GFB_Texts::get( 'validation.datetime_invalid' ) );
 			}
 		}
 
@@ -1159,7 +1159,7 @@ class GFB_Submit_Handler {
 					'gfb_tel',
 					sprintf(
 						/* translators: %s: field label */
-						__( 'Das Feld "%s" enthält eine ungültige Telefonnummer.', 'gutenberg-formbuilder' ),
+						GFB_Texts::get( 'validation.tel_invalid' ),
 						$label
 					)
 				);
@@ -1169,13 +1169,13 @@ class GFB_Submit_Handler {
 		if ( in_array( $type, array( 'select', 'radio' ), true ) && ! empty( $field['options'] ) && '' !== $value ) {
 			$opts = $field['options'];
 			if ( ! in_array( $value, $opts, true ) ) {
-				return new WP_Error( 'gfb_option', __( 'Ungültige Auswahl.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_option', GFB_Texts::get( 'validation.option_invalid' ) );
 			}
 		}
 
 		// Generelles Längenlimit gegen Pufferaufblähung pro Feld.
 		if ( is_string( $value ) && strlen( $value ) > 100000 ) {
-			return new WP_Error( 'gfb_too_long', __( 'Eingabe zu lang.', 'gutenberg-formbuilder' ) );
+			return new WP_Error( 'gfb_too_long', GFB_Texts::get( 'validation.too_long' ) );
 		}
 
 		return $value;
@@ -1211,7 +1211,7 @@ class GFB_Submit_Handler {
 					'gfb_file',
 					sprintf(
 						/* translators: %s: field label */
-						__( 'Bitte wähle eine Datei für "%s".', 'gutenberg-formbuilder' ),
+						GFB_Texts::get( 'validation.file_required' ),
 						$label
 					)
 				);
@@ -1222,15 +1222,15 @@ class GFB_Submit_Handler {
 		$file = $_FILES[ $name ];
 		if ( is_array( $file['name'] ?? null ) ) {
 			GFB_Security::log_event( 'file_reject_multi' );
-			return new WP_Error( 'gfb_file', __( 'Mehrfach-Uploads sind nicht erlaubt.', 'gutenberg-formbuilder' ) );
+			return new WP_Error( 'gfb_file', GFB_Texts::get( 'validation.file_multiple' ) );
 		}
 		if ( ! empty( $file['error'] ) && UPLOAD_ERR_OK !== (int) $file['error'] ) {
 			GFB_Security::log_event( 'file_reject_php_error', array( 'error' => (int) $file['error'] ) );
-			return new WP_Error( 'gfb_upload', __( 'Datei-Upload fehlgeschlagen.', 'gutenberg-formbuilder' ) );
+			return new WP_Error( 'gfb_upload', GFB_Texts::get( 'validation.file_upload_failed' ) );
 		}
 		if ( ! empty( $file['size'] ) && (int) $file['size'] > $max_bytes ) {
 			GFB_Security::log_event( 'file_reject_too_large', array( 'size' => (int) $file['size'], 'limit' => (int) $max_bytes ) );
-			return new WP_Error( 'gfb_size', __( 'Datei ist zu gross.', 'gutenberg-formbuilder' ) );
+			return new WP_Error( 'gfb_size', GFB_Texts::get( 'validation.file_too_large' ) );
 		}
 
 		$accept     = isset( $field['accept'] ) ? (string) $field['accept'] : '';
@@ -1253,11 +1253,11 @@ class GFB_Submit_Handler {
 					'',
 					array( 'sig' => $scan['details'], 'mime' => $real_mime )
 				);
-				return new WP_Error( 'gfb_virus', __( 'Diese Datei wurde vom Virenscanner als schädlich erkannt.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_virus', GFB_Texts::get( 'validation.virus_found' ) );
 			}
 			if ( 'unavailable' === $scan['status'] && ! empty( $clamav_set['require_for_uploads'] ) ) {
 				GFB_Security::log_event( 'file_reject_av_unavailable', array( 'details' => sanitize_text_field( $scan['details'] ) ) );
-				return new WP_Error( 'gfb_virus', __( 'Virenscan derzeit nicht verfügbar; Upload wird verweigert.', 'gutenberg-formbuilder' ) );
+				return new WP_Error( 'gfb_virus', GFB_Texts::get( 'validation.virus_unavailable' ) );
 			}
 		}
 

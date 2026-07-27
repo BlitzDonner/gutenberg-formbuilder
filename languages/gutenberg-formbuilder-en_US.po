@@ -29,7 +29,7 @@ msgstr "Session expired. Please reload the page and submit again."
 msgid "Die Anfrage wurde als Spam erkannt."
 msgstr "This request was identified as spam."
 
-msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgid "Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut."
 msgstr "Too many requests. Please wait a moment and try again."
 
 msgid "Formularschema nicht gefunden."
@@ -38,13 +38,13 @@ msgstr "Form schema not found."
 msgid "Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen."
 msgstr "Duplicate technical field names in the form. Please duplicate one of the affected fields or adjust the label or placeholder."
 
-msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfen Sie die Hinweise und senden Sie erneut."
 msgstr "The form was not submitted. Please review the messages and submit again."
 
 msgid "Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
 msgstr "An uploaded file was rejected. In this case the form was not submitted; no new entry was saved."
 
-msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgid "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut."
 msgstr "Saving failed. Please try again."
 
 msgid "Die Anfrage konnte nicht verarbeitet werden."
@@ -65,10 +65,10 @@ msgstr "New form (%1$s) on post %2$d"
 msgid "Ungültiges verstecktes Feld."
 msgstr "Invalid hidden field."
 
-msgid "Bitte fülle das Feld \"%s\" aus."
+msgid "Bitte füllen Sie das Feld \"%s\" aus."
 msgstr "Please fill in the field \"%s\"."
 
-msgid "Bitte bestätige \"%s\"."
+msgid "Bitte bestätigen Sie \"%s\"."
 msgstr "Please confirm \"%s\"."
 
 msgid "Das Feld \"%s\" enthält keine gültige E-Mail-Adresse."
@@ -104,7 +104,7 @@ msgstr "Invalid selection."
 msgid "Eingabe zu lang."
 msgstr "Input is too long."
 
-msgid "Bitte wähle eine Datei für \"%s\"."
+msgid "Bitte wählen Sie eine Datei für \"%s\"."
 msgstr "Please choose a file for \"%s\"."
 
 msgid "Mehrfach-Uploads sind nicht erlaubt."
@@ -214,7 +214,7 @@ msgstr "Confirmation fields"
 msgid "Spam-Schutz"
 msgstr "Spam protection"
 
-msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgid "Bitte schliessen Sie den Spam-Schutz ab, bevor Sie das Formular absenden."
 msgstr "Please complete the spam protection before submitting the form."
 
 msgid "Spam-Schutz mit Friendly Captcha\n\nZum Schutz unserer Formulare vor automatisiertem Missbrauch setzen wir den Dienst Friendly Captcha (Friendly Captcha GmbH, Deutschland) ein. Das Verfahren beruht auf einem rechnerischen Nachweis (Proof-of-Work) im Browser. Es verwendet keine Cookies, erstellt keinen Geraete-Fingerabdruck und verfolgt das Nutzungsverhalten nicht. Zur Durchfuehrung der Pruefung wird die IP-Adresse innerhalb der EU verarbeitet; eine Uebermittlung in Drittlaender findet nicht statt. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag. Rechtsgrundlage ist unser berechtigtes Interesse an der Abwehr von Spam (Art. 6 Abs. 1 lit. f DSGVO bzw. die entsprechende Bestimmung des revidierten Schweizer Datenschutzgesetzes)."
@@ -283,10 +283,10 @@ msgstr "Data processing agreement included in the plan"
 msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
 msgstr "(non-binding template, not legal advice)"
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut."
 msgstr "Spam protection was not confirmed. Please complete the spam check in the form and submit again."
 
-msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."
 msgstr "Spam protection is currently unavailable. Please try again in a few minutes."
 
 msgid "API-Key"
@@ -692,3 +692,81 @@ msgstr "Save overlay texts"
 
 msgid "Overlay-Texte gespeichert."
 msgstr "Overlay texts saved."
+
+msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgstr "Please complete the spam protection before submitting the form."
+
+msgid "Deine Daten werden verschlüsselt und sicher übermittelt …"
+msgstr "Your data is being encrypted and transmitted securely …"
+
+msgid "Deine Daten sind verschlüsselt übermittelt worden."
+msgstr "Your data has been transmitted in encrypted form."
+
+msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgstr "Too many requests. Please wait a moment and try again."
+
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgstr "The form was not submitted. Please review the messages and submit again."
+
+msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgstr "Saving failed. Please try again."
+
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgstr "Spam protection was not confirmed. Please complete the spam check in the form and submit again."
+
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgstr "Spam protection is currently unavailable. Please try again in a few minutes."
+
+msgid "Bitte fülle das Feld \"%s\" aus."
+msgstr "Please fill in the field \"%s\"."
+
+msgid "Bitte bestätige \"%s\"."
+msgstr "Please confirm \"%s\"."
+
+msgid "Bitte wähle eine Datei für \"%s\"."
+msgstr "Please choose a file for \"%s\"."
+
+msgid "Deine Einsendung bei %s ist eingegangen"
+msgstr "Your submission to %s has been received"
+
+msgid "Bitte bestätige deine E-Mail-Adresse"
+msgstr "Please confirm your email address"
+
+msgid "Deine Einsendung bei %s ist bestätigt"
+msgstr "Your submission to %s is confirmed"
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann hat jemand deine E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; du kannst dort jederzeit die Löschung verlangen – antworte dazu auf diese E-Mail oder nutze die Kontaktangaben der Website."
+msgstr "Did you not fill in this form? Then someone entered your email address. The submission is held by the operator of this website; you can request its deletion at any time – reply to this email or use the contact details on the website."
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann ignoriere diese E-Mail. Ohne Bestätigung gilt deine Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht."
+msgstr "Did you not fill in this form? Then simply ignore this email. Without confirmation your address is not considered confirmed, and the unconfirmed submission is deleted automatically after a fixed period."
+
+msgid "Deine Einsendung ist eingegangen. Bitte bestätige mit einem Klick, dass dieses E-Mail-Postfach dir gehört – erst danach erhältst du die vollständige Eingangsbestätigung."
+msgstr "Your submission has been received. Please confirm with one click that this mailbox belongs to you – only then will you receive the complete confirmation of receipt."
+
+msgid "Deine Einsendung ist eingegangen"
+msgstr "Your submission has been received"
+
+msgid "Vielen Dank. Diese E-Mail bestätigt den Eingang deiner Angaben:"
+msgstr "Thank you. This email confirms receipt of your details:"
+
+msgid "Du bist dem Bestätigungslink aus unserer E-Mail gefolgt."
+msgstr "You have followed the confirmation link from our email."
+
+msgid "Mit einem Klick auf den Knopf bestätigst du, dass dieses E-Mail-Postfach dir gehört. Erst danach erhältst du die vollständige Eingangsbestätigung per E-Mail."
+msgstr "By clicking the button you confirm that this mailbox belongs to you. Only then will you receive the complete confirmation of receipt by email."
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann schliesse diese Seite einfach – ohne Bestätigung passiert nichts."
+msgstr "Did you not fill in this form? Then simply close this page – nothing happens without confirmation."
+
+msgid "Das Ergebnis deiner Bestätigung:"
+msgstr "The result of your confirmation:"
+
+msgid "Deine Bestätigung ist erfasst."
+msgstr "Your confirmation has been recorded."
+
+msgid "Die Quittung wurde an deinen Mailserver übergeben."
+msgstr "The receipt has been handed over to your mail server."
+
+msgid "Der Seitenbetreiber hat deine Meldung erhalten."
+msgstr "The site operator has received your submission."

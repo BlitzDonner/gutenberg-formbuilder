@@ -114,8 +114,8 @@ class GFB_Field_Renderer {
 			$attrs = ' data-gfb-sensitive="1"';
 		}
 		$pill = $common['sensitive']
-			? '<span class="gfb-pill gfb-pill-sensitive" aria-label="' . esc_attr__( 'Wird verschlüsselt gespeichert', 'gutenberg-formbuilder' ) . '">'
-				. esc_html__( 'verschlüsselt', 'gutenberg-formbuilder' )
+			? '<span class="gfb-pill gfb-pill-sensitive" aria-label="' . esc_attr( GFB_Texts::get( 'form.encrypted_pill_aria' ) ) . '">'
+				. esc_html( GFB_Texts::get( 'form.encrypted_pill' ) )
 				. '</span>'
 			: '';
 		return '<div class="' . esc_attr( $cls ) . '"' . $attrs . '>'
@@ -453,8 +453,8 @@ class GFB_Field_Renderer {
 			$fs_attrs = ' data-gfb-sensitive="1"';
 		}
 		$pill = $c['sensitive']
-			? '<span class="gfb-pill gfb-pill-sensitive" aria-label="' . esc_attr__( 'Wird verschlüsselt gespeichert', 'gutenberg-formbuilder' ) . '">'
-				. esc_html__( 'verschlüsselt', 'gutenberg-formbuilder' )
+			? '<span class="gfb-pill gfb-pill-sensitive" aria-label="' . esc_attr( GFB_Texts::get( 'form.encrypted_pill_aria' ) ) . '">'
+				. esc_html( GFB_Texts::get( 'form.encrypted_pill' ) )
 				. '</span>'
 			: '';
 		$req_star = $c['required']
@@ -567,11 +567,11 @@ class GFB_Field_Renderer {
 		if ( $c['required'] ) {
 			$attr .= ' required';
 		}
-		$hint   = sprintf( esc_html__( 'Datei wird verschlüsselt gespeichert (max. %d MB).', 'gutenberg-formbuilder' ), $max_mb );
+		$hint   = sprintf( esc_html( GFB_Texts::get( 'form.file_hint' ) ), $max_mb );
 		$inner  = '<input' . $attr . ' />'
 			. '<div class="gfb-file-meta">'
 			. '<small class="gfb-help">' . $hint . '</small>'
-			. '<button type="button" class="gfb-file-clear" hidden>' . esc_html__( 'Entfernen', 'gutenberg-formbuilder' ) . '</button>'
+			. '<button type="button" class="gfb-file-clear" hidden>' . esc_html( GFB_Texts::get( 'form.file_remove' ) ) . '</button>'
 			. '</div>';
 		// Bei Files setzen wir das Sensitive-Pill IMMER, weil der Storage immer verschlüsselt.
 		$c['sensitive'] = true;
@@ -581,7 +581,7 @@ class GFB_Field_Renderer {
 	public static function render_submit( $a ) {
 		$text = isset( $a['label'] ) ? trim( (string) $a['label'] ) : '';
 		if ( '' === $text ) {
-			$text = __( 'Formular absenden', 'gutenberg-formbuilder' );
+			$text = GFB_Texts::get( 'form.submit_button' );
 		}
 		return '<div class="gfb-field gfb-field-submit"><div class="wp-block-button is-style-default"><button type="submit" class="wp-block-button__link wp-element-button">'
 			. esc_html( $text )

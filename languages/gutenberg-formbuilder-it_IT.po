@@ -28,7 +28,7 @@ msgstr "Sessione scaduta. Ricarica la pagina e invia di nuovo."
 msgid "Die Anfrage wurde als Spam erkannt."
 msgstr "La richiesta è stata identificata come spam."
 
-msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgid "Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut."
 msgstr "Troppe richieste. Attendi un momento e riprova."
 
 msgid "Formularschema nicht gefunden."
@@ -37,13 +37,13 @@ msgstr "Schema del modulo non trovato."
 msgid "Doppelte technische Feldnamen im Formular. Bitte eines der betroffenen Felder duplizieren oder Label bzw. Platzhalter anpassen."
 msgstr "Nomi tecnici dei campi duplicati nel modulo. Duplica uno dei campi interessati oppure modifica etichetta o segnaposto."
 
-msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfen Sie die Hinweise und senden Sie erneut."
 msgstr "Il modulo non è stato inviato. Controlla i messaggi e invia di nuovo."
 
 msgid "Eine hochgeladene Datei wurde abgelehnt. Das Formular wurde in diesem Fall nicht übermittelt; es wurde kein neuer Eintrag gespeichert."
 msgstr "Un file caricato è stato rifiutato. In questo caso il modulo non è stato inviato; non è stata salvata alcuna nuova voce."
 
-msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgid "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut."
 msgstr "Salvataggio non riuscito. Riprova."
 
 msgid "Die Anfrage konnte nicht verarbeitet werden."
@@ -64,10 +64,10 @@ msgstr "Nuovo modulo (%1$s) nell’articolo %2$d"
 msgid "Ungültiges verstecktes Feld."
 msgstr "Campo nascosto non valido."
 
-msgid "Bitte fülle das Feld \"%s\" aus."
+msgid "Bitte füllen Sie das Feld \"%s\" aus."
 msgstr "Compila il campo \"%s\"."
 
-msgid "Bitte bestätige \"%s\"."
+msgid "Bitte bestätigen Sie \"%s\"."
 msgstr "Conferma \"%s\"."
 
 msgid "Das Feld \"%s\" enthält keine gültige E-Mail-Adresse."
@@ -103,7 +103,7 @@ msgstr "Selezione non valida."
 msgid "Eingabe zu lang."
 msgstr "Input troppo lungo."
 
-msgid "Bitte wähle eine Datei für \"%s\"."
+msgid "Bitte wählen Sie eine Datei für \"%s\"."
 msgstr "Scegli un file per \"%s\"."
 
 msgid "Mehrfach-Uploads sind nicht erlaubt."
@@ -213,7 +213,7 @@ msgstr "Campi di conferma"
 msgid "Spam-Schutz"
 msgstr "Protezione anti-spam"
 
-msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgid "Bitte schliessen Sie den Spam-Schutz ab, bevor Sie das Formular absenden."
 msgstr "Completa la protezione anti-spam prima di inviare il modulo."
 
 msgid "Spam-Schutz mit Friendly Captcha\n\nZum Schutz unserer Formulare vor automatisiertem Missbrauch setzen wir den Dienst Friendly Captcha (Friendly Captcha GmbH, Deutschland) ein. Das Verfahren beruht auf einem rechnerischen Nachweis (Proof-of-Work) im Browser. Es verwendet keine Cookies, erstellt keinen Geraete-Fingerabdruck und verfolgt das Nutzungsverhalten nicht. Zur Durchfuehrung der Pruefung wird die IP-Adresse innerhalb der EU verarbeitet; eine Uebermittlung in Drittlaender findet nicht statt. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag. Rechtsgrundlage ist unser berechtigtes Interesse an der Abwehr von Spam (Art. 6 Abs. 1 lit. f DSGVO bzw. die entsprechende Bestimmung des revidierten Schweizer Datenschutzgesetzes)."
@@ -282,10 +282,10 @@ msgstr "Contratto di responsabile del trattamento incluso nel piano"
 msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
 msgstr "(modello non vincolante, non costituisce consulenza legale)"
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut."
 msgstr "La protezione anti-spam non è stata confermata. Completa il controllo anti-spam nel modulo e invia di nuovo."
 
-msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."
 msgstr "La protezione anti-spam non è al momento disponibile. Riprova tra qualche minuto."
 
 msgid "API-Key"
@@ -691,3 +691,81 @@ msgstr "Salvare i testi degli overlay"
 
 msgid "Overlay-Texte gespeichert."
 msgstr "Testi degli overlay salvati."
+
+msgid "Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest."
+msgstr "Completa la protezione anti-spam prima di inviare il modulo."
+
+msgid "Deine Daten werden verschlüsselt und sicher übermittelt …"
+msgstr "I suoi dati vengono cifrati e trasmessi in modo sicuro …"
+
+msgid "Deine Daten sind verschlüsselt übermittelt worden."
+msgstr "I suoi dati sono stati trasmessi in forma cifrata."
+
+msgid "Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
+msgstr "Troppe richieste. Attendi un momento e riprova."
+
+msgid "Das Formular wurde nicht übermittelt. Bitte prüfe die Hinweise und sende erneut."
+msgstr "Il modulo non è stato inviato. Controlla i messaggi e invia di nuovo."
+
+msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
+msgstr "Salvataggio non riuscito. Riprova."
+
+msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
+msgstr "La protezione anti-spam non è stata confermata. Completa il controllo anti-spam nel modulo e invia di nuovo."
+
+msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
+msgstr "La protezione anti-spam non è al momento disponibile. Riprova tra qualche minuto."
+
+msgid "Bitte fülle das Feld \"%s\" aus."
+msgstr "Compila il campo \"%s\"."
+
+msgid "Bitte bestätige \"%s\"."
+msgstr "Conferma \"%s\"."
+
+msgid "Bitte wähle eine Datei für \"%s\"."
+msgstr "Scegli un file per \"%s\"."
+
+msgid "Deine Einsendung bei %s ist eingegangen"
+msgstr "Il suo invio su %s è stato ricevuto"
+
+msgid "Bitte bestätige deine E-Mail-Adresse"
+msgstr "Confermi il suo indirizzo e-mail"
+
+msgid "Deine Einsendung bei %s ist bestätigt"
+msgstr "Il suo invio su %s è confermato"
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann hat jemand deine E-Mail-Adresse eingetragen. Die Einsendung liegt beim Betreiber dieser Website; du kannst dort jederzeit die Löschung verlangen – antworte dazu auf diese E-Mail oder nutze die Kontaktangaben der Website."
+msgstr "Non ha compilato questo modulo? Allora qualcuno ha inserito il suo indirizzo e-mail. L’invio è conservato dal gestore di questo sito; può richiederne la cancellazione in qualsiasi momento – risponda a questa e-mail o utilizzi i contatti del sito."
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann ignoriere diese E-Mail. Ohne Bestätigung gilt deine Adresse nicht als bestätigt, und die unbestätigte Einsendung wird nach einer festen Frist automatisch gelöscht."
+msgstr "Non ha compilato questo modulo? Ignori semplicemente questa e-mail. Senza conferma il suo indirizzo non risulta confermato e l’invio non confermato viene cancellato automaticamente dopo un termine fisso."
+
+msgid "Deine Einsendung ist eingegangen. Bitte bestätige mit einem Klick, dass dieses E-Mail-Postfach dir gehört – erst danach erhältst du die vollständige Eingangsbestätigung."
+msgstr "Il suo invio è stato ricevuto. Confermi con un clic che questa casella di posta le appartiene – solo dopo riceverà la conferma di ricezione completa."
+
+msgid "Deine Einsendung ist eingegangen"
+msgstr "Il suo invio è stato ricevuto"
+
+msgid "Vielen Dank. Diese E-Mail bestätigt den Eingang deiner Angaben:"
+msgstr "Grazie. Questa e-mail conferma la ricezione dei suoi dati:"
+
+msgid "Du bist dem Bestätigungslink aus unserer E-Mail gefolgt."
+msgstr "Ha seguito il link di conferma della nostra e-mail."
+
+msgid "Mit einem Klick auf den Knopf bestätigst du, dass dieses E-Mail-Postfach dir gehört. Erst danach erhältst du die vollständige Eingangsbestätigung per E-Mail."
+msgstr "Cliccando sul pulsante conferma che questa casella di posta le appartiene. Solo dopo riceverà la conferma di ricezione completa per e-mail."
+
+msgid "Du hast dieses Formular nicht ausgefüllt? Dann schliesse diese Seite einfach – ohne Bestätigung passiert nichts."
+msgstr "Non ha compilato questo modulo? Chiuda semplicemente questa pagina – senza conferma non succede nulla."
+
+msgid "Das Ergebnis deiner Bestätigung:"
+msgstr "L’esito della sua conferma:"
+
+msgid "Deine Bestätigung ist erfasst."
+msgstr "La sua conferma è stata registrata."
+
+msgid "Die Quittung wurde an deinen Mailserver übergeben."
+msgstr "La ricevuta è stata consegnata al suo server di posta."
+
+msgid "Der Seitenbetreiber hat deine Meldung erhalten."
+msgstr "Il gestore del sito ha ricevuto la sua segnalazione."

@@ -2,6 +2,26 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.11.0] – 2026-07-27
+
+### Neu
+
+- **Textverwaltung: jeder besuchersichtbare Satz ist einstellbar.** Neue Seite **Formular-Einträge → Texte** mit allen 83 Sätzen, die eine ausfüllende Person je zu sehen bekommt – gruppiert nach Formular, Overlays beim Absenden, Meldungen nach dem Absenden, Feldprüfung, Bestätigungsmail, Benachrichtigung an den Betrieb und Bestätigungsseiten. Jedes Feld zeigt den eingebauten Standard als Platzhalter und darunter im Klartext; leeres Feld bedeutet Standard. Gespeichert wird nur, was wirklich abweicht (Option `gfb_texts`), pro Gruppe zeigt ein Etikett die Zahl der eigenen Texte. Grundsatz: Es gibt im Plugin keinen Satz mehr, den die Betreiberin nicht ändern kann – neue Texte entstehen künftig nur noch in der Registry (`includes/class-gfb-texts.php`), nicht mehr verstreut im Code.
+- **Platzhalter-Schutz.** Texte mit Platzhaltern (etwa der Feldname in Fehlermeldungen oder der Website-Name in Betreffzeilen) werden beim Speichern geprüft: Fehlt ein Pflicht-Platzhalter oder kommt einer hinzu, wird der Text nicht übernommen, der bisherige gilt weiter, und die Seite nennt die betroffenen Schlüssel. So kann eine Textänderung die Ausgabe nicht brechen.
+- **Filter `gfb_text`** (Wert, Schlüssel, Argumente) für Code-Overrides einzelner Texte.
+- **Plugin-Details-Fenster: Änderungsprotokoll über zehn Versionen und ein Reiter «Weitere Plugins».** Unter Plugins → «Details anzeigen» zeigt der Reiter Änderungsprotokoll neu die letzten zehn Versionen mit Nummer und Datum statt nur der neusten. Dazu kommt ein Reiter mit einer kurzen Vorstellung von Blitz & Donner, den übrigen dort gepflegten Plugins und dem Verweis auf plugins.blitzdonner.ch. Beides liefert der Update-Server (ab 1.8.0); der eingebettete Update-Client ergänzt den Hinweis-Reiter selbst, falls ein älterer Server antwortet.
+- **Website-Bezeichnung in Mails: neu die Domain.** Betreffzeilen, der Satz über der Datentabelle, die Fusszeile und der Absendername nannten bisher den Website-Titel – also meist den Markennamen. Empfängerinnen erwarten dort die Adresse, unter der sie das Formular ausgefüllt haben. Neue Vorgabe ist deshalb die vereinfachte Domain (`varellion.ch`, ohne `www.`); auf der Textseite lässt sich stattdessen der Website-Titel oder eine eigene Bezeichnung wählen. Filter `gfb_site_label`.
+- **Umschalter für die Anrede.** Oben auf der Textseite lässt sich zwischen **Sie** (Vorgabe) und **Du** wählen – die eingebauten Standardtexte wechseln damit die Anredeform, ohne dass ein einziger Text von Hand umgeschrieben werden muss. 27 der 83 Texte tragen eine Anrede und führen beide Fassungen; die übrigen sind anredefrei und in beiden Formen gleich. Eigene Texte bleiben unberührt. Beide Fassungen sind in Englisch, Französisch und Italienisch übersetzt.
+
+### Geändert
+
+- **Bestehende Text-Einstellungen wandern in die Textverwaltung.** Die Einzelfelder für die Overlay-Texte (2.10.3) und den Captcha-Hinweis (2.10.1) sind in die neue Seite aufgegangen; eingestellte Texte werden beim Update einmalig übernommen und bleiben erhalten. Die Standardtexte behalten ihre Übersetzungen in Deutsch, Englisch, Französisch und Italienisch.
+- **Alle Standardtexte siezen.** Neun Texte duzten bisher (Pflichtfeld-Hinweise, Rate-Limit, Captcha-Hinweis, Speicher- und Prüf-Meldungen) – sie sind auf die Sie-Form umgestellt, ihre bisherigen Übersetzungen gelten unverändert weiter. Die Du-Fassungen bleiben über den Anrede-Umschalter erreichbar.
+
+### Bekannte Grenzen
+
+- Die Oberfläche des Backends selbst (Einstellungen, Listen, Audit-Log) bleibt bewusst nur übersetzbar, nicht editierbar: Sie richtet sich an die Betreiberin, nicht an ihre Kundschaft. Die Erklärtexte der neuen Textseite sind übersetzbar ausgezeichnet, aber noch nicht in en/fr/it übersetzt.
+
 ## [2.10.3] – 2026-07-27
 
 ### Neu
