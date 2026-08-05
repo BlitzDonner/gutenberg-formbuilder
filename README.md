@@ -152,16 +152,25 @@ docs/                       # Zusatzdoku (Farben/Verläufe, E-Mail-Benachrichtig
 
 Ein veröffentlichtes reguläres GitHub-Release wird automatisch auf
 `plugins.blitzdonner.ch` publiziert. Der Workflow
-`.github/workflows/publish-update.yml` baut das ZIP, durchläuft vier Gates
-(php -l, Header-Version === Tag, ZIP-Struktur, SemVer) und postet es mit einem
-Deploy-Token. Einrichtung und Nutzung: [`docs/AUTO-PUBLISH.md`](docs/AUTO-PUBLISH.md).
-**Nächster Schritt (Mittelweg):** Ed25519-Signatur des ZIP – noch nicht enthalten.
+`.github/workflows/publish-update.yml` baut das ZIP und durchläuft vier Gates
+(php -l, Header-Version === Tag, ZIP-Struktur, SemVer). Es sendet **nichts** an
+den Server: Der Update-Server verlangt eine **Ed25519-Signatur**, und der private
+Schlüssel liegt bewusst nur auf dem Entwicklungsrechner, nie in der CI.
+Veröffentlicht wird darum von Hand – ZIP bauen, mit `bd-sign.php` signieren, per
+Deploy-Token an den Publish-Endpunkt senden. Ablauf Schritt für Schritt:
+[`docs/AUTO-PUBLISH.md`](docs/AUTO-PUBLISH.md).
 
 ## Entwicklung
 
 - Kein npm-Build: JS/CSS sind Quelldateien.
-- Nach Änderungen an JS/CSS **Version** in `gutenberg-formbuilder.php` **und** in `blocks/form/block.json` sowie in `blocks/form-success/block.json` und `blocks/token/block.json` (`version`) erhöhen (Query-String `ver=` für eingebundene Skripte/Styles).
+- Nach Änderungen an JS/CSS die **Version** in `gutenberg-formbuilder.php` erhöhen, an beiden Stellen (Header `Version:` und `GFB_PLUGIN_VERSION`). Diese Konstante steht im Query-String `ver=` jeder eingebundenen Datei und leert damit die Browser-Caches; `assets/editor.js` und `assets/frontend.js` hängen daran (`register_assets()` in `includes/class-gfb-plugin.php`). Die `version`-Felder in den `block.json` sind reine Metadaten und beeinflussen den Cache nicht.
 - PHP-Syntax prüfen: `php -l datei.php` (falls PHP im PATH).
+
+### Inserter einschränken – nur über den eigenen Block
+
+Soll ein Block des Plugins in einem Editor-Kontext nicht angeboten werden, geschieht das **clientseitig** über `supports.inserter` in `assets/editor.js` (Beispiel: `gfb/confirm-status`, nur im Site Editor sichtbar).
+
+Der Filter `allowed_block_types_all` darf den Wert `true` **niemals** in eine Positivliste aus `WP_Block_Type_Registry` umwandeln. Diese Registry kennt ausschliesslich serverseitig registrierte Blöcke. Jeder Block, den ein anderes Plugin allein im Editor-JavaScript anmeldet, fehlt darin und wäre gesperrt – und Gutenberg blendet zusätzlich jede Vorlage aus, die einen gesperrten Block auf oberster Ebene enthält. Genau das geschah zwischen 2.10.0 und 2.11.1 (siehe [`CHANGELOG.md`](CHANGELOG.md), 2.11.2).
 
 **Zuletzt dokumentiert (Auszug):** **Technische Feldnamen** (stabil, editierbar, `nameClientId`), **`formId`** pro Formular-Instanz, **E-Mail-Benachrichtigung** ([`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)), **Erfolgsbereich**, **Platzhalter-Hilfe** (`gfb/token`), **Datum/Zeit** (`pattern`/`placeholder` aus WP-Datumsformat), **Safari/WebKit-Fallback** (Admin-Option), Entwürfe, Submit-**Detailnotices**, Schema-Suche (`locate_form_block_for_post`).
 
