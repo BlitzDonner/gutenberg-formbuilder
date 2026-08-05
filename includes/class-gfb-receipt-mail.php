@@ -729,9 +729,13 @@ class GFB_Receipt_Mail {
 	 * gfb/confirm-status im Beitrags-/Seiten-Editor aus dem Inserter nehmen –
 	 * der Block ist nur in den zwei Bestätigungs-Templates sinnvoll. Im Site
 	 * Editor (Template-Bearbeitung, context->post leer) bleibt er verfügbar.
-	 * Bewusste Decke: Ist $allowed noch true, wird die Liste aus der Registry
-	 * materialisiert; danach registrierte Blöcke fehlen dann im Inserter dieses
-	 * Requests (in der Praxis registriert alles auf init vor dem Editor-Load).
+	 *
+	 * Der Wert true bleibt hier unangetastet. Wer ihn zu einer Positivliste aus
+	 * WP_Block_Type_Registry macht, sperrt jeden Block, den ein Plugin nur im
+	 * Editor-JavaScript registriert – solche Blöcke stehen nie in der Registry.
+	 * Gutenberg blendet dann zusätzlich jede Vorlage aus, die einen gesperrten
+	 * Block auf oberster Ebene enthält. Das Ausblenden im Inserter übernimmt
+	 * darum assets/editor.js über supports.inserter.
 	 *
 	 * @param bool|array<int,string>  $allowed Bisheriger Filterwert.
 	 * @param WP_Block_Editor_Context $context Editor-Kontext.
@@ -740,9 +744,6 @@ class GFB_Receipt_Mail {
 	public static function restrict_confirm_status_inserter( $allowed, $context ) {
 		if ( ! ( $context instanceof WP_Block_Editor_Context ) || empty( $context->post ) ) {
 			return $allowed;
-		}
-		if ( true === $allowed ) {
-			$allowed = array_keys( WP_Block_Type_Registry::get_instance()->get_all_registered() );
 		}
 		if ( is_array( $allowed ) ) {
 			$allowed = array_values( array_diff( $allowed, array( 'gfb/confirm-status' ) ) );

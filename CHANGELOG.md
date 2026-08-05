@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.11.2] – 2026-08-05
+
+### Behoben
+
+- **Fremde Blöcke und Vorlagen verschwanden aus dem Inserter.** Um den Block «Bestätigungs-Status» im Beitrags-Editor auszublenden, baute das Plugin aus dem Filterwert `true` eine Positivliste aller serverseitig registrierten Blöcke. Blöcke, die ein anderes Plugin nur im Editor-JavaScript registriert, stehen nie in dieser Registry und waren damit gesperrt. Gutenberg blendet zusätzlich jede Vorlage aus, die einen gesperrten Block auf oberster Ebene enthält – auf einer betroffenen Website fehlten dadurch sechs Blöcke und drei Vorlagen samt zwei Vorlagen-Kategorien. Der Filter lässt `true` jetzt unverändert. Das Ausblenden im Inserter übernimmt `assets/editor.js` über `supports.inserter`, wirksam nur ausserhalb des Site Editors. Der Block bleibt dort, wo er hingehört, und fremde Blöcke bleiben unberührt.
+
 ## [2.11.1] – 2026-07-27
 
 ### Behoben

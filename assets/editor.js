@@ -2655,7 +2655,33 @@
 		},
 	} );
 
+	/**
+	 * Läuft dieser Editor im Site Editor? Nur dort gehört gfb/confirm-status in
+	 * den Inserter, denn er lebt in den zwei Bestätigungs-Templates. Geprüft
+	 * werden Pfad, Body-Klasse und der edit-site-Store; trifft nichts davon zu,
+	 * bleibt der Block im Inserter verborgen, aber einfügbar (Vorlagen, Kopie).
+	 */
+	function gfbIsSiteEditor() {
+		try {
+			if ( /\/site-editor\.php/.test( window.location.pathname ) ) {
+				return true;
+			}
+			if ( document.body && document.body.classList.contains( 'site-editor-php' ) ) {
+				return true;
+			}
+			return !! ( wp.data && wp.data.select && wp.data.select( 'core/edit-site' ) );
+		} catch ( e ) {
+			return true;
+		}
+	}
+
 	registerBlockType( 'gfb/confirm-status', {
+		supports: {
+			html: false,
+			multiple: false,
+			reusable: false,
+			inserter: gfbIsSiteEditor(),
+		},
 		edit: function () {
 			var blockProps = useBlockProps( {
 				className: 'gfb-confirm-status-editor',
