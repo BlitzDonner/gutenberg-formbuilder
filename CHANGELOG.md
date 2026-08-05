@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.12.0] – 2026-08-05
+
+### Neu
+
+- Zentrale Lizenzverwaltung (bdliz-Modul, eingebettet): Alle Blitz-&-Donner-Plugins teilen sich einen Lizenz-Screen unter «Einstellungen → B&D Lizenzen». Das Lizenz-Token wird einmal eingetragen und gilt für alle abgedeckten Plugins; ein bereits im Formular-Plugin hinterlegtes Token wird automatisch übernommen. Der Screen zeigt zusätzlich die weiteren verfügbaren Plugins mit Link auf plugins.blitzdonner.ch.
+- Update-Client: Token-Suche dreistufig (wp-config-Konstante → zentrale Lizenzverwaltung → bisherige Einzel-Option). Bestehende Installationen laufen unverändert weiter. Ohne Lizenz entfallen weiterhin nur die Updates, nie Funktionen.
+
 ## [2.11.2] – 2026-08-05
 
 ### Behoben

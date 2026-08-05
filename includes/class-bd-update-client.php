@@ -15,12 +15,12 @@
  * - Token wird per Authorization-Header (Bearer) gesendet, nie als URL-Parameter.
  * - Nach dem Download prueft der Client die SHA-256-Pruefsumme. Bei Abweichung
  *   wird NICHT installiert.
- * - Ed25519-Signatur (PFLICHT): Jedes Paket muss eine gueltige Ed25519-Signatur
- *   mitliefern. Der Client prueft sie gegen die eingebettete Liste akzeptierter
- *   Public Keys (ACCEPTED_KEYS). Fehlt die Signatur, ist sie ungueltig oder fehlt
- *   libsodium, wird NICHT installiert. Das Plugin bleibt dabei voll funktions-
- *   faehig – verweigert wird nur das Update, kein Killswitch. Fehlt libsodium,
- *   zeigt der Client zusaetzlich eine Admin-Notice.
+ * - Ed25519-Signatur (PFLICHT, Greenfield): Jedes Paket muss eine gueltige
+ *   Ed25519-Signatur mitliefern. Der Client prueft sie gegen die eingebettete
+ *   Liste akzeptierter Public Keys (ACCEPTED_KEYS). Fehlt die Signatur, ist sie
+ *   ungueltig oder fehlt libsodium, wird NICHT installiert. Das Plugin bleibt
+ *   dabei voll funktionsfaehig – verweigert wird nur das Update, kein Killswitch.
+ *   Fehlt libsodium, zeigt der Client zusaetzlich eine Admin-Notice.
  *
  * Einbinden im Hauptplugin (Beispiel):
  *
@@ -30,8 +30,8 @@
  *       'slug'        => 'gutenberg-formbuilder',  // Slug auf dem Server
  *       'server_url'  => 'https://plugins.blitzdonner.ch',
  *       'version'     => '2.6.3',                   // aktuelle Version
- *       'option_key'  => 'gfb_update_token',        // Einstellungs-Option (DB)
- *       'const_key'   => 'GFB_UPDATE_TOKEN',         // wp-config-Konstante (Vorrang)
+ *       'option_key'  => 'gfb_license_token',       // Einstellungs-Option
+ *       'const_key'   => 'GFB_LICENSE_TOKEN',       // optionale wp-config-Konstante
  *   ) );
  *
  * @package bd-update-client
@@ -62,11 +62,11 @@ class BD_Update_Client {
 	/**
 	 * Pflicht-Schalter fuer die Signaturpruefung.
 	 *
-	 * true = Pflicht-Modus (aktiv): eine fehlende oder ungueltige Signatur
-	 *        verhindert die Installation. Auch ein fehlendes libsodium verhindert
-	 *        die Installation (zusaetzlich Admin-Notice). Das Plugin laeuft in
-	 *        allen Faellen normal weiter – es wird nur das Update verweigert, es
-	 *        gibt keinen Killswitch (GPL-Grenze, Harvey).
+	 * true = Pflicht-Modus (aktiv, Greenfield-Entscheidung): eine fehlende oder
+	 *        ungueltige Signatur verhindert die Installation. Auch ein fehlendes
+	 *        libsodium verhindert die Installation (zusaetzlich Admin-Notice).
+	 *        Das Plugin laeuft in allen Faellen normal weiter – es wird nur das
+	 *        Update verweigert, es gibt keinen Killswitch (GPL-Grenze, Harvey).
 	 *
 	 * Voraussetzung: Jede ausgelieferte Version muss bereits signiert sein.
 	 */
@@ -151,12 +151,20 @@ class BD_Update_Client {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * Token aus wp-config-Konstante ODER Einstellungs-Option lesen.
-	 * Die Konstante hat Vorrang.
+	 * Token dreistufig lesen:
+	 * 1. wp-config-Konstante (Vorrang, technische Setups),
+	 * 2. zentrale Lizenzverwaltung (bdliz-Modul, ein Feld fuer alle Plugins),
+	 * 3. plugin-eigene Einstellungs-Option (Rueckfallebene, Bestand).
 	 */
 	private function get_token() {
 		if ( $this->const_key && defined( $this->const_key ) ) {
 			return (string) constant( $this->const_key );
+		}
+		if ( function_exists( 'bdliz_get_token' ) ) {
+			$token = (string) bdliz_get_token( $this->slug );
+			if ( '' !== $token ) {
+				return $token;
+			}
 		}
 		if ( $this->option_key ) {
 			return (string) get_option( $this->option_key, '' );
