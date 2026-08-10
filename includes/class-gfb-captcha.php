@@ -261,6 +261,25 @@ class GFB_Captcha {
 		$label     = GFB_Texts::get( 'form.captcha_label' );
 		$hint      = self::hint_text( $form_id );
 
+		/**
+		 * Erscheinungsbild des Widgets.
+		 *
+		 * Das Widget liegt in einem iframe von friendlycaptcha.com und laesst
+		 * sich von aussen nicht gestalten. Friendly Captcha nimmt dafuer
+		 * data-theme entgegen und reicht den Wert an den iframe weiter.
+		 *
+		 * «auto» folgt der Systemeinstellung des Besuchers. Themes mit fester
+		 * heller oder dunkler Flaeche setzen den Wert ueber diesen Filter,
+		 * sonst steht ein weisses Widget auf dunklem Grund.
+		 *
+		 * @param string $theme   auto, light oder dark.
+		 * @param string $form_id Formular-ID.
+		 */
+		$theme = (string) apply_filters( 'gfb_captcha_theme', 'auto', $form_id );
+		if ( ! in_array( $theme, array( 'auto', 'light', 'dark' ), true ) ) {
+			$theme = 'auto';
+		}
+
 		ob_start();
 		?>
 		<div class="gfb-captcha-row" data-gfb-captcha="1">
@@ -268,6 +287,7 @@ class GFB_Captcha {
 			<div
 				class="frc-captcha gfb-captcha-widget"
 				data-sitekey="<?php echo esc_attr( $s['site_key'] ); ?>"
+				data-theme="<?php echo esc_attr( $theme ); ?>"
 				role="group"
 				aria-labelledby="<?php echo esc_attr( $dom_id ); ?>-label"
 			></div>
