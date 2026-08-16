@@ -817,7 +817,7 @@ class GFB_Plugin {
 					<?php echo esc_html( $status_msg ); ?>
 				</div>
 			<?php endif; ?>
-			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" data-gfb-webkit-datetime-fallback="<?php echo esc_attr( self::is_webkit_datetime_fallback_enabled() ? '1' : '0' ); ?>" lang="<?php echo esc_attr( determine_locale() ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
+			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" data-gfb-webkit-datetime-fallback="<?php echo esc_attr( self::is_webkit_datetime_fallback_enabled() ? '1' : '0' ); ?>" lang="<?php echo esc_attr( str_replace( '_', '-', determine_locale() ) ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
 				<input type="hidden" name="gfb_token" value="<?php echo esc_attr( $gfb_token ); ?>" />
 				<input type="hidden" name="gfb_instance_id" value="<?php echo esc_attr( $instance_id ); ?>" />
 				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" id="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" aria-label="<?php echo esc_attr__( 'Dieses Feld bitte leer lassen.', 'gutenberg-formbuilder' ); ?>" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
