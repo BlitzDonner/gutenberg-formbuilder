@@ -820,7 +820,7 @@ class GFB_Plugin {
 			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" data-gfb-webkit-datetime-fallback="<?php echo esc_attr( self::is_webkit_datetime_fallback_enabled() ? '1' : '0' ); ?>" lang="<?php echo esc_attr( determine_locale() ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
 				<input type="hidden" name="gfb_token" value="<?php echo esc_attr( $gfb_token ); ?>" />
 				<input type="hidden" name="gfb_instance_id" value="<?php echo esc_attr( $instance_id ); ?>" />
-				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
+				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" id="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" aria-label="<?php echo esc_attr__( 'Dieses Feld bitte leer lassen.', 'gutenberg-formbuilder' ); ?>" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
 				<?php wp_nonce_field( 'gfb_submit_' . $form_id . '_' . $post_id, 'gfb_nonce' ); ?>
 				<input type="hidden" name="action" value="gfb_submit" />
 				<input type="hidden" name="gfb_post_id" value="<?php echo esc_attr( $post_id ); ?>" />
@@ -870,7 +870,18 @@ class GFB_Plugin {
 			'style'    => true,
 			'data-*'   => true,
 			'tabindex' => true,
-			'aria-*'   => true,
+			// wp_kses kennt Attribut-Wildcards nur fuer data-*; aria-*
+			// wuerde stillschweigend entfernt. Darum einzeln aufgezaehlt.
+			'aria-label'      => true,
+			'aria-labelledby' => true,
+			'aria-describedby' => true,
+			'aria-hidden'     => true,
+			'aria-live'       => true,
+			'aria-required'   => true,
+			'aria-invalid'    => true,
+			'aria-expanded'   => true,
+			'aria-controls'   => true,
+			'aria-current'    => true,
 			'role'     => true,
 			'hidden'   => true,
 			'title'    => true,

@@ -141,10 +141,28 @@ class GFB_Field_Renderer {
 		$star = $required
 			? ' <span class="gfb-required" aria-hidden="true">*</span>'
 			: '';
-		return '<label for="' . esc_attr( $name ) . '">'
+		return '<label id="' . esc_attr( 'label-' . $name ) . '" for="' . esc_attr( $name ) . '">'
 			. esc_html( $txt )
 			. $star
 			. '</label>';
+	}
+
+	/**
+	 * Accessible-Name-Attribut für ein Feld: aria-labelledby auf das eigene
+	 * Label, ohne Label ein aria-label aus dem Placeholder. Ergänzt die
+	 * for/id-Kopplung für Prüfwerkzeuge, die nur ARIA-Attribute auswerten.
+	 *
+	 * @param array $c Common-Attribute des Felds.
+	 * @return string Attribut-String (mit führendem Leerzeichen) oder leer.
+	 */
+	private static function aria_name( array $c ) {
+		if ( '' !== trim( (string) $c['label'] ) && '' !== $c['name'] ) {
+			return ' aria-labelledby="' . esc_attr( 'label-' . $c['name'] ) . '"';
+		}
+		if ( '' !== $c['placeholder'] ) {
+			return ' aria-label="' . esc_attr( $c['placeholder'] ) . '"';
+		}
+		return '';
 	}
 
 	/**
@@ -324,6 +342,7 @@ class GFB_Field_Renderer {
 		$attr  = ' type="' . esc_attr( $type ) . '"';
 		$attr .= ' name="' . esc_attr( $c['name'] ) . '"';
 		$attr .= ' id="' . esc_attr( $c['name'] ) . '"';
+		$attr .= self::aria_name( $c );
 		if ( '' !== $c['placeholder'] ) {
 			$attr .= ' placeholder="' . esc_attr( $c['placeholder'] ) . '"';
 		}
@@ -391,6 +410,7 @@ class GFB_Field_Renderer {
 		$rows = isset( $a['rows'] ) ? (int) $a['rows'] : 4;
 		$attr  = ' name="' . esc_attr( $c['name'] ) . '"';
 		$attr .= ' id="' . esc_attr( $c['name'] ) . '"';
+		$attr .= self::aria_name( $c );
 		$attr .= ' rows="' . max( 1, $rows ) . '"';
 		if ( '' !== $c['placeholder'] ) {
 			$attr .= ' placeholder="' . esc_attr( $c['placeholder'] ) . '"';
@@ -412,6 +432,7 @@ class GFB_Field_Renderer {
 		}
 		$opts  = self::option_lines( isset( $a['options'] ) ? (string) $a['options'] : '' );
 		$attr  = ' name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '"';
+		$attr .= self::aria_name( $c );
 		if ( $c['required'] ) {
 			$attr .= ' required';
 		}
@@ -441,8 +462,8 @@ class GFB_Field_Renderer {
 			$id  = $c['name'] . '_' . $idx;
 			$req = ( $c['required'] && 0 === $idx ) ? ' required' : '';
 			$inner .= '<div class="gfb-radio-row">'
-				. '<input type="radio" name="' . esc_attr( $c['name'] ) . '" value="' . esc_attr( $opt ) . '" id="' . esc_attr( $id ) . '"' . $req . ' />'
-				. ' <label for="' . esc_attr( $id ) . '">' . esc_html( $opt ) . '</label>'
+				. '<input type="radio" name="' . esc_attr( $c['name'] ) . '" value="' . esc_attr( $opt ) . '" id="' . esc_attr( $id ) . '" aria-labelledby="' . esc_attr( 'label-' . $id ) . '"' . $req . ' />'
+				. ' <label id="' . esc_attr( 'label-' . $id ) . '" for="' . esc_attr( $id ) . '">' . esc_html( $opt ) . '</label>'
 				. '</div>';
 			++$idx;
 		}
@@ -490,8 +511,8 @@ class GFB_Field_Renderer {
 		$cb_star = $c['required']
 			? ' <span class="gfb-required" aria-hidden="true">*</span>'
 			: '';
-		$inner = '<label for="' . esc_attr( $c['name'] ) . '">'
-			. '<input type="checkbox" name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '" value="1"' . ( $c['required'] ? ' required' : '' ) . ' />'
+		$inner = '<label id="' . esc_attr( 'label-' . $c['name'] ) . '" for="' . esc_attr( $c['name'] ) . '">'
+			. '<input type="checkbox" name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '" value="1" aria-labelledby="' . esc_attr( 'label-' . $c['name'] ) . '"' . ( $c['required'] ? ' required' : '' ) . ' />'
 			. ' ' . esc_html( $c['label'] )
 			. $cb_star
 			. '</label>';
@@ -505,6 +526,7 @@ class GFB_Field_Renderer {
 		}
 		$attr  = ' type="number"';
 		$attr .= ' name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '"';
+		$attr .= self::aria_name( $c );
 		foreach ( array( 'min', 'max', 'step' ) as $k ) {
 			if ( isset( $a[ $k ] ) && '' !== (string) $a[ $k ] ) {
 				$attr .= ' ' . esc_attr( $k ) . '="' . esc_attr( (string) $a[ $k ] ) . '"';
@@ -531,6 +553,7 @@ class GFB_Field_Renderer {
 		$default = isset( $a['defaultValue'] ) ? (string) $a['defaultValue'] : $min;
 		$attr    = ' type="range"';
 		$attr   .= ' name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '"';
+		$attr   .= self::aria_name( $c );
 		$attr   .= ' min="' . esc_attr( $min ) . '"';
 		$attr   .= ' max="' . esc_attr( $max ) . '"';
 		$attr   .= ' step="' . esc_attr( $step ) . '"';
@@ -561,6 +584,7 @@ class GFB_Field_Renderer {
 		$accept   = isset( $a['accept'] ) ? (string) $a['accept'] : '';
 		$max_mb   = isset( $a['maxSizeMb'] ) ? max( 1, (int) $a['maxSizeMb'] ) : 8;
 		$attr     = ' type="file" name="' . esc_attr( $c['name'] ) . '" id="' . esc_attr( $c['name'] ) . '"';
+		$attr    .= self::aria_name( $c );
 		if ( '' !== $accept ) {
 			$attr .= ' accept="' . esc_attr( $accept ) . '"';
 		}
