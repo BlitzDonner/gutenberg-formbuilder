@@ -30,9 +30,16 @@
  *       'slug'        => 'gutenberg-formbuilder',  // Slug auf dem Server
  *       'server_url'  => 'https://plugins.blitzdonner.ch',
  *       'version'     => '2.6.3',                   // aktuelle Version
- *       'option_key'  => 'gfb_license_token',       // Einstellungs-Option
- *       'const_key'   => 'GFB_LICENSE_TOKEN',       // optionale wp-config-Konstante
+ *       'option_key'  => 'gfb_license_token',       // Einstellungs-Option (Rueckfallebene)
+ *       'const_key'   => 'GFB_LICENSE_TOKEN',       // AUSGELAUFEN – wird nicht mehr gelesen;
+ *                                                   // eine gesetzte Konstante uebernimmt das
+ *                                                   // bdliz-Modul einmalig (legacy_const)
  *   ) );
+ *
+ * KOPIE-VERSION: 3.0.0 – diese Nummer beim Registrieren ueber den Lader
+ * (bd-update-client-loader.php) als Literal angeben und bei jeder
+ * Aktualisierung der Kopie mitfuehren. Der Lader laedt siteweit die
+ * hoechste registrierte Kopie (newest wins).
  *
  * @package bd-update-client
  * @license GPL-2.0-or-later
@@ -57,6 +64,8 @@ class BD_Update_Client {
 		'8337dfb76e01b82d' => '8337dfb76e01b82da07e39df711d72f758f33a372932db268bb505b0bdea4860',
 		// Inhaber: Blitz & Donner / David – erzeugt 2026-06-26.
 		'85044a46882e9338' => '85044a46882e93386304cb8329b2407ba7d7f970f727d99d4b546fc79391e2bd',
+		// Inhaber: Blitz & Donner / Max – erzeugt 2026-08-04.
+		'7172641c9899191a' => '7172641c9899191aeac78a5cc8839b0c6bdda015e8b8cd919a6281e6e7f6c523',
 	);
 
 	/**
@@ -151,15 +160,18 @@ class BD_Update_Client {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * Token dreistufig lesen:
-	 * 1. wp-config-Konstante (Vorrang, technische Setups),
-	 * 2. zentrale Lizenzverwaltung (bdliz-Modul, ein Feld fuer alle Plugins),
-	 * 3. plugin-eigene Einstellungs-Option (Rueckfallebene, Bestand).
+	 * Token zweistufig lesen:
+	 * 1. zentrale Lizenzverwaltung (bdliz-Modul, ein Screen fuer alle Plugins),
+	 * 2. plugin-eigene Einstellungs-Option (Rueckfallebene, Bestand).
+	 *
+	 * Die frühere wp-config-Konstante (const_key) ist AUSGELAUFEN und wird
+	 * bewusst nicht mehr gelesen: zwei Wahrheitsquellen mit Vorrangregel
+	 * haben in der Praxis gueltige zentrale Lizenzen blockiert (vergessene,
+	 * ungueltige Konstante → 403, Updates blieben stumm aus). Eine noch
+	 * gesetzte Konstante uebernimmt das bdliz-Modul einmalig in die zentrale
+	 * Ablage (bdliz_register, Parameter legacy_const).
 	 */
 	private function get_token() {
-		if ( $this->const_key && defined( $this->const_key ) ) {
-			return (string) constant( $this->const_key );
-		}
 		if ( function_exists( 'bdliz_get_token' ) ) {
 			$token = (string) bdliz_get_token( $this->slug );
 			if ( '' !== $token ) {

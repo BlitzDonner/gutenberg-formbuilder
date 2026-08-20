@@ -29,7 +29,7 @@ if ( ! class_exists( 'BDLIZ_Module' ) ) :
 
 class BDLIZ_Module {
 
-	const VERSION    = '1.0.0';
+	const VERSION    = '1.1.0';
 	const SERVER_URL = 'https://plugins.blitzdonner.ch';
 	const OPTION     = 'bdliz_tokens';
 	const PAGE_SLUG  = 'bdliz-lizenzen';
@@ -98,10 +98,12 @@ class BDLIZ_Module {
 	/* ------------------------------------------------------------------ */
 
 	/**
-	 * Uebernimmt vorhandene Einzel-Tokens (z.B. gfb_update_token) einmalig in
-	 * die gemeinsame Ablage. Fuer Bestandskunden unsichtbar: das Token bleibt
-	 * dasselbe, nur der Ort wechselt. Die alte Option bleibt als Rueckfall-
-	 * ebene stehen, bis der Kunde sie selbst entfernt.
+	 * Uebernimmt vorhandene Einzel-Tokens einmalig in die gemeinsame Ablage –
+	 * aus den bisherigen Plugin-Optionen (z.B. gfb_update_token) UND aus den
+	 * ausgelaufenen wp-config-Konstanten (z.B. BDMEN_LICENSE_TOKEN). Fuer
+	 * Bestandskunden unsichtbar: das Token bleibt dasselbe, nur der Ort
+	 * wechselt. Ein ungueltiges Alt-Token blockiert nichts mehr – es zeigt
+	 * im Screen einfach «deckt kein Plugin» und kann entfernt werden.
 	 */
 	public function migrate_legacy_tokens() {
 		$list    = $this->tokens();
@@ -109,20 +111,25 @@ class BDLIZ_Module {
 		$changed = false;
 
 		foreach ( $this->plugins as $slug => $info ) {
-			if ( empty( $info['legacy_option'] ) ) {
-				continue;
+			$kandidaten = array();
+			if ( ! empty( $info['legacy_option'] ) ) {
+				$kandidaten[] = (string) get_option( $info['legacy_option'], '' );
 			}
-			$legacy = (string) get_option( $info['legacy_option'], '' );
-			if ( '' === $legacy || in_array( $legacy, $known, true ) ) {
-				continue;
+			if ( ! empty( $info['legacy_const'] ) && defined( $info['legacy_const'] ) ) {
+				$kandidaten[] = (string) constant( $info['legacy_const'] );
 			}
-			$list[]  = array(
-				'token'      => $legacy,
-				'coverage'   => array(),
-				'checked_at' => 0,
-			);
-			$known[] = $legacy;
-			$changed = true;
+			foreach ( $kandidaten as $legacy ) {
+				if ( '' === $legacy || in_array( $legacy, $known, true ) ) {
+					continue;
+				}
+				$list[]  = array(
+					'token'      => $legacy,
+					'coverage'   => array(),
+					'checked_at' => 0,
+				);
+				$known[] = $legacy;
+				$changed = true;
+			}
 		}
 
 		if ( $changed ) {

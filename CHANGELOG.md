@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.13.0] – 2026-08-20
+
+### Behoben
+
+- Update-Client 3.0.0: Der mitgelieferte Update-Baustein laedt siteweit als neueste Kopie (Lade-Registry) und akzeptiert alle aktuellen Signaturschluessel – Updates anderer Blitz-&-Donner-Plugins werden nicht mehr blockiert (Befund 18.08.2026).
+
+### Geaendert
+
+- Lizenzverwaltung bdliz 1.1.0 (Uebernahme einer wp-config-Konstante in die zentrale Ablage).
+- Captcha: Erscheinungsbild ueber gfb_captcha_theme steuerbar; Felder tragen aria-labelledby; Formular-lang als BCP-47 (de-CH).
+
 ## [2.12.0] – 2026-08-05
 
 ### Neu

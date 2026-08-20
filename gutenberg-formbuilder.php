@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Blitz & Donner Formular
  * Description: Sicherheitszentrierter Formular-Builder für den Block-Editor mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
- * Version: 2.12.0
+ * Version: 2.13.0
  * Plugin URI: https://plugins.blitzdonner.ch
  * Author: Blitz & Donner
  * Author URI: https://plugins.blitzdonner.ch
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'GFB_PLUGIN_FILE', __FILE__ );
 define( 'GFB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GFB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'GFB_PLUGIN_VERSION', '2.12.0' );
+define( 'GFB_PLUGIN_VERSION', '2.13.0' );
 
 // Reihenfolge wichtig: Crypto + Capabilities + Audit zuerst, dann alles, was sie nutzt.
 require_once GFB_PLUGIN_DIR . 'includes/class-gfb-texts.php';
@@ -96,11 +96,21 @@ GFB_Admin_Texts::boot();
 // Die neueste installierte Modul-Kopie aller B&D-Plugins gewinnt.
 require_once GFB_PLUGIN_DIR . 'includes/bdliz/bdliz-loader.php';
 bdliz_register(
-	'1.0.0',
+	'1.1.0',
 	GFB_PLUGIN_DIR . 'includes/bdliz/class-bdliz-module.php',
 	'gutenberg-formbuilder',
 	'Blitz & Donner Formular',
-	'gfb_update_token'
+	'gfb_update_token',
+	'GFB_UPDATE_TOKEN'
+);
+
+// Update-Client-Kopie registrieren: Der Lader stellt siteweit die NEUESTE
+// mitgelieferte Kopie aller B&D-Plugins scharf (Befund 18.08.2026 – eine
+// veraltete Kopie eines anderen Plugins kann Updates nicht mehr blockieren).
+require_once GFB_PLUGIN_DIR . 'includes/bd-update-client-loader.php';
+bd_update_client_register(
+	'3.0.0',
+	GFB_PLUGIN_DIR . 'includes/class-bd-update-client.php'
 );
 
 // Frueh auf plugins_loaded instanziieren: Der Filter

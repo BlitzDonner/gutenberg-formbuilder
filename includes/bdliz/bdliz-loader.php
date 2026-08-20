@@ -43,12 +43,17 @@ if ( ! function_exists( 'bdliz_register' ) ) :
 	 * @param string $plugin_slug    Slug des Plugins auf dem Update-Server.
 	 * @param string $plugin_name    Anzeigename des Plugins.
 	 * @param string $legacy_option  Bisherige Einzel-Token-Option (fuer die Migration), '' wenn keine.
+	 * @param string $legacy_const   Bisherige wp-config-Konstante (fuer die einmalige
+	 *                               Uebernahme in die zentrale Ablage), '' wenn keine.
+	 *                               Die Konstante ist AUSGELAUFEN: neue Clients lesen
+	 *                               sie nicht mehr, ihr Wert wird nur noch migriert.
 	 */
-	function bdliz_register( $module_version, $module_path, $plugin_slug, $plugin_name, $legacy_option = '' ) {
+	function bdliz_register( $module_version, $module_path, $plugin_slug, $plugin_name, $legacy_option = '', $legacy_const = '' ) {
 		$GLOBALS['bdliz_registry']['candidates'][ (string) $module_version ] = (string) $module_path;
 		$GLOBALS['bdliz_registry']['plugins'][ (string) $plugin_slug ]       = array(
 			'name'          => (string) $plugin_name,
 			'legacy_option' => (string) $legacy_option,
+			'legacy_const'  => (string) $legacy_const,
 		);
 	}
 
