@@ -145,8 +145,16 @@ includes/                   # PHP: Plugin, Submit, Admin
 assets/                     # editor.js, frontend.js, CSS
 blocks/*/block.json         # Block-Metadaten
 languages/                  # Übersetzungen (*.po / *.mo), siehe INSTALL.md
-docs/                       # Zusatzdoku (Farben/Verläufe, E-Mail-Benachrichtigung, …)
+docs/                       # Zusatzdoku (Farben/Verläufe, E-Mail-Benachrichtigung, Testprotokolle, …)
 ```
+
+## Kompatibilität
+
+Zuletzt geprüft gegen **WordPress 7.1** (20.08.2026, Plugin 2.11.2 und 2.13.0, PHP 8.2.29):
+alle Mail-Varianten, Double-Opt-in samt Angriffsfällen, Uploads, Backend und der ab 7.1
+durchgehend iframe-gekapselte Editor. Kein PHP-Fehler, kein ungültiger Block.
+Vollständiges Protokoll mit den drei offenen Befunden:
+[`docs/TESTPROTOKOLL-WP-7.1.md`](docs/TESTPROTOKOLL-WP-7.1.md).
 
 ## Auto-Publish (Release → Update-Server)
 

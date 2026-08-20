@@ -13,6 +13,10 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 - Lizenzverwaltung bdliz 1.1.0 (Uebernahme einer wp-config-Konstante in die zentrale Ablage).
 - Captcha: Erscheinungsbild ueber gfb_captcha_theme steuerbar; Felder tragen aria-labelledby; Formular-lang als BCP-47 (de-CH).
 
+### Geprueft
+
+- Kompatibilitaet mit WordPress 7.1 (20.08.2026): alle Mail-Varianten, Double-Opt-in samt Angriffsfaellen, Uploads, Backend und der ab 7.1 durchgehend iframe-gekapselte Editor. Kein PHP-Fehler, kein ungueltiger Block. Protokoll: docs/TESTPROTOKOLL-WP-7.1.md.
+
 ## [2.12.0] – 2026-08-05
 
 ### Neu
