@@ -1,0 +1,312 @@
+{
+  "hinweis": "Eine Quelle für beide Wege: der Editor baut daraus gültige Blöcke, das PHP-Fixture einen Rückfall ohne Browser.",
+  "felder": [
+    {
+      "name": "gfb/field-text",
+      "attrs": {
+        "label": "Vorname",
+        "name": "vorname",
+        "required": true,
+        "placeholder": "Vorname"
+      }
+    },
+    {
+      "name": "gfb/field-text",
+      "attrs": {
+        "label": "Nachname",
+        "name": "nachname"
+      }
+    },
+    {
+      "name": "gfb/field-email",
+      "attrs": {
+        "label": "E-Mail",
+        "name": "mail",
+        "required": true
+      }
+    },
+    {
+      "name": "gfb/field-email",
+      "attrs": {
+        "label": "Zweitadresse",
+        "name": "mail2",
+        "required": false
+      }
+    },
+    {
+      "name": "gfb/field-tel",
+      "attrs": {
+        "label": "Telefon",
+        "name": "telefon",
+        "sensitive": true
+      }
+    },
+    {
+      "name": "gfb/field-url",
+      "attrs": {
+        "label": "Website",
+        "name": "website"
+      }
+    },
+    {
+      "name": "gfb/field-textarea",
+      "attrs": {
+        "label": "Nachricht",
+        "name": "nachricht"
+      }
+    },
+    {
+      "name": "gfb/field-number",
+      "attrs": {
+        "label": "Zahl",
+        "name": "zahl",
+        "min": "1",
+        "max": "10",
+        "step": "1"
+      }
+    },
+    {
+      "name": "gfb/field-range",
+      "attrs": {
+        "label": "Regler",
+        "name": "regler",
+        "min": "0",
+        "max": "100",
+        "step": "5",
+        "defaultValue": "20"
+      }
+    },
+    {
+      "name": "gfb/field-date",
+      "attrs": {
+        "label": "Datum",
+        "name": "datum",
+        "min": "2026-01-01",
+        "max": "2026-12-31"
+      }
+    },
+    {
+      "name": "gfb/field-time",
+      "attrs": {
+        "label": "Uhrzeit",
+        "name": "zeit"
+      }
+    },
+    {
+      "name": "gfb/field-datetime",
+      "attrs": {
+        "label": "Termin",
+        "name": "termin"
+      }
+    },
+    {
+      "name": "gfb/field-select",
+      "attrs": {
+        "label": "Auswahl",
+        "name": "auswahl",
+        "options": "Eins\nZwei\nDrei"
+      }
+    },
+    {
+      "name": "gfb/field-radio",
+      "attrs": {
+        "label": "Anrede",
+        "name": "anrede",
+        "options": "Frau\nHerr\nKeine Angabe",
+        "optionsLayout": "row"
+      }
+    },
+    {
+      "name": "gfb/field-checkbox",
+      "attrs": {
+        "label": "Ich stimme zu",
+        "name": "zustimmung"
+      }
+    },
+    {
+      "name": "gfb/field-hidden",
+      "attrs": {
+        "label": "Herkunft",
+        "name": "herkunft",
+        "hiddenValue": "testreihe"
+      }
+    },
+    {
+      "name": "gfb/field-hidden",
+      "attrs": {
+        "label": "Gesperrt",
+        "name": "gesperrt",
+        "hiddenValue": "fest",
+        "lockedValue": true
+      }
+    },
+    {
+      "name": "gfb/field-file",
+      "attrs": {
+        "label": "Ausweis",
+        "name": "ausweis",
+        "accept": ".pdf,.jpg,.png",
+        "maxSizeMb": 2,
+        "sensitive": true
+      }
+    },
+    {
+      "name": "gfb/field-submit",
+      "attrs": {
+        "label": "Formular absenden"
+      }
+    },
+    {
+      "name": "gfb/form-success",
+      "attrs": {},
+      "inner": [
+        {
+          "name": "core/paragraph",
+          "attrs": {
+            "content": "Vielen Dank, {{vorname}}. Wir haben Ihre Einsendung erhalten."
+          }
+        }
+      ]
+    }
+  ],
+  "formulare": [
+    {
+      "kennung": "voll",
+      "slug": "gfbt-voll",
+      "titel": "Testformular vollständig",
+      "attrs": {
+        "formId": "gfbt_voll",
+        "formTitle": "Testformular vollständig",
+        "emailNotificationEnabled": true,
+        "emailRecipients": [
+          "betrieb1@example.test",
+          "betrieb2@example.test",
+          "betrieb3@example.test"
+        ],
+        "emailSubject": "Neue Einsendung von {{vorname}} ({{label_mail}})",
+        "emailFromField": "mail",
+        "emailFromName": "Testreihe",
+        "receiptMode": "none",
+        "captchaMode": "off"
+      }
+    },
+    {
+      "kennung": "instant",
+      "slug": "gfbt-instant",
+      "titel": "Testformular Sofort-Bestätigung",
+      "attrs": {
+        "formId": "gfbt_instant",
+        "formTitle": "Testformular Sofort-Bestätigung",
+        "emailNotificationEnabled": true,
+        "emailRecipients": [
+          "betrieb1@example.test"
+        ],
+        "receiptMode": "instant",
+        "receiptEmailField": "mail",
+        "receiptSubject": "Ihre Einsendung ist eingegangen",
+        "captchaMode": "on"
+      }
+    },
+    {
+      "kennung": "doi",
+      "slug": "gfbt-doi",
+      "titel": "Testformular Double-Opt-in",
+      "attrs": {
+        "formId": "gfbt_doi",
+        "formTitle": "Testformular Double-Opt-in",
+        "emailNotificationEnabled": true,
+        "emailRecipients": [
+          "betrieb1@example.test"
+        ],
+        "receiptMode": "doi",
+        "receiptEmailField": "mail",
+        "doiSubject": "Bitte bestätigen Sie Ihre Adresse",
+        "receiptSubject": "Ihre Einsendung ist eingegangen",
+        "consentField": "zustimmung",
+        "captchaMode": "on"
+      }
+    },
+    {
+      "kennung": "farben",
+      "slug": "gfbt-farben",
+      "titel": "Testformular Farben",
+      "attrs": {
+        "formId": "gfbt_farben",
+        "formTitle": "Testformular Farben",
+        "appearanceMode": "auto",
+        "colorLabel": "#123456",
+        "colorText": "#222222",
+        "colorPlaceholder": "#778899",
+        "colorFieldBg": "#fafafa",
+        "colorBorder": "#334455",
+        "colorFocus": "#ff6600",
+        "colorButtonBg": "#0b5fd0",
+        "colorButtonText": "#ffffff",
+        "colorFormShell": "#eef2f7",
+        "darkColorLabel": "#aabbcc",
+        "darkColorText": "#eeeeee",
+        "darkColorFieldBg": "#1c1f25",
+        "darkColorBorder": "#445566",
+        "darkColorButtonBg": "#6ba4ff",
+        "darkColorButtonText": "#101010",
+        "darkColorFormShell": "#14161a",
+        "receiptMode": "none",
+        "captchaMode": "off"
+      }
+    },
+    {
+      "kennung": "danke",
+      "slug": "gfbt-danke-formular",
+      "titel": "Testformular mit Danke-Seite",
+      "dankeSeite": true,
+      "attrs": {
+        "formId": "gfbt_danke",
+        "formTitle": "Testformular mit Danke-Seite",
+        "draftEnabled": false,
+        "receiptMode": "none",
+        "captchaMode": "off"
+      }
+    },
+    {
+      "kennung": "doppelt",
+      "slug": "gfbt-doppelt",
+      "titel": "Testformular doppelter Feldname",
+      "felder": [
+        {
+          "name": "gfb/field-text",
+          "attrs": {
+            "label": "Vorname",
+            "name": "vorname",
+            "required": true
+          }
+        },
+        {
+          "name": "gfb/field-text",
+          "attrs": {
+            "label": "Vorname nochmals",
+            "name": "vorname"
+          }
+        },
+        {
+          "name": "gfb/field-email",
+          "attrs": {
+            "label": "E-Mail",
+            "name": "mail"
+          }
+        },
+        {
+          "name": "gfb/field-submit",
+          "attrs": {
+            "label": "Absenden"
+          }
+        }
+      ],
+      "attrs": {
+        "formId": "gfbt_doppelt",
+        "formTitle": "Testformular doppelter Feldname",
+        "receiptMode": "none",
+        "captchaMode": "off"
+      }
+    }
+  ]
+}

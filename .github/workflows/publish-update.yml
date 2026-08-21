@@ -95,6 +95,7 @@ jobs:
             --exclude '.github' \
             --exclude 'node_modules' \
             --exclude 'bin' \
+            --exclude 'tests' \
             --exclude '*.sh' \
             --exclude 'deutsch-für-profis.txt' \
             --exclude 'graphify-out' \

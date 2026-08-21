@@ -311,6 +311,20 @@ class GFB_Admin_Settings {
 				$message = __( 'Capability-Zuordnung gespeichert.', 'gutenberg-formbuilder' );
 				break;
 
+			case 'save_uninstall':
+				$aufraeumen = ! empty( $_POST['uninstall_cleanup'] );
+				update_option( 'gfb_uninstall_cleanup', $aufraeumen ? '1' : '', false );
+				GFB_Audit::record(
+					'settings_uninstall_saved',
+					'config',
+					'',
+					array( 'cleanup' => $aufraeumen ? 1 : 0 )
+				);
+				$message = $aufraeumen
+					? __( 'Beim Löschen des Plugins werden alle Daten entfernt.', 'gutenberg-formbuilder' )
+					: __( 'Beim Löschen des Plugins bleiben Einträge und Dateien erhalten.', 'gutenberg-formbuilder' );
+				break;
+
 			case 'verify_audit':
 				$res     = GFB_Audit::verify_chain();
 				$message = $res['ok']
@@ -728,6 +742,26 @@ class GFB_Admin_Settings {
 			default:
 				$license_badge = self::summary_badge( 'neutral', __( 'Kein Token', 'gutenberg-formbuilder' ) );
 		}
+		// Aufräumen beim Löschen des Plugins.
+		$aufraeumen_an = (bool) get_option( 'gfb_uninstall_cleanup', false );
+		$aufraeumen_badge = self::summary_badge(
+			$aufraeumen_an ? 'warn' : 'neutral',
+			$aufraeumen_an
+				? __( 'entfernt alles', 'gutenberg-formbuilder' )
+				: __( 'behält die Daten', 'gutenberg-formbuilder' )
+		);
+		echo '</details><details class="gfb-settings-card" id="gfb-aufraeumen"><summary><h2>' . esc_html__( 'Beim Löschen des Plugins', 'gutenberg-formbuilder' ) . '</h2>' . $aufraeumen_badge . '</summary>';
+		echo '<p>' . esc_html__( 'Wird das Plugin über die Plugin-Verwaltung gelöscht, bleiben Einträge, hochgeladene Dateien und das Prüfprotokoll von Haus aus erhalten. So nimmt ein versehentliches Löschen keine Kundendaten mit.', 'gutenberg-formbuilder' ) . '</p>';
+		echo '<form method="post">';
+		wp_nonce_field( 'gfb_settings_action' );
+		echo '<input type="hidden" name="gfb_settings_action" value="save_uninstall" />';
+		echo '<p><label><input type="checkbox" name="uninstall_cleanup" value="1" ' . checked( $aufraeumen_an, true, false ) . ' /> ';
+		echo esc_html__( 'Beim Löschen alle Daten entfernen', 'gutenberg-formbuilder' );
+		echo '</label></p>';
+		echo '<p class="description">' . esc_html__( 'Angekreuzt verschwinden mit dem Plugin auch die drei Datenbanktabellen, die verschlüsselten Dateien, die eigenen Rechte und die geplanten Aufgaben. Das lässt sich nicht rückgängig machen.', 'gutenberg-formbuilder' ) . '</p>';
+		submit_button( __( 'Speichern', 'gutenberg-formbuilder' ) );
+		echo '</form>';
+
 		echo '</details><details class="gfb-settings-card" id="gfb-lizenz"><summary><h2>' . esc_html__( 'Lizenz / Updates', 'gutenberg-formbuilder' ) . '</h2>' . $license_badge . '</summary>';
 		echo '<p>' . esc_html__( 'Mit einem gültigen Lizenz-Token bezieht das Plugin automatische Updates von plugins.blitzdonner.ch. Ohne Token läuft es normal weiter, nur ohne Update-Angebote.', 'gutenberg-formbuilder' ) . '</p>';
 

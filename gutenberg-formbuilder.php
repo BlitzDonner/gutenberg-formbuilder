@@ -2,8 +2,9 @@
 /**
  * Plugin Name: Blitz & Donner Formular
  * Description: Sicherheitszentrierter Formular-Builder für den Block-Editor mit serverseitiger Verschlüsselung von Datei-Uploads und sensiblen Feldern (AES-256-GCM, Master-Key in wp-config.php), eigenem Capability-Modell, ClamAV-Integration, tamper-evident Audit-Log und privatem Storage ausserhalb der Web-Wurzel.
- * Version: 2.13.0
+ * Version: 2.14.0
  * Plugin URI: https://plugins.blitzdonner.ch
+ * Update URI: https://plugins.blitzdonner.ch/gutenberg-formbuilder
  * Author: Blitz & Donner
  * Author URI: https://plugins.blitzdonner.ch
  * License: GPL-2.0-or-later

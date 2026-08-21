@@ -10,3 +10,4 @@ vendor/
 .env.*
 *.zip
 graphify-out/
+tests/berichte/

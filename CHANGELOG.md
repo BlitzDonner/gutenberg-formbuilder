@@ -2,11 +2,20 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
-## [Unveröffentlicht]
+## [2.14.0] – 2026-08-21
+
+### Neu
+
+- Einstellung «Beim Löschen des Plugins»: Von Haus aus bleiben Einträge, hochgeladene Dateien und das Prüfprotokoll erhalten, wenn das Plugin über die Plugin-Verwaltung gelöscht wird. Ein versehentliches Löschen nimmt so keine Kundendaten mit. Wer ausdrücklich alles entfernen will, kreuzt die Option an; dann verschwinden auch die drei Datenbanktabellen, die verschlüsselten Dateien, die eigenen Rechte und die geplanten Aufgaben. Der Vorgang läuft auf Multisite über alle Websites.
+- Automatisierte Testreihe unter `tests/`: Docker-Umgebung, Prüfgruppen für Editor, Entwürfe, Abwehr, Datei-Upload, Mail, Backend und Rechte. Aufruf über `tests/lauf.sh`, Berichte bleiben lokal.
 
 ### Behoben
 
 - Datum und Uhrzeit erscheinen in den Mails und im Backend jetzt in der Schreibweise aus Einstellungen → Allgemein: aus `2026-08-17` wird `17.08.2026`. Bisher gab das Plugin den gespeicherten ISO-Wert unverändert aus, obwohl die Eingabemaske dieselbe Einstellung bereits befolgte (gemeldet 21.08.2026 am Zählerstand-Formular auf rell.ch). Betrifft die Benachrichtigungsmail, die Platzhalter `{{feldname}}` in Betreff und Kopfzeilen, die Empfangsbestätigung an den Absender und die Übersicht der Einsendungen. Gespeichert bleibt der ISO-Wert, und der CSV-Export gibt weiterhin ISO aus, damit Tabellen- und Datenbankprogramme den Wert als Datum lesen.
+
+### Geändert
+
+- Plugin-Header trägt die `Update URI`, damit WordPress die Updates eindeutig diesem Update-Server zuordnet.
 
 ## [2.13.0] – 2026-08-20
 

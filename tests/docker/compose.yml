@@ -1,0 +1,79 @@
+# Wegwerf-Umgebung fuer die Testreihe. Pro WordPress-Fassung ein eigener Stapel,
+# gesteuert ueber COMPOSE_PROJECT_NAME und die Variablen aus lauf.sh.
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: wurzel
+      MARIADB_DATABASE: wp
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  mailpit:
+    image: axllent/mailpit:latest
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "${MAILPIT_PORT:-8761}:8025"
+
+  wp:
+    image: ${WP_IMAGE:-wordpress:7.1-php8.3-apache}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WP_PORT:-8661}:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'WP_DEBUG_LOG', '/var/www/html/wp-content/debug.log' );
+        define( 'WP_DEBUG_DISPLAY', false );
+        define( 'AUTOMATIC_UPDATER_DISABLED', true );
+        define( 'GFB_MASTER_KEYS', getenv('GFB_MASTER_KEYS') );
+        define( 'GFB_ACTIVE_KEY_ID', getenv('GFB_ACTIVE_KEY_ID') );
+        define( 'GFB_TESTLAUF', true );
+      GFB_MASTER_KEYS: ${GFB_MASTER_KEYS}
+      GFB_ACTIVE_KEY_ID: ${GFB_ACTIVE_KEY_ID:-1}
+      GFB_MAIL_ZIEL: ${GFB_MAIL_ZIEL:-mailpit}
+      GFB_SMTP_HOST: ${GFB_SMTP_HOST:-}
+      GFB_SMTP_USER: ${GFB_SMTP_USER:-}
+      GFB_SMTP_PASS: ${GFB_SMTP_PASS:-}
+    volumes:
+      # Das Projekt haengt schreibgeschuetzt drin: der Container kann es nie
+      # veraendern. Nur die Umstiegs-Umgebung mountet ein leeres Wegwerf-
+      # Verzeichnis beschreibbar, damit WP-CLI dort Versionen einspielen kann.
+      - ${PLUGIN_DIR}:${PLUGIN_ZIEL:-/var/www/html/wp-content/plugins/gutenberg-formbuilder}${PLUGIN_MOUNT_MODE-:ro}
+      - ${PAKETE_DIR:-/tmp}:/gfb-pakete:ro
+      - ${TESTS_DIR}/docker/mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ${TESTS_DIR}/fixtures:/gfb-fixtures:ro
+
+  cli:
+    image: wordpress:cli-php8.3
+    depends_on:
+      - wp
+    user: "33:33"
+    entrypoint: ["tail", "-f", "/dev/null"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      # wp-config liest den Schlüssel aus der Umgebung: ohne ihn kann WP-CLI
+      # nichts entschlüsseln, obwohl der Webserver es kann.
+      GFB_MASTER_KEYS: ${GFB_MASTER_KEYS}
+      GFB_ACTIVE_KEY_ID: ${GFB_ACTIVE_KEY_ID:-1}
+      GFB_MAIL_ZIEL: ${GFB_MAIL_ZIEL:-mailpit}
+    volumes_from:
+      - wp
