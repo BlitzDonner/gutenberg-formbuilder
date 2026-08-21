@@ -1703,6 +1703,10 @@ class GFB_Receipt_Mail {
 		// Checkbox: «1»/«0» lesbar machen.
 		if ( isset( $ctx['types'][ $key ] ) && 'checkbox' === $ctx['types'][ $key ] ) {
 			$value = ( '1' === $value ) ? GFB_Texts::get( 'receipt.value_yes' ) : GFB_Texts::get( 'receipt.value_no' );
+		} else {
+			// Datum und Uhrzeit nach Einstellungen → Allgemein anzeigen.
+			$field_type = isset( $ctx['types'][ $key ] ) ? (string) $ctx['types'][ $key ] : '';
+			$value      = GFB_Field_Renderer::format_stored_datetime_for_display( $value, $field_type );
 		}
 
 		$value = wp_strip_all_tags( $value );

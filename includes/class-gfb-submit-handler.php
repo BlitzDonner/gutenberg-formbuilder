@@ -859,6 +859,9 @@ class GFB_Submit_Handler {
 			$value = '[verschlüsselte Datei #' . (int) $value['file_id'] . ' — Download im Admin]';
 		} elseif ( is_array( $value ) ) {
 			$value = wp_json_encode( $value );
+		} else {
+			// Datum und Uhrzeit nach Einstellungen → Allgemein anzeigen.
+			$value = GFB_Field_Renderer::format_stored_datetime_for_display( $value );
 		}
 		$value = wp_strip_all_tags( (string) $value );
 		$value = preg_replace( "/[\r\n]+/", "\n", (string) $value );

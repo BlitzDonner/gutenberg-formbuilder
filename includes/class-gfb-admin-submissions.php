@@ -379,6 +379,7 @@ class GFB_Admin_Submissions {
 				return '<em class="gfb-admin-encrypted">' . esc_html__( '[Entschlüsselung fehlgeschlagen — möglicherweise wurde der Schlüssel rotiert]', 'gutenberg-formbuilder' ) . '</em>';
 			}
 			$any_decrypt = true;
+			$plain       = GFB_Field_Renderer::format_stored_datetime_for_display( $plain );
 			return '<span class="gfb-admin-decrypted">' . nl2br( esc_html( (string) $plain ) ) . '</span>'
 				. ' <small class="gfb-admin-decrypted-meta">' . esc_html__( '(entschlüsselt)', 'gutenberg-formbuilder' ) . '</small>';
 		}
@@ -388,7 +389,8 @@ class GFB_Admin_Submissions {
 			return '<pre class="gfb-admin-pre">' . esc_html( wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ) . '</pre>';
 		}
 
-		$s = (string) $value;
+		// Datum und Uhrzeit nach Einstellungen → Allgemein anzeigen; der CSV-Export bleibt bei ISO.
+		$s = GFB_Field_Renderer::format_stored_datetime_for_display( $value );
 		if ( preg_match( '#^https?://#i', $s ) ) {
 			return '<a href="' . esc_url( $s ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $s ) . '</a>';
 		}

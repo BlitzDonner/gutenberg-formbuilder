@@ -191,6 +191,86 @@ class GFB_Field_Renderer {
 	}
 
 	/**
+	 * Gespeicherten ISO-Wert eines date/time/datetime-local-Felds für die
+	 * Anzeige umbauen (Mail, Bestätigungsmail, Backend-Übersicht).
+	 *
+	 * Gespeichert und exportiert bleibt immer ISO. Die Anzeige folgt
+	 * Einstellungen → Allgemein, also derselben Quelle wie die Eingabemaske
+	 * (siehe site_html_pattern_for_input_type()). Aus «2026-08-17» wird bei
+	 * Format d.m.Y die Anzeige «17.08.2026».
+	 *
+	 * Ohne bekannten Feldtyp entscheidet das Muster des Werts. Ein Textfeld,
+	 * dessen ganzer Inhalt ein ISO-Datum ist, wird dabei mitformatiert.
+	 *
+	 * @param mixed  $value Roher Feldwert.
+	 * @param string $type  Feldtyp, falls bekannt: date|time|datetime-local.
+	 * @return string Anzeigewert; alles Unbekannte bleibt unverändert.
+	 */
+	public static function format_stored_datetime_for_display( $value, $type = '' ) {
+		$raw = trim( (string) $value );
+		if ( '' === $raw ) {
+			return (string) $value;
+		}
+		if ( '' !== $type && ! in_array( $type, array( 'date', 'time', 'datetime-local' ), true ) ) {
+			return (string) $value;
+		}
+
+		$date_format = (string) get_option( 'date_format', 'Y-m-d' );
+		$time_format = (string) get_option( 'time_format', 'H:i' );
+
+		if ( ( '' === $type || 'date' === $type ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw ) ) {
+			return self::wp_date_from_iso( '!Y-m-d', $raw, $date_format, (string) $value );
+		}
+
+		if ( ( '' === $type || 'datetime-local' === $type )
+			&& preg_match( '/^\d{4}-\d{2}-\d{2}[T ]([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $raw ) ) {
+			$normalized = preg_replace( '/\s+/', 'T', $raw, 1 );
+			$has_seconds = (bool) preg_match( '/:\d{2}:\d{2}$/', $normalized );
+			$php_format  = $has_seconds ? '!Y-m-d\TH:i:s' : '!Y-m-d\TH:i';
+
+			return self::wp_date_from_iso( $php_format, $normalized, $date_format . ' ' . $time_format, (string) $value );
+		}
+
+		if ( ( '' === $type || 'time' === $type )
+			&& preg_match( '/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $raw ) ) {
+			$php_format = ( 8 === strlen( $raw ) ) ? '!H:i:s' : '!H:i';
+
+			return self::wp_date_from_iso( $php_format, $raw, $time_format, (string) $value );
+		}
+
+		return (string) $value;
+	}
+
+	/**
+	 * ISO-Wert nach Anzeigeformat wandeln, ohne Zeitzonen-Verschiebung.
+	 *
+	 * Kalenderdaten und Uhrzeiten ohne Zonenangabe werden in UTC gelesen und
+	 * in UTC ausgegeben. So bleibt der 17. der 17., unabhängig davon, welche
+	 * Zeitzone die Website eingestellt hat.
+	 *
+	 * @param string $parse_format   PHP-Format zum Lesen des ISO-Werts.
+	 * @param string $iso            ISO-Wert.
+	 * @param string $display_format PHP-Format für die Anzeige.
+	 * @param string $fallback       Rückgabe, wenn der Wert kein gültiges Datum ist.
+	 * @return string
+	 */
+	private static function wp_date_from_iso( $parse_format, $iso, $display_format, $fallback ) {
+		$utc = new DateTimeZone( 'UTC' );
+		$dt  = DateTimeImmutable::createFromFormat( $parse_format, $iso, $utc );
+		if ( ! $dt instanceof DateTimeImmutable ) {
+			return $fallback;
+		}
+		$errors = DateTimeImmutable::getLastErrors();
+		if ( is_array( $errors ) && ( ! empty( $errors['warning_count'] ) || ! empty( $errors['error_count'] ) ) ) {
+			return $fallback;
+		}
+
+		$formatted = wp_date( $display_format, $dt->getTimestamp(), $utc );
+
+		return ( false === $formatted ) ? $fallback : $formatted;
+	}
+
+	/**
 	 * HTML-pattern (Regex) für date/time/datetime-local aus Einstellungen → Allgemein.
 	 *
 	 * @param string $type date|time|datetime-local

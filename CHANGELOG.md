@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [Unveröffentlicht]
+
+### Behoben
+
+- Datum und Uhrzeit erscheinen in den Mails und im Backend jetzt in der Schreibweise aus Einstellungen → Allgemein: aus `2026-08-17` wird `17.08.2026`. Bisher gab das Plugin den gespeicherten ISO-Wert unverändert aus, obwohl die Eingabemaske dieselbe Einstellung bereits befolgte (gemeldet 21.08.2026 am Zählerstand-Formular auf rell.ch). Betrifft die Benachrichtigungsmail, die Platzhalter `{{feldname}}` in Betreff und Kopfzeilen, die Empfangsbestätigung an den Absender und die Übersicht der Einsendungen. Gespeichert bleibt der ISO-Wert, und der CSV-Export gibt weiterhin ISO aus, damit Tabellen- und Datenbankprogramme den Wert als Datum lesen.
+
 ## [2.13.0] – 2026-08-20
 
 ### Behoben
