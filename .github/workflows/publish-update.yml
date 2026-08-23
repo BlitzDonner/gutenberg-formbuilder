@@ -85,6 +85,20 @@ jobs:
             exit 1
           fi
 
+      # G-2b: Laufzeit-Konstante === Header. Der Update-Client meldet dem Server
+      # GFB_PLUGIN_VERSION, nicht den Header. Laufen die beiden auseinander, bietet
+      # der Server nach jeder Installation erneut ein Update an (Befund 23.08.2026,
+      # Fassung 2.14.0: Header 2.14.0, Konstante 2.13.0, 33 Auslieferungen).
+      - name: "Gate G-2b: GFB_PLUGIN_VERSION === Header-Version"
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          CONST_VERSION="$(sed -nE "s/.*define\\( *'GFB_PLUGIN_VERSION', *'([^']+)'.*/\\1/p" "${SLUG}.php" | head -n1)"
+          echo "Konstante: $CONST_VERSION / Tag-Version: $VERSION"
+          if [ "$CONST_VERSION" != "$VERSION" ]; then
+            echo "::error::GFB_PLUGIN_VERSION meldet «$CONST_VERSION», Tag erwartet «$VERSION». Der Update-Client wuerde eine falsche Version melden."
+            exit 1
+          fi
+
       - name: ZIP nach bestehender Konvention bauen
         run: |
           BUILD_DIR="build/${SLUG}"

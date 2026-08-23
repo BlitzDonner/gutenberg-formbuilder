@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.14.1] – 2026-08-23
+
+### Behoben
+
+- Update-Schleife seit 2.14.0: Nach jeder Installation bot WordPress dasselbe Update erneut an. Ursache war eine Fassungsnummer an zwei Orten – der Plugin-Header meldete 2.14.0, die Konstante `GFB_PLUGIN_VERSION` blieb auf 2.13.0. Der Update-Client meldet dem Server die Konstante, nicht den Header; der Server sah damit dauerhaft eine ältere Installation und bot weiter an. Auf plugins.blitzdonner.ch zählte die Fassung 2.14.0 dadurch 33 Auslieferungen. Beide Angaben stehen jetzt auf 2.14.1.
+- Aus derselben Ursache erschienen CSS und JavaScript mit der Fassungsnummer 2.13.0 in der Adresse. Browser konnten die vorherigen Dateien behalten. Auch das ist behoben.
+
+### Geaendert
+
+- Neues Freigabe-Gate G-2b im Veroeffentlichungs-Ablauf: `GFB_PLUGIN_VERSION` muss dem Plugin-Header und dem Tag entsprechen. Laufen die Angaben auseinander, bricht die Veroeffentlichung ab. Das bisherige Gate verglich nur den Header mit dem Tag und liess den Fehler durch.
+
 ## [2.14.0] – 2026-08-21
 
 ### Neu
