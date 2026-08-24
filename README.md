@@ -161,12 +161,19 @@ Vollständiges Protokoll mit den drei offenen Befunden:
 Ein veröffentlichtes reguläres GitHub-Release wird automatisch auf
 `plugins.blitzdonner.ch` publiziert. Der Workflow
 `.github/workflows/publish-update.yml` baut das ZIP und durchläuft vier Gates
-(php -l, Header-Version === Tag, ZIP-Struktur, SemVer). Es sendet **nichts** an
+(php -l, Header-Version === Tag, Konstante === Tag, ZIP-Struktur, SemVer). Es
+sendet **nichts** an
 den Server: Der Update-Server verlangt eine **Ed25519-Signatur**, und der private
 Schlüssel liegt bewusst nur auf dem Entwicklungsrechner, nie in der CI.
 Veröffentlicht wird darum von Hand – ZIP bauen, mit `bd-sign.php` signieren, per
 Deploy-Token an den Publish-Endpunkt senden. Ablauf Schritt für Schritt:
 [`docs/AUTO-PUBLISH.md`](docs/AUTO-PUBLISH.md).
+
+**Damit ist der Release abgeschlossen.** Ein Plugin wird nie auf einer Website
+von Hand aktualisiert – die Installationen holen sich die neue Fassung selbst.
+Kein `wp plugin update` auf Kundenseiten, kein rsync, kein Lizenz-Token
+nachtragen. Die Verbotsliste steht im Abschnitt «Der einzige Weg auf eine
+Website» in [`docs/AUTO-PUBLISH.md`](docs/AUTO-PUBLISH.md).
 
 ## Entwicklung
 
