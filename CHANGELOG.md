@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.14.2] – 2026-08-24
+
+### Behoben
+
+- Datumsfelder wiesen die Eingabe mit «Bitte geben Sie ein gültiges Datum ein» ab, sobald der Browser kein eigenes Datumsfeld stellt. Betroffen war der Ersatzweg für WebKit-Browser: Die Eingabemaske gibt seit 2.12.0 das Format aus Einstellungen → Allgemein vor, auf Schweizer Websites also «24.08.2026», die Prüfung beim Absenden verlangte aber weiterhin die ISO-Schreibweise «2026-08-24». Der Server nimmt jetzt beide Schreibweisen an und rechnet die Eingabe vor der Prüfung um. Gespeichert und exportiert wird unverändert ISO. Gilt für Datum, Uhrzeit und Datum mit Uhrzeit. (Gemeldet am Zählerstand-Formular auf rell.ch, 24.08.2026.)
+- Ungültige Eingaben bleiben ungültig: «31.02.2026» oder «25:99» werden nicht zurechtgebogen, sondern wie bisher abgewiesen. Gelesen wird ausschliesslich das eingestellte Format, nichts wird geraten.
+
 ## [2.14.1] – 2026-08-23
 
 ### Behoben

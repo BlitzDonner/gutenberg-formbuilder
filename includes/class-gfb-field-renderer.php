@@ -242,6 +242,87 @@ class GFB_Field_Renderer {
 	}
 
 	/**
+	 * Gegenstueck zur Anzeige: eingesandten Wert nach ISO normalisieren.
+	 *
+	 * Die Eingabemaske gibt pattern und Platzhalter aus Einstellungen →
+	 * Allgemein vor (siehe site_html_pattern_for_input_type()). Wo der Browser
+	 * kein natives Datumsfeld stellt, tippt die ausfuellende Person deshalb im
+	 * Website-Format, etwa «24.08.2026». Gespeichert und geprueft wird aber ISO.
+	 * Diese Funktion nimmt genau das eingestellte Format an und gibt ISO zurueck.
+	 *
+	 * Geraten wird nichts: Nur das konfigurierte Format wird gelesen, und nur
+	 * wenn der Wert nicht ohnehin schon ISO ist. Alles andere bleibt unveraendert
+	 * und faellt danach in die Pruefung des Submit-Handlers.
+	 *
+	 * @param mixed  $value Roher Feldwert aus dem Formular.
+	 * @param string $type  Feldtyp: date|time|datetime-local.
+	 * @return string ISO-Wert oder der unveraenderte Ausgangswert.
+	 */
+	public static function normalize_submitted_datetime_to_iso( $value, $type ) {
+		$raw = trim( (string) $value );
+		if ( '' === $raw || ! in_array( $type, array( 'date', 'time', 'datetime-local' ), true ) ) {
+			return (string) $value;
+		}
+
+		// Schon ISO: nichts zu tun.
+		$iso_muster = array(
+			'date'           => '/^\d{4}-\d{2}-\d{2}$/',
+			'time'           => '/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/',
+			'datetime-local' => '/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/',
+		);
+		if ( preg_match( $iso_muster[ $type ], $raw ) ) {
+			return $raw;
+		}
+
+		$date_format = (string) get_option( 'date_format', 'Y-m-d' );
+		$time_format = (string) get_option( 'time_format', 'H:i' );
+
+		if ( 'date' === $type ) {
+			return self::iso_from_site_format( '!' . $date_format, $raw, 'Y-m-d', (string) $value );
+		}
+		if ( 'time' === $type ) {
+			return self::iso_from_site_format( '!' . $time_format, $raw, 'H:i', (string) $value );
+		}
+
+		// datetime-local: Datum und Uhrzeit mit Leerzeichen oder T getrennt.
+		$kandidat = preg_replace( '/\s*T\s*/', ' ', $raw, 1 );
+
+		return self::iso_from_site_format(
+			'!' . $date_format . ' ' . $time_format,
+			$kandidat,
+			'Y-m-d\TH:i',
+			(string) $value
+		);
+	}
+
+	/**
+	 * Wert im Website-Format lesen und als ISO zurueckgeben.
+	 *
+	 * Wie wp_date_from_iso() in UTC, damit die Zeitzone der Website den Tag
+	 * nicht verschiebt. Schlaegt das Lesen fehl, kommt der Ausgangswert zurueck;
+	 * die Pruefung im Submit-Handler weist ihn dann regulaer ab.
+	 *
+	 * @param string $parse_format PHP-Format des Website-Formats.
+	 * @param string $eingabe      Getippter Wert.
+	 * @param string $iso_format   Zielformat.
+	 * @param string $fallback     Rueckgabe bei ungueltiger Eingabe.
+	 * @return string
+	 */
+	private static function iso_from_site_format( $parse_format, $eingabe, $iso_format, $fallback ) {
+		$utc = new DateTimeZone( 'UTC' );
+		$dt  = DateTimeImmutable::createFromFormat( $parse_format, $eingabe, $utc );
+		if ( ! $dt instanceof DateTimeImmutable ) {
+			return $fallback;
+		}
+		$errors = DateTimeImmutable::getLastErrors();
+		if ( is_array( $errors ) && ( ! empty( $errors['warning_count'] ) || ! empty( $errors['error_count'] ) ) ) {
+			return $fallback;
+		}
+
+		return $dt->format( $iso_format );
+	}
+
+	/**
 	 * ISO-Wert nach Anzeigeformat wandeln, ohne Zeitzonen-Verschiebung.
 	 *
 	 * Kalenderdaten und Uhrzeiten ohne Zonenangabe werden in UTC gelesen und

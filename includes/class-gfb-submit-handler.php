@@ -1137,6 +1137,17 @@ class GFB_Submit_Handler {
 			$value = (string) $num;
 		}
 
+		// Die Eingabemaske gibt das Format aus Einstellungen → Allgemein vor.
+		// Wo der Browser kein natives Datumsfeld stellt (WebKit-Ersatzfeld),
+		// kommt der Wert im Website-Format herein, etwa «24.08.2026». Vor der
+		// Pruefung nach ISO normalisieren; gespeichert bleibt ISO.
+		if ( in_array( $type, array( 'date', 'time', 'datetime' ), true ) && '' !== $value ) {
+			$value = GFB_Field_Renderer::normalize_submitted_datetime_to_iso(
+				$value,
+				'datetime' === $type ? 'datetime-local' : $type
+			);
+		}
+
 		if ( 'date' === $type && '' !== $value ) {
 			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
 				return new WP_Error( 'gfb_date', GFB_Texts::get( 'validation.date_invalid' ) );
