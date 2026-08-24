@@ -6,112 +6,107 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 
 ### Behoben
 
-- Datumsfelder wiesen die Eingabe mit «Bitte geben Sie ein gültiges Datum ein» ab, sobald der Browser kein eigenes Datumsfeld stellt. Betroffen war der Ersatzweg für WebKit-Browser: Die Eingabemaske gibt seit 2.12.0 das Format aus Einstellungen → Allgemein vor, auf Schweizer Websites also «24.08.2026», die Prüfung beim Absenden verlangte aber weiterhin die ISO-Schreibweise «2026-08-24». Der Server nimmt jetzt beide Schreibweisen an und rechnet die Eingabe vor der Prüfung um. Gespeichert und exportiert wird unverändert ISO. Gilt für Datum, Uhrzeit und Datum mit Uhrzeit. (Gemeldet am Zählerstand-Formular auf rell.ch, 24.08.2026.)
-- Ungültige Eingaben bleiben ungültig: «31.02.2026» oder «25:99» werden nicht zurechtgebogen, sondern wie bisher abgewiesen. Gelesen wird ausschliesslich das eingestellte Format, nichts wird geraten.
+- **Datumsfelder liessen sich in Safari nicht absenden.** Wer ein Datum eintrug, bekam die Meldung «Bitte geben Sie ein gültiges Datum ein» – obwohl das Datum stimmte. Grund: Safari zeigt kein eigenes Datumsfeld an, deshalb tippt man das Datum von Hand, in der Schreibweise der Website, also zum Beispiel 24.08.2026. Das Plugin erwartete beim Absenden aber die technische Schreibweise 2026-08-24. Jetzt versteht es beide. In Chrome und Firefox trat der Fehler nie auf.
+- Ein falsches Datum bleibt falsch: Den 31. Februar oder die Uhrzeit 25:99 nimmt das Plugin weiterhin nicht an.
 
 ## [2.14.1] – 2026-08-23
 
 ### Behoben
 
-- Update-Schleife seit 2.14.0: Nach jeder Installation bot WordPress dasselbe Update erneut an. Ursache war eine Fassungsnummer an zwei Orten – der Plugin-Header meldete 2.14.0, die Konstante `GFB_PLUGIN_VERSION` blieb auf 2.13.0. Der Update-Client meldet dem Server die Konstante, nicht den Header; der Server sah damit dauerhaft eine ältere Installation und bot weiter an. Auf plugins.blitzdonner.ch zählte die Fassung 2.14.0 dadurch 33 Auslieferungen. Beide Angaben stehen jetzt auf 2.14.1.
-- Aus derselben Ursache erschienen CSS und JavaScript mit der Fassungsnummer 2.13.0 in der Adresse. Browser konnten die vorherigen Dateien behalten. Auch das ist behoben.
+- **WordPress bot dasselbe Update immer wieder an.** Man klickte auf «Aktualisieren», es lief durch – und kurz darauf stand das gleiche Update erneut da. Die Fassung 2.14.0 trug ihre Nummer an zwei Stellen im Programm, und nur eine davon war erhöht worden. Die Stelle, die dem Update-Dienst die eigene Nummer meldet, sagte weiterhin die alte. Der Dienst hielt die Website deshalb für veraltet. Beide Stellen stimmen jetzt überein.
+- **Gestaltung und Bedienung luden teilweise noch aus dem Zwischenspeicher.** Aus derselben Ursache erhielten die Design- und Programmdateien die alte Nummer im Namen, und Browser konnten die vorherige Fassung behalten. Auch das ist erledigt.
 
-### Geaendert
+### Geändert
 
-- Neues Freigabe-Gate G-2b im Veroeffentlichungs-Ablauf: `GFB_PLUGIN_VERSION` muss dem Plugin-Header und dem Tag entsprechen. Laufen die Angaben auseinander, bricht die Veroeffentlichung ab. Das bisherige Gate verglich nur den Header mit dem Tag und liess den Fehler durch.
+- Vor jeder Veröffentlichung prüft eine zusätzliche Kontrolle, dass beide Nummern übereinstimmen. Passt etwas nicht, wird gar nicht erst veröffentlicht.
 
 ## [2.14.0] – 2026-08-21
 
 ### Neu
 
-- Einstellung «Beim Löschen des Plugins»: Von Haus aus bleiben Einträge, hochgeladene Dateien und das Prüfprotokoll erhalten, wenn das Plugin über die Plugin-Verwaltung gelöscht wird. Ein versehentliches Löschen nimmt so keine Kundendaten mit. Wer ausdrücklich alles entfernen will, kreuzt die Option an; dann verschwinden auch die drei Datenbanktabellen, die verschlüsselten Dateien, die eigenen Rechte und die geplanten Aufgaben. Der Vorgang läuft auf Multisite über alle Websites.
-- Automatisierte Testreihe unter `tests/`: Docker-Umgebung, Prüfgruppen für Editor, Entwürfe, Abwehr, Datei-Upload, Mail, Backend und Rechte. Aufruf über `tests/lauf.sh`, Berichte bleiben lokal.
+- **Ihre Daten überleben ein versehentliches Löschen des Plugins.** Wer das Plugin in der Plugin-Verwaltung löscht, verliert seine Einsendungen, die hochgeladenen Dateien und das Prüfprotokoll nicht mehr – sie bleiben in der Datenbank. Wer wirklich alles loswerden will, setzt vorher in den Einstellungen ein Häkchen; dann wird beim Löschen tatsächlich alles entfernt.
+- Eine automatische Testreihe prüft das Plugin künftig vor jeder Veröffentlichung durch: Formular ausfüllen, absenden, Mails, Dateiupload, Verwaltung und Zugriffsrechte.
 
 ### Behoben
 
-- Datum und Uhrzeit erscheinen in den Mails und im Backend jetzt in der Schreibweise aus Einstellungen → Allgemein: aus `2026-08-17` wird `17.08.2026`. Bisher gab das Plugin den gespeicherten ISO-Wert unverändert aus, obwohl die Eingabemaske dieselbe Einstellung bereits befolgte (gemeldet 21.08.2026 am Zählerstand-Formular auf rell.ch). Betrifft die Benachrichtigungsmail, die Platzhalter `{{feldname}}` in Betreff und Kopfzeilen, die Empfangsbestätigung an den Absender und die Übersicht der Einsendungen. Gespeichert bleibt der ISO-Wert, und der CSV-Export gibt weiterhin ISO aus, damit Tabellen- und Datenbankprogramme den Wert als Datum lesen.
+- **Datum und Uhrzeit erschienen in der technischen Schreibweise.** In den Mails und in der Übersicht stand «2026-08-17» statt «17.08.2026». Jetzt richtet sich die Anzeige nach dem Format, das unter Einstellungen → Allgemein eingestellt ist – dieselbe Einstellung, der das Eingabefeld schon vorher folgte. Der Export für Excel und ähnliche Programme behält die technische Schreibweise, damit diese den Wert als Datum erkennen.
 
 ### Geändert
 
-- Plugin-Header trägt die `Update URI`, damit WordPress die Updates eindeutig diesem Update-Server zuordnet.
+- WordPress erkennt jetzt eindeutig, von welchem Dienst dieses Plugin seine Updates bezieht.
 
 ## [2.13.0] – 2026-08-20
 
 ### Behoben
 
-- Update-Client 3.0.0: Der mitgelieferte Update-Baustein laedt siteweit als neueste Kopie (Lade-Registry) und akzeptiert alle aktuellen Signaturschluessel – Updates anderer Blitz-&-Donner-Plugins werden nicht mehr blockiert (Befund 18.08.2026).
+- **Updates anderer Blitz-&-Donner-Plugins blieben stecken.** Waren mehrere unserer Plugins auf einer Website installiert, konnte ein älteres davon die Updates der übrigen blockieren. Jetzt setzt sich immer der neueste Update-Baustein durch, und alle Plugins werden wieder angeboten.
 
-### Geaendert
+### Geändert
 
-- Lizenzverwaltung bdliz 1.1.0 (Uebernahme einer wp-config-Konstante in die zentrale Ablage).
-- Captcha: Erscheinungsbild ueber gfb_captcha_theme steuerbar; Felder tragen aria-labelledby; Formular-lang als BCP-47 (de-CH).
+- Das Aussehen des Spam-Schutzes lässt sich an das Design der Website anpassen.
+- Verbesserungen für Screenreader: Jedes Eingabefeld ist eindeutig mit seiner Beschriftung verknüpft, und die Sprache des Formulars ist sauber ausgezeichnet.
 
-### Geprueft
+### Geprüft
 
-- Kompatibilitaet mit WordPress 7.1 (20.08.2026): alle Mail-Varianten, Double-Opt-in samt Angriffsfaellen, Uploads, Backend und der ab 7.1 durchgehend iframe-gekapselte Editor. Kein PHP-Fehler, kein ungueltiger Block. Protokoll: docs/TESTPROTOKOLL-WP-7.1.md.
+- Das Plugin wurde am Erscheinungstag von WordPress 7.1 vollständig durchgetestet: alle Bestätigungsmails, der Weg mit Bestätigungslink samt Angriffsversuchen, Dateiuploads, die Verwaltung und der Editor. Keine Fehler.
 
 ## [2.12.0] – 2026-08-05
 
 ### Neu
 
-- Zentrale Lizenzverwaltung (bdliz-Modul, eingebettet): Alle Blitz-&-Donner-Plugins teilen sich einen Lizenz-Screen unter «Einstellungen → B&D Lizenzen». Das Lizenz-Token wird einmal eingetragen und gilt für alle abgedeckten Plugins; ein bereits im Formular-Plugin hinterlegtes Token wird automatisch übernommen. Der Screen zeigt zusätzlich die weiteren verfügbaren Plugins mit Link auf plugins.blitzdonner.ch.
-- Update-Client: Token-Suche dreistufig (wp-config-Konstante → zentrale Lizenzverwaltung → bisherige Einzel-Option). Bestehende Installationen laufen unverändert weiter. Ohne Lizenz entfallen weiterhin nur die Updates, nie Funktionen.
+- **Ein Lizenz-Schlüssel für alle Blitz-&-Donner-Plugins.** Unter «Einstellungen → B&D Lizenzen» tragen Sie den Schlüssel einmal ein, und er gilt für alle unsere Plugins auf dieser Website. Ein Schlüssel, den Sie früher schon im Formular-Plugin hinterlegt hatten, wird automatisch übernommen. Die Seite zeigt ausserdem, welche weiteren Plugins es von uns gibt.
+- Bestehende Installationen laufen unverändert weiter. Ohne Lizenz entfallen weiterhin nur die automatischen Updates – nie eine Funktion.
 
 ## [2.11.2] – 2026-08-05
 
 ### Behoben
 
-- **Fremde Blöcke und Vorlagen verschwanden aus dem Inserter.** Um den Block «Bestätigungs-Status» im Beitrags-Editor auszublenden, baute das Plugin aus dem Filterwert `true` eine Positivliste aller serverseitig registrierten Blöcke. Blöcke, die ein anderes Plugin nur im Editor-JavaScript registriert, stehen nie in dieser Registry und waren damit gesperrt. Gutenberg blendet zusätzlich jede Vorlage aus, die einen gesperrten Block auf oberster Ebene enthält – auf einer betroffenen Website fehlten dadurch sechs Blöcke und drei Vorlagen samt zwei Vorlagen-Kategorien. Der Filter lässt `true` jetzt unverändert. Das Ausblenden im Inserter übernimmt `assets/editor.js` über `supports.inserter`, wirksam nur ausserhalb des Site Editors. Der Block bleibt dort, wo er hingehört, und fremde Blöcke bleiben unberührt.
+- **Im Editor fehlten Blöcke und Vorlagen anderer Plugins.** Weil unser Plugin einen eigenen Block aus der Auswahl ausblenden wollte, verschwanden ungewollt auch Bausteine anderer Anbieter – auf einer Website waren es sechs Blöcke und drei Vorlagen. Das Ausblenden funktioniert jetzt anders und lässt alles Fremde in Ruhe.
 
 ## [2.11.1] – 2026-07-27
 
 ### Behoben
 
-- **Vorschau der Bestätigungsmail: Links sind nicht mehr klickbar.** In der kleinen Vorschau auf der Einstellungsseite führte ein Klick mitten in die Website – im 420 Pixel hohen Rahmen ein Umweg ohne Rückweg. Die Vorschau legt Links jetzt still (Klick bleibt wirkungslos), das Scrollen bleibt erhalten. Der Versandpfad ist davon unberührt: In der tatsächlich verschickten Mail funktionieren die Links normal.
+- **Vorschau der Bestätigungsmail: Links führen nicht mehr weg.** In der kleinen Vorschau auf der Einstellungsseite landete man mit einem Klick mitten auf der Website, ohne Weg zurück. Die Links in der Vorschau reagieren jetzt nicht mehr auf Klicks; scrollen geht weiterhin. In der verschickten Mail funktionieren die Links normal.
 
 ### Neu
 
-- **Ausrichtung des Logos wählbar.** In der Karte «Bestätigungsmail an Absender/innen» lässt sich das Logo im Mail-Kopf neu **linksbündig, mittig** (Vorgabe) **oder rechtsbündig** setzen. Umgesetzt über das `align`-Attribut der Tabellenzelle, das Mail-Clients zuverlässiger auswerten als CSS.
+- **Logo in der Mail links, mittig oder rechts.** Die Ausrichtung des Logos im Mail-Kopf lässt sich jetzt wählen. Vorgabe ist mittig.
 
 ## [2.11.0] – 2026-07-27
 
 ### Neu
 
-- **Textverwaltung: jeder besuchersichtbare Satz ist einstellbar.** Neue Seite **Formular-Einträge → Texte** mit allen 83 Sätzen, die eine ausfüllende Person je zu sehen bekommt – gruppiert nach Formular, Overlays beim Absenden, Meldungen nach dem Absenden, Feldprüfung, Bestätigungsmail, Benachrichtigung an den Betrieb und Bestätigungsseiten. Jedes Feld zeigt den eingebauten Standard als Platzhalter und darunter im Klartext; leeres Feld bedeutet Standard. Gespeichert wird nur, was wirklich abweicht (Option `gfb_texts`), pro Gruppe zeigt ein Etikett die Zahl der eigenen Texte. Grundsatz: Es gibt im Plugin keinen Satz mehr, den die Betreiberin nicht ändern kann – neue Texte entstehen künftig nur noch in der Registry (`includes/class-gfb-texts.php`), nicht mehr verstreut im Code.
-- **Platzhalter-Schutz.** Texte mit Platzhaltern (etwa der Feldname in Fehlermeldungen oder der Website-Name in Betreffzeilen) werden beim Speichern geprüft: Fehlt ein Pflicht-Platzhalter oder kommt einer hinzu, wird der Text nicht übernommen, der bisherige gilt weiter, und die Seite nennt die betroffenen Schlüssel. So kann eine Textänderung die Ausgabe nicht brechen.
-- **Filter `gfb_text`** (Wert, Schlüssel, Argumente) für Code-Overrides einzelner Texte.
-- **Plugin-Details-Fenster: Änderungsprotokoll über zehn Versionen und ein Reiter «Weitere Plugins».** Unter Plugins → «Details anzeigen» zeigt der Reiter Änderungsprotokoll neu die letzten zehn Versionen mit Nummer und Datum statt nur der neusten. Dazu kommt ein Reiter mit einer kurzen Vorstellung von Blitz & Donner, den übrigen dort gepflegten Plugins und dem Verweis auf plugins.blitzdonner.ch. Beides liefert der Update-Server (ab 1.8.0); der eingebettete Update-Client ergänzt den Hinweis-Reiter selbst, falls ein älterer Server antwortet.
-- **Website-Bezeichnung in Mails: neu die Domain.** Betreffzeilen, der Satz über der Datentabelle, die Fusszeile und der Absendername nannten bisher den Website-Titel – also meist den Markennamen. Empfängerinnen erwarten dort die Adresse, unter der sie das Formular ausgefüllt haben. Neue Vorgabe ist deshalb die vereinfachte Domain (`varellion.ch`, ohne `www.`); auf der Textseite lässt sich stattdessen der Website-Titel oder eine eigene Bezeichnung wählen. Filter `gfb_site_label`.
-- **Umschalter für die Anrede.** Oben auf der Textseite lässt sich zwischen **Sie** (Vorgabe) und **Du** wählen – die eingebauten Standardtexte wechseln damit die Anredeform, ohne dass ein einziger Text von Hand umgeschrieben werden muss. 27 der 83 Texte tragen eine Anrede und führen beide Fassungen; die übrigen sind anredefrei und in beiden Formen gleich. Eigene Texte bleiben unberührt. Beide Fassungen sind in Englisch, Französisch und Italienisch übersetzt.
+- **Jeder Satz im Formular ist jetzt änderbar.** Unter «Formular-Einträge → Texte» finden Sie alle 83 Sätze, die eine ausfüllende Person zu sehen bekommt – vom Hinweis unter dem Spam-Schutz über die Fehlermeldungen bis zur Bestätigungsmail. Sie sind nach Bereichen gruppiert. Wo Sie nichts eintragen, gilt der eingebaute Text. Ab jetzt gibt es im Plugin keine Formulierung mehr, die Sie nicht selbst bestimmen können.
+- **Schutz vor kaputten Texten.** Manche Sätze enthalten Platzhalter, etwa den Feldnamen in einer Fehlermeldung. Löschen Sie versehentlich einen davon, wird die Änderung nicht gespeichert und Sie sehen, wo es klemmt. So kann eine Textänderung nichts zerstören.
+- **Sie oder Du – auf Knopfdruck.** Oben auf der Textseite wählen Sie die Anredeform. Alle eingebauten Texte wechseln mit, ohne dass Sie einen einzigen Satz umschreiben müssen. Vorgabe ist «Sie».
+- **Als Absender steht jetzt die Adresse der Website.** In Betreffzeilen, Fusszeilen und beim Absendernamen stand bisher der Website-Titel, also meist der Markenname. Empfängerinnen erwarten dort die Adresse, unter der sie das Formular ausgefüllt haben – also zum Beispiel `beispiel.ch`. Wer lieber den Titel oder eine eigene Bezeichnung möchte, stellt das auf der Textseite um.
+- **Details-Fenster zeigt zehn Fassungen und unsere übrigen Plugins.** Unter Plugins → «Details anzeigen» sehen Sie im Änderungsprotokoll neu die letzten zehn Fassungen statt nur der neuesten. Ein zweiter Reiter stellt Blitz & Donner und die weiteren Plugins vor.
+- **Die Texte der Wartemeldungen beim Absenden sind einstellbar.** Beide Einblendungen – während des Absendens und beim Virenscan – lassen sich in den Einstellungen ändern.
 
 ### Geändert
 
-- **Bestehende Text-Einstellungen wandern in die Textverwaltung.** Die Einzelfelder für die Overlay-Texte (2.10.3) und den Captcha-Hinweis (2.10.1) sind in die neue Seite aufgegangen; eingestellte Texte werden beim Update einmalig übernommen und bleiben erhalten. Die Standardtexte behalten ihre Übersetzungen in Deutsch, Englisch, Französisch und Italienisch.
-- **Alle Standardtexte siezen.** Neun Texte duzten bisher (Pflichtfeld-Hinweise, Rate-Limit, Captcha-Hinweis, Speicher- und Prüf-Meldungen) – sie sind auf die Sie-Form umgestellt, ihre bisherigen Übersetzungen gelten unverändert weiter. Die Du-Fassungen bleiben über den Anrede-Umschalter erreichbar.
-
-### Bekannte Grenzen
-
-- Die Oberfläche des Backends selbst (Einstellungen, Listen, Audit-Log) bleibt bewusst nur übersetzbar, nicht editierbar: Sie richtet sich an die Betreiberin, nicht an ihre Kundschaft. Die Erklärtexte der neuen Textseite sind übersetzbar ausgezeichnet, aber noch nicht in en/fr/it übersetzt.
+- **Die eingebauten Texte siezen.** Aus «Deine Daten …» wurde «Ihre Daten …». Wer duzt, stellt das auf der Textseite um. Die Texte sind jetzt ausserdem auf Deutsch, Englisch, Französisch und Italienisch verfügbar.
 
 ## [2.10.3] – 2026-07-27
 
 ### Neu
 
-- **Overlay-Texte im Backend einstellbar.** Die Texte der beiden Absende-Overlays – Sende-Animation («Ihre Daten werden verschlüsselt …») und Erfolgs-Quittung (Titel, Text, Schliessen-Knopf) – sind neu in den Einstellungen unter «Formular (Frontend)» änderbar. Leer = eingebauter, übersetzter Standardtext; eigene Texte gelten site-weit für alle Formulare. Filter `gfb_overlay_texts` für Code-Overrides; die Werte gehen als reiner Text ins Frontend (kein HTML).
+- **Die Meldungen beim Absenden lassen sich ändern.** Während des Absendens erscheint eine Einblendung («Ihre Daten werden verschlüsselt …»), danach die Bestätigung. Beide Texte stellen Sie neu in den Einstellungen unter «Formular» ein. Lassen Sie ein Feld leer, gilt der eingebaute Text. Ihre Texte gelten für alle Formulare der Website.
 
 ### Geändert
 
-- **Standardtexte der Overlays in der Sie-Form.** Kundensites siezen – die eingebauten Texte beider Overlays tun das jetzt auch («Ihre Daten …» statt «Deine Daten …»). Wer duzt, trägt die Du-Fassung in die neuen Felder ein. Die Standardtexte sind damit erstmals auch übersetzbar (de/en/fr/it).
+- **Die eingebauten Meldungen siezen.** Aus «Deine Daten …» wurde «Ihre Daten …». Wer duzt, trägt die eigene Fassung in die neuen Felder ein. Die Texte gibt es jetzt auch auf Englisch, Französisch und Italienisch.
 
 ## [2.10.2] – 2026-07-27
 
 ### Behoben
 
-- **Feldwert-Tabellen zeigen immer das Feldlabel.** In den Bestätigungs- und Betreiber-Mails (und überall, wo das Formular-Schema Labels liefert) erschien bei Feldern ohne eigenes Label der technische Feldname (`e_mail`, `telefon`) oder eine leere Beschriftung. Neu gilt: explizit gesetztes Label → dieses; fehlendes oder bewusst leeres Label → der eingebaute Standard-Titel des Feldtyps aus der Block-Registrierung («E-Mail», «Telefon», «Auswahl» …); der technische Name bleibt nur der Notnagel (z. B. bei versteckten Feldern ohne Standard-Titel). Bestehende Einsendungen behalten ihren historischen Label-Schnappschuss.
+- **In den Mails steht jetzt immer die Feldbezeichnung.** Bei Feldern ohne eigene Beschriftung erschien vorher der technische Name wie `e_mail` oder gar nichts. Jetzt steht dort die normale Bezeichnung des Feldes, also «E-Mail» oder «Telefon». Bereits eingegangene Einsendungen behalten ihre ursprünglichen Bezeichnungen.
 
 ### Neu
 
-- **Erfolg nach dem Absenden ist jetzt garantiert sichtbar.** Bleibt das Ziel des Absendens auf derselben Seite, trägt die Rückleitung neu einen Anker: Bei Erfolg springt der Browser nativ zum Erfolgsbereich (`#gfb-erfolg-{form_id}`), im Fehlerfall zum Formular mit der Meldung (`#gfb-form-{form_id}`) – das funktioniert ohne JavaScript. Zusätzlich zeigt das Frontend bei Erfolg ein viewport-zentriertes Quittungs-Overlay (Häkchen, «Erfolgreich übermittelt», Schliessen-Knopf), das aktiv geschlossen werden muss – die Bestätigung wird damit nachweislich gesehen. Schliessen (Knopf, Esc oder Klick auf den Hintergrund) führt Fokus und Scroll zum redaktionellen Erfolgsbereich (`role="status"`, fokussierbar); `prefers-reduced-motion` wird respektiert, der Submit-Anker wird nach der Quittung aus der URL entfernt. Konfigurierte Danke-Seiten bleiben unverändert ohne Overlay und Anker.
+- **Nach dem Absenden sieht man die Bestätigung garantiert.** Bleibt man nach dem Absenden auf derselben Seite, springt der Browser jetzt automatisch zur Erfolgsmeldung – bei einem Fehler zum Formular mit dem Hinweis. Zusätzlich erscheint eine Einblendung mit Häkchen und «Erfolgreich übermittelt», die aktiv geschlossen werden muss. So geht die Bestätigung niemandem durch. Wer eine eigene Danke-Seite eingerichtet hat, merkt davon nichts – dort bleibt alles wie bisher.
 
 ## [2.10.1] – 2026-07-24
 
@@ -121,7 +116,7 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 
 ### Behoben
 
-- **Formulare in Site-Editor-Templates scheiterten mit «err_schema», der Fehler-Redirect strandete auf admin-post (Beta-Befund beta.rell.ch, Formular gfb_job_372).** Zwei verkettete Ursachen: (1) Die Schema-Suche brach bei fehlender/ungültiger Post-ID ab, BEVOR die FSE-Template-Quellen geprüft wurden – Formulare, die in einem Site-Editor-Template/-Part ohne verwertbare Post-ID rendern, fanden ihr eigenes Schema nicht. `locate_form_block_for_post()` gibt jetzt nur bei leerem form_id sofort auf; ohne Post-ID entfällt nur die post_content-Quelle, und die Template-Suche läuft im neuen site-weiten Modus über alle aktiven Templates und Template-Parts (Theme-Dateien UND Site-Editor-Customizations via `get_block_templates()`, request-gecacht). Zusätzlich greift der site-weite Modus als letzte Rettung auch bei gültiger Post-ID, deren post-spezifische Quellen nicht treffen (z. B. Formular in einem Custom-Template ausserhalb der Standard-Hierarchie). Die Post-ID-Ermittlung im Frontend-Renderer ist gehärtet (get_the_ID → get_queried_object_id nur auf Einzelansichten → global $post; Template-IDs und Unbrauchbares → explizit 0), und der Submit akzeptiert post_id 0 als legitimen Template-Kontext. (2) `redirect_with_state()` vertraute `get_permalink()` blind – bei ungültiger ID (false) landete der Redirect auf der aktuellen admin-post-URI und die Person sah eine leere Seite mit Query-Args. Neu mit Fallback-Kette: geprüfter Permalink → Referer (nur same-host via `wp_validate_redirect`, gfb_*-Args gestrippt, nie admin-post) → Startseite.
+- **Formulare in Site-Editor-Templates scheiterten mit «err_schema», der Fehler-Redirect strandete auf admin-post (Befund aus einer Testumgebung).** Zwei verkettete Ursachen: (1) Die Schema-Suche brach bei fehlender/ungültiger Post-ID ab, BEVOR die FSE-Template-Quellen geprüft wurden – Formulare, die in einem Site-Editor-Template/-Part ohne verwertbare Post-ID rendern, fanden ihr eigenes Schema nicht. `locate_form_block_for_post()` gibt jetzt nur bei leerem form_id sofort auf; ohne Post-ID entfällt nur die post_content-Quelle, und die Template-Suche läuft im neuen site-weiten Modus über alle aktiven Templates und Template-Parts (Theme-Dateien UND Site-Editor-Customizations via `get_block_templates()`, request-gecacht). Zusätzlich greift der site-weite Modus als letzte Rettung auch bei gültiger Post-ID, deren post-spezifische Quellen nicht treffen (z. B. Formular in einem Custom-Template ausserhalb der Standard-Hierarchie). Die Post-ID-Ermittlung im Frontend-Renderer ist gehärtet (get_the_ID → get_queried_object_id nur auf Einzelansichten → global $post; Template-IDs und Unbrauchbares → explizit 0), und der Submit akzeptiert post_id 0 als legitimen Template-Kontext. (2) `redirect_with_state()` vertraute `get_permalink()` blind – bei ungültiger ID (false) landete der Redirect auf der aktuellen admin-post-URI und die Person sah eine leere Seite mit Query-Args. Neu mit Fallback-Kette: geprüfter Permalink → Referer (nur same-host via `wp_validate_redirect`, gfb_*-Args gestrippt, nie admin-post) → Startseite.
 
 ## [2.10.0] – 2026-07-22
 
@@ -135,8 +130,8 @@ Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen 
 - **Feste Absenderadresse:** From der Bestätigungsmail ist immer betreiber-eigen (`noreply@site-domain`), per Filter `gfb_receipt_from`/`gfb_receipt_from_name`/`gfb_receipt_return_path` setzbar – nie die feldgesteuerte `emailFrom*`-Logik der Betreiber-Mail. Sprache zur Absendezeit über `determine_locale()`, Filter `gfb_receipt_locale`.
 - **Status pro Einsendung:** Neue Spalten (Schema-Version 3) halten Bestätigungs- und Versandstatus; die Detailansicht der Formular-Einträge zeigt «unbestätigt»/«bestätigt am …» und «an Mailserver übergeben»/«Übergabe fehlgeschlagen» – bewusst nie «zugestellt». Jeder Versand, jede Bestätigung und jedes Überspringen ist ein eigenes Audit-Ereignis (`receipt_handed_off`, `receipt_handoff_failed`, `receipt_skipped`, `doi_confirmed`, `doi_rejected`) – nur mit Einsendungs-ID und Status-Slug, ohne Adressen oder Feldwerte, nie mit dem Roh-Token.
 - **Bugfix: Site-Editor-Anpassungen der Bestätigungs-Templates wurden nie gerendert.** Der Core-REST-Controller des Site Editors speichert die Customization eines plugin-registrierten Templates unter der ID des aktiven Themes (`{stylesheet}//gfb-confirm`), nicht unter der Plugin-ID – die Auflösung fragte nur die Plugin-ID ab und lieferte darum immer den Plugin-Default (empirisch belegt auf formbuilder.local). `resolve_confirm_template()` fragt jetzt zuerst die Theme-ID ab (akzeptiert source «custom» = Site-Editor-Anpassung und «theme» = theme-eigenes gleichnamiges Template, beides bewusste Gestaltung) und fällt erst danach auf den Plugin-Default zurück; gilt für beide Templates (Landeseite und Ergebnis). Live-Beleg: REST-gespeicherte Customization mit Marker und Header-Template-Part rendert auf der Bestätigungsseite.
-- **Neuer Block «Bestätigungs-Knopf» (gfb/confirm-button):** Der Gutenberg-Link-Dialog akzeptiert `{{bestaetigungslink}}` nicht als URL (Live-Befund beta.rell.ch) – ein core/button mit Platzhalter-href ist für Redaktoren real nicht setzbar. Der neue dedizierte Knopf-Block (nur im Container «Bestätigungslink-Mail – Inhalt») hat bewusst kein URL-Feld: Der Server setzt den Bestätigungslink beim Versand immer selbst. Editierbar sind Beschriftung (RichText, Default «Jetzt bestätigen») und Farben über native Block-Supports (Custom-Farben erscheinen im Mail-Knopf; Paletten-Presets fallen im Mail-Kontext bewusst auf die Default-Optik zurück – kein Theme-CSS in Mails). Editor-Darstellung als Knopf mit Hinweis «Link wird beim Versand automatisch gesetzt»; Mail-Rendering als bulletproof Tabellen-Button, Plaintext als «Beschriftung: URL»-Zeile. Die Standard-Vorlagen der Link-Mail (Editor-Template und Server-Vorlage) nutzen den Knopf statt des nackten Platzhalter-Absatzes; der erklärende Textabsatz davor bleibt. Der Text-Platzhalter bleibt in Absätzen unterstützt, die Editor-Warnung gilt als erfüllt durch Knopf ODER Platzhalter, der Server-Fallback (Link anhängen, wenn beides fehlt) bleibt, und core/button mit Platzhalter-href wird im Übersetzer weiter akzeptiert (Abwärtskompatibilität).
-- **Bestätigungslink als Frontend-URL:** Der Link in der DOI-Mail lautet neu `https://site/?gfb-bestaetigung={Nummer}&gfb-token={Token}` (home_url) statt der bisherigen wp-admin-Adresse – eine admin-post-URL in einer Kundenmail wirkt wie Admin-Zugang/Phishing und wird von Firmen-Mailfiltern abgestraft (Live-Befund beta.rell.ch). Bewusst Query-Variante ohne Rewrite-Rules (kein Flush), Parameter kollisionssicher mit gfb-Präfix; der Handler greift früh auf `template_redirect` und nur bei gesetztem `gfb-bestaetigung`. Auch das POST-Formular der Landeseite und der Server-Fallback («Link anhängen, wenn der Platzhalter fehlt») erzeugen die neue URL. Die alte admin-post-Route bleibt als voll funktionsfähiger Alias – bereits verschickte Links überleben die 7 Tage Token-Gültigkeit; beide Einstiege sind dünne Parser über demselben Bestätigungs-Kern (identisches Verhalten, Subprozess-Harness-belegt).
+- **Neuer Block «Bestätigungs-Knopf» (gfb/confirm-button):** Der Gutenberg-Link-Dialog akzeptiert `{{bestaetigungslink}}` nicht als URL (Befund aus einer Testumgebung) – ein core/button mit Platzhalter-href ist für Redaktoren real nicht setzbar. Der neue dedizierte Knopf-Block (nur im Container «Bestätigungslink-Mail – Inhalt») hat bewusst kein URL-Feld: Der Server setzt den Bestätigungslink beim Versand immer selbst. Editierbar sind Beschriftung (RichText, Default «Jetzt bestätigen») und Farben über native Block-Supports (Custom-Farben erscheinen im Mail-Knopf; Paletten-Presets fallen im Mail-Kontext bewusst auf die Default-Optik zurück – kein Theme-CSS in Mails). Editor-Darstellung als Knopf mit Hinweis «Link wird beim Versand automatisch gesetzt»; Mail-Rendering als bulletproof Tabellen-Button, Plaintext als «Beschriftung: URL»-Zeile. Die Standard-Vorlagen der Link-Mail (Editor-Template und Server-Vorlage) nutzen den Knopf statt des nackten Platzhalter-Absatzes; der erklärende Textabsatz davor bleibt. Der Text-Platzhalter bleibt in Absätzen unterstützt, die Editor-Warnung gilt als erfüllt durch Knopf ODER Platzhalter, der Server-Fallback (Link anhängen, wenn beides fehlt) bleibt, und core/button mit Platzhalter-href wird im Übersetzer weiter akzeptiert (Abwärtskompatibilität).
+- **Bestätigungslink als Frontend-URL:** Der Link in der DOI-Mail lautet neu `https://site/?gfb-bestaetigung={Nummer}&gfb-token={Token}` (home_url) statt der bisherigen wp-admin-Adresse – eine admin-post-URL in einer Kundenmail wirkt wie Admin-Zugang/Phishing und wird von Firmen-Mailfiltern abgestraft (Befund aus einer Testumgebung). Bewusst Query-Variante ohne Rewrite-Rules (kein Flush), Parameter kollisionssicher mit gfb-Präfix; der Handler greift früh auf `template_redirect` und nur bei gesetztem `gfb-bestaetigung`. Auch das POST-Formular der Landeseite und der Server-Fallback («Link anhängen, wenn der Platzhalter fehlt») erzeugen die neue URL. Die alte admin-post-Route bleibt als voll funktionsfähiger Alias – bereits verschickte Links überleben die 7 Tage Token-Gültigkeit; beide Einstiege sind dünne Parser über demselben Bestätigungs-Kern (identisches Verhalten, Subprozess-Harness-belegt).
 - **Integrations-Hooks für Dritt-Plugins:** Drei neutrale Hooks für DOI- und einwilligungsbewusste Weiterverarbeitung (z. B. CRM-Anbindung; keine Anbindungs-Logik im Plugin): Filter `gfb_doi_cleared` (Übermittlung aus DOI-Sicht freigegeben? true ohne DOI-Modus oder bei bestätigter Adresse, sonst false), Filter `gfb_doi_status` (''/none/pending/confirmed/expired, gleiche Zustandslogik wie die DOI-Ampel) und Action `gfb_doi_confirmed( $submission_id, $form_id, $post_id )` – feuert genau einmal beim erfolgreichen Bestätigungs-CAS, nach dem Statuswechsel und vor der Voll-Quittung. Dazu das neue Formular-Attribut `consentField` («Datenweitergabe (Integrationen)» im Inspector: Dropdown der Checkbox-Felder) mit Filter `gfb_transfer_consent` – true nur bei designiertem Feld UND angekreuzter Checkbox, nie implizit; vertraulich markierte Felder werden nicht entschlüsselt (Filter liefert false, Editor warnt). Die Filter geben nur boolesche/Status-Werte heraus, nie Feldinhalte. Doku mit Beispiel: `docs/INTEGRATIONEN.md`.
 - **Einstellungs-Karte «Bestätigungsmail»: Hinweise als Toggles.** Die drei Hinweisblöcke (Zustellbarkeit, Missbrauchsschutz, Datenschutz und Recht) stecken neu in standardmässig zugeklappten Aufklapp-Elementen (natives details/summary-Muster der Karte) – Inhalte unverändert, die Karte wird deutlich kompakter.
 - **Vorschau und Testmail für die Bestätigungsmail:** Die Karte «Bestätigungsmail an Absender/innen» zeigt neu eine serverseitig gerenderte Inline-Vorschau der Person-Mail mit dem gespeicherten Branding (Logo-Header, eingebaute Standard-Vorlage, Dummy-Feldwerte-Tabelle mit statischen, übersetzten Beispielwerten, Footer-Identität, neutraler Schluss-Satz) – dargestellt in einem sandboxed iframe mit escaped srcdoc, damit Mail-HTML und Admin-CSS sich nicht berühren; die Vorschau rendert aus den gespeicherten Werten (kein AJAX-Live-Preview, bewusst schlank). Dazu ein Knopf «Testmail senden» mit Empfänger-Feld (Default: E-Mail des eingeloggten Admins): Versand über den echten Engine-Pfad (Multipart, From/Return-Path/Auto-Submitted wie produktiv), Betreff mit Präfix «[Test] », Inhalt identisch zur Vorschau. Ergebnis-Notice sagt «an den Mailserver übergeben» bzw. «Übergabe fehlgeschlagen» – nie «zugestellt». Die Testmail umgeht das öffentliche Send-Gate (Admin-Aktion, verbraucht keine Deckel), ist aber mild gedrosselt (5 pro 10 Minuten je Site); Audit-Eintrag `receipt_test_mail` ohne Empfängeradresse.
