@@ -223,7 +223,7 @@ Jedes Formular hat sein eigenes Overlay. `gfbShowSubmitOverlay(form)` arbeitet r
 
 Wenn die native HTML-Validierung (required, pattern etc.) den Submit blockiert, feuert der `submit`-Event nicht. Das Overlay wird nicht eingeblendet. Kein Handlungsbedarf.
 
-### 7.7 Friendly Captcha aktiv
+### 7.7 Friendly Captcha aktiv (bis 2.15, seit 2.16.0 entfernt)
 
 Der Captcha-Flow laeuft vor dem Submit (Widget-Loesung wird in ein Hidden Field geschrieben). Der Submit-Event feuert erst, wenn das Captcha bestanden ist. Keine Kollision mit dem Overlay.
 

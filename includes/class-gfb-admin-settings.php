@@ -164,45 +164,6 @@ class GFB_Admin_Settings {
 				GFB_Audit::record( 'clamav_eicar_test', 'system', '', $res );
 				break;
 
-			case 'save_captcha':
-				$prev          = GFB_Captcha::get_settings();
-				$new_mode      = isset( $_POST['captcha_mode'] ) && 'strict' === sanitize_key( wp_unslash( $_POST['captcha_mode'] ) ) ? 'strict' : 'soft';
-				$message       = __( 'CAPTCHA-Einstellungen gespeichert.', 'gutenberg-formbuilder' );
-
-				// Expliziter Vergleich gegen das Radio-Wertschema (value="1"/"0").
-				$enabled = ( '1' === ( isset( $_POST['captcha_enabled'] ) ? sanitize_key( wp_unslash( $_POST['captcha_enabled'] ) ) : '' ) );
-
-				// API-Key (Secret) wird leer gerendert. Leer abgeschickt =
-				// bestehenden Wert beibehalten (nicht versehentlich loeschen).
-				$api_key_in = isset( $_POST['captcha_api_key'] ) ? trim( (string) wp_unslash( $_POST['captcha_api_key'] ) ) : '';
-				$api_key_to_store = ( '' === $api_key_in ) ? $prev['api_key'] : $api_key_in;
-
-				GFB_Captcha::update_settings(
-					array(
-						'enabled'   => $enabled,
-						'site_key'  => isset( $_POST['captcha_site_key'] ) ? wp_unslash( $_POST['captcha_site_key'] ) : '',
-						'api_key'   => $api_key_to_store,
-						'mode'      => $new_mode,
-						// Sanitize zentral in update_settings (sanitize_text_field, 300 Zeichen).
-						'hint_text' => isset( $_POST['captcha_hint_text'] ) ? wp_unslash( $_POST['captcha_hint_text'] ) : '',
-					)
-				);
-
-				// Audit ohne Secret im Klartext: nur Status-Flags, keine Keys.
-				$saved = GFB_Captcha::get_settings();
-				GFB_Audit::record(
-					'settings_captcha_saved',
-					'config',
-					'',
-					array(
-						'enabled'      => $saved['enabled'] ? 'yes' : 'no',
-						'mode'         => $saved['mode'],
-						'site_key_set' => '' !== $saved['site_key'] ? 'yes' : 'no',
-						'api_key_set'  => '' !== $saved['api_key'] ? 'yes' : 'no',
-					)
-				);
-				break;
-
 			case 'save_receipt_branding':
 				// Sanitize zentral in der Engine (Datenmodell-Besitzerin):
 				// Logo nur Attachment-ID oder http(s)-URL (data: fliegt),
@@ -253,7 +214,7 @@ class GFB_Admin_Settings {
 				}
 
 				// Token wird leer gerendert. Leer abgeschickt = bestehenden Wert
-				// beibehalten (analog captcha_api_key), nicht versehentlich loeschen.
+				// beibehalten, nicht versehentlich loeschen.
 				$prev_token = (string) get_option( 'gfb_update_token', '' );
 				$token_in   = isset( $_POST['gfb_update_token'] ) ? trim( (string) wp_unslash( $_POST['gfb_update_token'] ) ) : '';
 
@@ -387,7 +348,6 @@ class GFB_Admin_Settings {
 			'eicar_test'           => 'gfb-clamav',
 			'save_license'         => 'gfb-lizenz',
 			'test_license'         => 'gfb-lizenz',
-			'save_captcha'         => 'gfb-captcha',
 			'save_caps'            => 'gfb-berechtigungen',
 			'storage_reach_test'   => 'gfb-privatsphaere',
 			'save_webkit_datetime' => 'gfb-frontend',
@@ -551,8 +511,6 @@ class GFB_Admin_Settings {
 		// 2b) Spam-Schutz: Eingabe-Nachweis (immer aktiv, ohne Einstellung)
 		self::render_nachweis_section();
 
-		// 2c) Zusätzlicher Schutz (optional) – Friendly Captcha
-		self::render_captcha_section();
 
 		// 2c) Bestätigungsmail (Autoresponder + Double-Opt-in): Zustellbarkeit + Datenschutz
 		self::render_receipt_mail_section();
@@ -711,7 +669,7 @@ class GFB_Admin_Settings {
 	 * wird das Feld deaktiviert und ein POST aendert den DB-Wert nicht.
 	 *
 	 * Das Token wird als password-Feld behandelt, nie im Klartext gerendert
-	 * (gleiches Muster wie der Captcha-API-Key).
+	 * (Secret wird nie im Klartext ausgegeben).
 	 *
 	 * @return void
 	 */
@@ -935,194 +893,6 @@ class GFB_Admin_Settings {
 	}
 
 	/**
-	 * Rendert den Abschnitt «Zusätzlicher Schutz (optional): Friendly Captcha»
-	 * (zwischen ClamAV und Berechtigungen). Ein Anbieter, keine Anbieterwahl.
-	 * Gibt nur den Site-Key/API-Key-Eingabe aus; der API-Key wird als
-	 * password-Feld behandelt und beim Rendern nicht echo't (nur «gesetzt»-Status).
-	 *
-	 * @return void
-	 */
-	private static function render_captcha_section() {
-		$s          = GFB_Captcha::get_settings();
-		$incomplete = GFB_Captcha::is_enabled_but_incomplete();
-
-		if ( ! empty( $s['enabled'] ) ) {
-			$captcha_badge = $incomplete
-				? self::summary_badge( 'warn', __( 'Unvollständig konfiguriert', 'gutenberg-formbuilder' ) )
-				: self::summary_badge( 'on', __( 'Aktiv', 'gutenberg-formbuilder' ) );
-		} else {
-			$captcha_badge = self::summary_badge( 'neutral', __( 'Deaktiviert', 'gutenberg-formbuilder' ) );
-		}
-		echo '</details><details class="gfb-settings-card" id="gfb-captcha"><summary><h2>' . esc_html__( 'Zusätzlicher Schutz (optional): Friendly Captcha', 'gutenberg-formbuilder' ) . '</h2>' . $captcha_badge . '</summary>';
-		echo '<p>' . esc_html__( 'Friendly Captcha ist ein Fremddienst mit eigenem Konto. Ist es eingerichtet, läuft es zusätzlich zum Spam-Schutz oben. Für Firmen verlangt Friendly Captcha einen bezahlten Plan.', 'gutenberg-formbuilder' ) . '</p>';
-
-		// A5: nicht-blockierende Warnung bei aktiv + unvollstaendig.
-		if ( $incomplete ) {
-			echo '<div class="notice notice-warning inline"><p>'
-				. esc_html__( 'CAPTCHA ist aktiv, aber unvollständig konfiguriert – es wird vorerst kein Widget angezeigt. Bitte Site-Key und API-Key eintragen.', 'gutenberg-formbuilder' )
-				. '</p></div>';
-		}
-
-		echo '<form method="post">';
-		wp_nonce_field( 'gfb_settings_action' );
-		echo '<input type="hidden" name="gfb_settings_action" value="save_captcha" />';
-		echo '<table class="form-table" role="presentation"><tbody>';
-
-		// CAPTCHA aktiv (global) – Radio Nein/Ja.
-		echo '<tr><th scope="row">' . esc_html__( 'CAPTCHA aktiv (global)', 'gutenberg-formbuilder' ) . '</th><td>';
-		echo '<fieldset>';
-		echo '<label style="margin-right:1.5rem;"><input type="radio" name="captcha_enabled" value="0" ' . checked( $s['enabled'], false, false ) . ' /> ' . esc_html__( 'Nein', 'gutenberg-formbuilder' ) . '</label>';
-		echo '<label><input type="radio" name="captcha_enabled" value="1" ' . checked( $s['enabled'], true, false ) . ' /> ' . esc_html__( 'Ja', 'gutenberg-formbuilder' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Steuert, ob auf Formularen ein CAPTCHA erscheinen kann. Pro Formular zusätzlich im Block überschreibbar.', 'gutenberg-formbuilder' ) . '</p>';
-		echo '</fieldset></td></tr>';
-
-		// Anbieter (nur Beschriftung, kein Auswahl-Steuerelement).
-		echo '<tr><th scope="row">' . esc_html__( 'Anbieter', 'gutenberg-formbuilder' ) . '</th><td>';
-		echo '<strong>' . esc_html__( 'Friendly Captcha', 'gutenberg-formbuilder' ) . '</strong> '
-			. '<span class="description">' . esc_html__( '(EU, Proof-of-Work, kein Drittlandtransfer)', 'gutenberg-formbuilder' ) . '</span>';
-		echo '</td></tr>';
-
-		// Site-Key.
-		echo '<tr><th scope="row"><label for="gfb_captcha_site_key">' . esc_html__( 'Site-Key', 'gutenberg-formbuilder' ) . '</label></th><td>';
-		echo '<input type="text" id="gfb_captcha_site_key" name="captcha_site_key" value="' . esc_attr( $s['site_key'] ) . '" class="regular-text" autocomplete="off" spellcheck="false" />';
-		echo '</td></tr>';
-
-		// API-Key (Secret) – wird nie im Klartext zurueckgegeben; Platzhalter zeigt nur den Status.
-		echo '<tr><th scope="row"><label for="gfb_captcha_api_key">' . esc_html__( 'API-Key (Secret)', 'gutenberg-formbuilder' ) . '</label></th><td>';
-		$api_set     = '' !== $s['api_key'];
-		$api_ph      = $api_set
-			? esc_attr__( '•••••••••• (gespeichert – leer lassen, um beizubehalten)', 'gutenberg-formbuilder' )
-			: '';
-		// Feld leer rendern (Secret nie ausgeben). Leeres Absenden behaelt den alten Wert über update_settings nicht automatisch –
-		// daher: wenn gesetzt und leer gesendet, übernimmt der POST-Handler den Wert aus dem Feld; um versehentliches Loeschen zu vermeiden,
-		// füllt der Nutzer das Feld nur bei Aenderung. Hinweis im description-Text.
-		echo '<input type="password" id="gfb_captcha_api_key" name="captcha_api_key" value="" class="regular-text" autocomplete="off" spellcheck="false" placeholder="' . $api_ph . '" />';
-		echo '<p class="description">' . esc_html__( 'Bleibt serverseitig und wird nie im Klartext angezeigt.', 'gutenberg-formbuilder' );
-		if ( $api_set ) {
-			echo ' ' . esc_html__( 'Aktuell gesetzt – zum Ändern neuen Wert eintragen, sonst leer lassen.', 'gutenberg-formbuilder' );
-		}
-		echo '</p></td></tr>';
-
-		// Hinweistext unter dem Widget (Feature 24.07.2026).
-		echo '<tr><th scope="row"><label for="gfb_captcha_hint_text">' . esc_html__( 'Hinweistext unter dem Captcha', 'gutenberg-formbuilder' ) . '</label></th><td>';
-		echo '<input type="text" id="gfb_captcha_hint_text" name="captcha_hint_text" value="' . esc_attr( $s['hint_text'] ) . '" class="regular-text" maxlength="300" />';
-		echo '<p class="description">' . esc_html__( 'Leer = eingebauter Standardtext (übersetzt). Ein eigener Text gilt unverändert für alle Sprachen.', 'gutenberg-formbuilder' ) . '</p>';
-		echo '</td></tr>';
-
-		echo '</tbody></table>';
-
-		// Anleitung: Schlüssel beim Anbieter erstellen (eingeklappt, gleiches Muster
-		// wie der Datenschutz-Block; Schritte verifiziert gegen die offizielle Doku).
-		echo '<details><summary>' . esc_html__( 'Wie erhalte ich Site-Key und API-Key?', 'gutenberg-formbuilder' ) . '</summary>';
-		echo '<ol style="margin:0.5rem 0 0.4rem 1.4rem">';
-		echo '<li>' . sprintf(
-			/* translators: %s: Link auf friendlycaptcha.com */
-			esc_html__( 'Konto bei %s erstellen (Gratis-Plan verfügbar) und anmelden.', 'gutenberg-formbuilder' ),
-			'<a href="https://friendlycaptcha.com" target="_blank" rel="noopener noreferrer">friendlycaptcha.com</a>'
-		) . '</li>';
-		echo '<li>' . sprintf(
-			/* translators: %s: Link auf die Applications-Seite im Dashboard */
-			esc_html__( 'Im Dashboard unter %s mit «+ New Application» eine Anwendung anlegen. Der Site-Key erscheint unter dem Anwendungsnamen und beginnt immer mit «FC».', 'gutenberg-formbuilder' ),
-			'<a href="https://app.friendlycaptcha.eu/dashboard/accounts/-/apps" target="_blank" rel="noopener noreferrer">Applications</a>'
-		) . '</li>';
-		echo '<li>' . sprintf(
-			/* translators: %s: Link auf die API-Keys-Seite im Dashboard */
-			esc_html__( 'Unter %s einen neuen API-Key erstellen – das ist das Secret für die serverseitige Prüfung.', 'gutenberg-formbuilder' ),
-			'<a href="https://app.friendlycaptcha.eu/dashboard/accounts/-/keys" target="_blank" rel="noopener noreferrer">API Keys</a>'
-		) . '</li>';
-		echo '<li>' . esc_html__( 'Beide Werte hier eintragen und speichern.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '</ol>';
-		echo '<p class="description" style="margin:0 0 0.2rem">' . esc_html__( 'Der API-Key wird nur einmal angezeigt – direkt nach dem Erstellen kopieren.', 'gutenberg-formbuilder' ) . '</p>';
-		echo '</details>';
-
-		// Datenschutz-Hinweisblock (schlank, informativ – nicht als Warnblock).
-		self::render_captcha_privacy_box();
-
-		// Erzwingungsmodus.
-		echo '<table class="form-table" role="presentation"><tbody>';
-		echo '<tr><th scope="row">' . esc_html__( 'Erzwingung', 'gutenberg-formbuilder' ) . '</th><td>';
-		echo '<fieldset>';
-		echo '<label style="display:block;margin-bottom:.4rem;"><input type="radio" name="captcha_mode" value="soft" ' . checked( $s['mode'], 'soft', false ) . ' /> <strong>' . esc_html__( 'Mit Ausnahme bei Serverausfall', 'gutenberg-formbuilder' ) . '</strong></label>';
-		echo '<p class="description" style="margin:0 0 .6rem 1.8rem;">' . esc_html__( 'Das Formular verlangt ein bestandenes Captcha. Nur wenn Friendly Captcha einmal nicht erreichbar ist, lässt sich das Formular trotzdem absenden – damit eine seltene Störung beim Dienst Ihre Formulare nicht blockiert.', 'gutenberg-formbuilder' ) . '</p>';
-		echo '<label style="display:block;margin-bottom:.4rem;"><input type="radio" name="captcha_mode" value="strict" ' . checked( $s['mode'], 'strict', false ) . ' /> <strong>' . esc_html__( 'Streng', 'gutenberg-formbuilder' ) . '</strong></label>';
-		echo '<p class="description" style="margin:0 0 .6rem 1.8rem;">' . esc_html__( 'Ohne bestandenes Captcha wird nicht abgesendet – auch dann nicht, wenn Friendly Captcha gerade gestört ist.', 'gutenberg-formbuilder' ) . '</p>';
-		echo '</fieldset></td></tr>';
-		echo '</tbody></table>';
-
-		submit_button( __( 'CAPTCHA-Einstellungen speichern', 'gutenberg-formbuilder' ) );
-		echo '</form>';
-	}
-
-	/**
-	 * Informativer Datenschutz-Hinweis (E-neu.3, erweitert E4) plus zwei
-	 * kopierbare Textbausteine: den vollstaendigen Datenschutz-Baustein
-	 * (E-neu.1) und die LIA-Vorlage (E-neu.2).
-	 *
-	 * UX-Ziel: Der Abschnitt bleibt uebersichtlich. Der gesamte Bereich steckt
-	 * in einem uebergeordneten, standardmaessig eingeklappten Akkordeon (natives
-	 * <details>); sichtbar bleibt nur die Zusammenfassungszeile «Datenschutz-
-	 * Hinweise und Textbausteine anzeigen». Die beiden langen Rechtstexte
-	 * stecken zusaetzlich in je einem verschachtelten, ebenfalls eingeklappten
-	 * <details>. Die sichtbaren Labels sind laienverstaendlich (Klartext statt
-	 * Fachjargon, Fachbegriffe mit Klammer-Erklaerung).
-	 *
-	 * Der Block ist informativ dargestellt, kein nicht-wegklickbarer Warnblock
-	 * (EN6). Beide Bausteine sind per Copy-Button in die Zwischenablage
-	 * kopierbar (EN1, EN4); ein Textfeld bleibt als Fallback erhalten.
-	 *
-	 * @return void
-	 */
-	private static function render_captcha_privacy_box() {
-		// Uebergeordnetes, standardmaessig eingeklapptes Akkordeon (natives
-		// <details>, gleiches Muster wie der ClamAV-Hilfe-Block). Sichtbar bleibt
-		// nur die kurze Zusammenfassungszeile; der Hinweisblock und beide
-		// Textbausteine erscheinen erst beim Aufklappen. Das spart Platz auf der
-		// Einstellungsseite.
-		echo '<details class="gfb-captcha-privacy" style="margin:.5rem 0 1rem;max-width:46rem;border:1px solid #dcdcde;border-radius:6px;background:#f6f7f7;">';
-		echo '<summary style="cursor:pointer;padding:.6rem .9rem;font-weight:600;">'
-			. esc_html__( 'Datenschutz-Hinweise und Textbausteine anzeigen', 'gutenberg-formbuilder' ) . '</summary>';
-		echo '<div style="padding:0 1.2rem 1rem;">';
-		echo '<p style="margin-top:.6rem;"><strong>ℹ ' . esc_html__( 'Was Sie zum Datenschutz wissen sollten', 'gutenberg-formbuilder' ) . '</strong></p>';
-
-		// Sechs Punkte (a)–(f) aus E-neu.3, laienverstaendlich formuliert.
-		echo '<ul style="margin:.2rem 0 .6rem 1.2rem;list-style:disc;">';
-		echo '<li>' . esc_html__( 'Die IP-Adresse wird nur in der EU verarbeitet, nichts geht ins Ausland.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '<li>' . esc_html__( 'Kein Tracking: keine Cookies, kein Wiedererkennen des Geräts. Stattdessen löst Ihr Browser im Hintergrund eine kleine Rechenaufgabe («Proof-of-Work»). Das bremst Bots, ohne Sie zu beobachten.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '<li>' . esc_html__( 'Pflicht: Sie müssen mit Friendly Captcha einen Auftragsverarbeitungsvertrag (AVV) abschliessen. Diesen erhalten Sie direkt bei Friendly Captcha. Ohne AVV ist der Einsatz nicht rechtmässig.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '<li>' . esc_html__( 'Im Normalbetrieb müssen Besucher nicht zustimmen (berechtigtes Interesse). Dafür muss Ihre Datenschutzerklärung den vollständigen Textbaustein unten enthalten.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '<li>' . esc_html__( 'Empfehlung: Halten Sie den internen Vermerk zur Rechtsgrundlage (Interessenabwägung) ausgefüllt bereit – als Nachweis bei einer Prüfung.', 'gutenberg-formbuilder' ) . '</li>';
-		echo '</ul>';
-
-		// Baustein 1: vollstaendiger Datenschutz-Textbaustein (E-neu.1).
-		$privacy = GFB_Captcha::privacy_text_snippet();
-		self::render_captcha_snippet_block(
-			'gfb-captcha-snippet',
-			__( 'Textbaustein für Ihre Datenschutzerklärung (öffentlich) anzeigen', 'gutenberg-formbuilder' ),
-			__( 'Diesen Text kopieren Sie in Ihre öffentliche Datenschutzerklärung auf der Website.', 'gutenberg-formbuilder' ),
-			$privacy,
-			14,
-			__( 'Vor dem Veröffentlichen die beiden Platzhalter in eckigen Klammern ersetzen: «[Firmenbezeichnung und Adresse]» aus Ihrem Auftragsverarbeitungsvertrag, «[Konkrete Speicherdauer aus der Dokumentation von Friendly Captcha]» aus der Anbieter-Dokumentation.', 'gutenberg-formbuilder' )
-		);
-
-		// Baustein 2: LIA-Vorlage (E-neu.2).
-		$lia = GFB_Captcha::lia_text_snippet();
-		self::render_captcha_snippet_block(
-			'gfb-captcha-lia',
-			__( 'Internes Dokument zur Rechtsgrundlage (Interessenabwägung) anzeigen', 'gutenberg-formbuilder' ),
-			__( 'Kurzes internes Dokument als Nachweis, warum der Spam-Schutz erlaubt ist. Bleibt bei Ihnen, nicht öffentlich.', 'gutenberg-formbuilder' ),
-			$lia,
-			16
-		);
-
-		// Ein gemeinsamer, abhaengigkeitsfreier Toggle/Copy-Handler fuer beide
-		// Bausteine. <details> uebernimmt das Auf-/Zuklappen nativ; das Skript
-		// kuemmert sich nur um den Copy-Button. CSP der Plugin-Seiten erlaubt
-		// 'unsafe-inline'.
-		echo "<script>(function(){var bs=document.querySelectorAll('.gfb-captcha-copy');for(var i=0;i<bs.length;i++){(function(b){b.addEventListener('click',function(){var ta=document.getElementById(b.getAttribute('data-target'));if(!ta)return;ta.removeAttribute('hidden');ta.focus();ta.select();var done=function(){var o=b.textContent;b.textContent=b.getAttribute('data-done');setTimeout(function(){b.textContent=o;},1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){try{document.execCommand('copy');done();}catch(e){}});}else{try{document.execCommand('copy');done();}catch(e){}}});})(bs[i]);}})();</script>";
-		echo '</div></details>';
-	}
-
-	/**
 	 * Rendert einen aufklappbaren, kopierbaren Textbaustein-Block. Sichtbar ist
 	 * nur die kurze Zusammenfassungszeile (<summary>); der lange Rechtstext und
 	 * der Copy-Button erscheinen erst beim Aufklappen. Standardzustand:
@@ -1137,12 +907,12 @@ class GFB_Admin_Settings {
 	 *                        (steht bewusst ausserhalb des kopierbaren Texts).
 	 * @return void
 	 */
-	private static function render_captcha_snippet_block( $id, $summary, $hint, $text, $rows, $note = '' ) {
+	private static function render_snippet_block( $id, $summary, $hint, $text, $rows, $note = '' ) {
 		echo '<details style="margin:.5rem 0 0;border:1px solid #dcdcde;border-radius:5px;background:#fff;">';
 		echo '<summary style="cursor:pointer;padding:.55rem .75rem;font-weight:600;">' . esc_html( $summary ) . '</summary>';
 		echo '<div style="padding:0 .75rem .75rem;">';
 		echo '<p class="description" style="margin:.3rem 0 .5rem;">' . esc_html( $hint ) . '</p>';
-		echo '<p style="margin:0 0 .4rem;"><button type="button" class="button button-secondary gfb-captcha-copy" data-target="' . esc_attr( $id ) . '" data-done="' . esc_attr__( 'Kopiert!', 'gutenberg-formbuilder' ) . '">'
+		echo '<p style="margin:0 0 .4rem;"><button type="button" class="button button-secondary gfb-snippet-copy" data-target="' . esc_attr( $id ) . '" data-done="' . esc_attr__( 'Kopiert!', 'gutenberg-formbuilder' ) . '">'
 			. esc_html__( 'In die Zwischenablage kopieren', 'gutenberg-formbuilder' ) . '</button></p>';
 		if ( '' !== $note ) {
 			echo '<p class="description" style="margin:0 0 .4rem;padding:.4rem .6rem;background:#fcf9e8;border-left:3px solid #dba617;border-radius:3px;"><strong>'
@@ -1179,7 +949,7 @@ class GFB_Admin_Settings {
 
 		echo '<details style="margin:.5rem 0 0;border:1px solid #dcdcde;border-radius:5px;background:#fff;"><summary style="cursor:pointer;padding:.55rem .75rem;font-weight:600;">' . esc_html__( 'Missbrauchsschutz (automatisch aktiv)', 'gutenberg-formbuilder' ) . '</summary><div style="padding:0 .75rem .5rem;">';
 		echo '<ul style="margin:.2rem 0 .3rem 1.2rem;list-style:disc;">';
-		echo '<li>' . esc_html__( 'Der Sofort-Modus versendet nur, wenn für das Formular ein Captcha erzwungen ist – sonst wäre das Formular als anonyme Mail-Kanone missbrauchbar.', 'gutenberg-formbuilder' ) . '</li>';
+		echo '<li>' . esc_html__( 'Der Sofort-Modus versendet nur, wenn die Einsendung den Eingabe-Nachweis bestanden hat – sonst wäre das Formular als anonyme Mail-Kanone missbrauchbar.', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Ein mehrschichtiges Sende-Limit begrenzt den Versand: 50 Bestätigungsmails pro Stunde und Website, 10 pro Stunde und IP-Adresse, 3 pro Stunde und Empfängeradresse (Filter gfb_receipt_gate_limits).', 'gutenberg-formbuilder' ) . '</li>';
 		echo '<li>' . esc_html__( 'Nie bestätigte Einsendungen im Link-Modus werden nach 45 Tagen automatisch gelöscht (Filter gfb_receipt_retention_days).', 'gutenberg-formbuilder' ) . '</li>';
 		echo '</ul></div></details>';
@@ -1195,7 +965,7 @@ class GFB_Admin_Settings {
 
 		self::render_receipt_preview_and_test();
 
-		self::render_captcha_snippet_block(
+		self::render_snippet_block(
 			'gfb-receipt-privacy-snippet',
 			__( 'Textbaustein für Ihre Datenschutzerklärung (Bestätigungsmail) anzeigen', 'gutenberg-formbuilder' ),
 			__( 'Diesen Text kopieren Sie in Ihre öffentliche Datenschutzerklärung, wenn Sie die Bestätigungsmail einsetzen.', 'gutenberg-formbuilder' ),
@@ -1204,9 +974,8 @@ class GFB_Admin_Settings {
 			__( 'Vor dem Veröffentlichen die Platzhalter in eckigen Klammern ersetzen: Aufbewahrungsfrist gemäss Ihrer Konfiguration sowie Anbieter und Sitz Ihres SMTP-Dienstes.', 'gutenberg-formbuilder' )
 		);
 
-		// Eigener Copy-Handler: das Skript der CAPTCHA-Karte läuft beim Parsen
-		// und erreicht diesen später gerenderten Button nicht mehr.
-		echo "<script>(function(){var b=document.querySelector('#gfb-bestaetigungsmail .gfb-captcha-copy');if(!b)return;b.addEventListener('click',function(){var ta=document.getElementById(b.getAttribute('data-target'));if(!ta)return;ta.removeAttribute('hidden');ta.focus();ta.select();var done=function(){var o=b.textContent;b.textContent=b.getAttribute('data-done');setTimeout(function(){b.textContent=o;},1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){try{document.execCommand('copy');done();}catch(e){}});}else{try{document.execCommand('copy');done();}catch(e){}}});})();</script>";
+		// Eigener Copy-Handler für den Kopier-Knopf dieser Karte.
+		echo "<script>(function(){var b=document.querySelector('#gfb-bestaetigungsmail .gfb-snippet-copy');if(!b)return;b.addEventListener('click',function(){var ta=document.getElementById(b.getAttribute('data-target'));if(!ta)return;ta.removeAttribute('hidden');ta.focus();ta.select();var done=function(){var o=b.textContent;b.textContent=b.getAttribute('data-done');setTimeout(function(){b.textContent=o;},1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){try{document.execCommand('copy');done();}catch(e){}});}else{try{document.execCommand('copy');done();}catch(e){}}});})();</script>";
 	}
 
 	/**
@@ -1413,7 +1182,7 @@ class GFB_Admin_Settings {
 
 		// Erklärung, Schritte und alle Anleitungen stecken in einem übergeordneten,
 		// standardmässig eingeklappten Akkordeon (natives <details>, gleiches Muster
-		// wie die CAPTCHA-Datenschutz-Bausteine). Sichtbar bleibt nur die kurze
+		// wie die übrigen Datenschutz-Bausteine). Sichtbar bleibt nur die kurze
 		// Zusammenfassungszeile; das spart auf der Einstellungsseite viel Platz.
 		echo '<details style="margin:0;border:1px solid #dcdcde;border-radius:5px;background:#fff;">';
 		echo '<summary style="cursor:pointer;padding:.55rem .75rem;font-weight:600;">'

@@ -125,15 +125,6 @@ class GFB_Texts {
 						'default' => __( 'Entfernen', 'gutenberg-formbuilder' ),
 						'hint'    => __( 'Knopf, der eine gewählte Datei wieder abwählt.', 'gutenberg-formbuilder' ),
 					),
-					'captcha_label'      => array(
-						'default' => __( 'Spam-Schutz', 'gutenberg-formbuilder' ),
-						'hint'    => __( 'Beschriftung über dem Captcha-Feld.', 'gutenberg-formbuilder' ),
-					),
-					'captcha_hint'       => array(
-						'default' => __( 'Bitte schliessen Sie den Spam-Schutz ab, bevor Sie das Formular absenden.', 'gutenberg-formbuilder' ),
-						'du'      => __( 'Bitte den Spam-Schutz abschliessen, bevor du das Formular absendest.', 'gutenberg-formbuilder' ),
-						'hint'    => __( 'Hinweis unter dem Captcha.', 'gutenberg-formbuilder' ),
-					),
 				),
 			),
 
@@ -233,11 +224,6 @@ class GFB_Texts {
 						'default' => __( 'Das Formular konnte nicht gesendet werden. Bitte laden Sie die Seite neu und senden Sie es noch einmal.', 'gutenberg-formbuilder' ),
 						'du'      => __( 'Das Formular konnte nicht gesendet werden. Bitte lade die Seite neu und sende es noch einmal.', 'gutenberg-formbuilder' ),
 						'hint'    => __( 'Der Spam-Schutz hat die Einsendung abgewiesen.', 'gutenberg-formbuilder' ),
-					),
-					'err_captcha_unreachable'  => array(
-						'default' => __( 'Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut.', 'gutenberg-formbuilder' ),
-						'du'      => __( 'Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut.', 'gutenberg-formbuilder' ),
-						'hint'    => __( 'Der Captcha-Dienst antwortet nicht.', 'gutenberg-formbuilder' ),
 					),
 				),
 			),
@@ -717,11 +703,6 @@ class GFB_Texts {
 					$migrated[ 'overlay.' . $legacy_key ] = sanitize_textarea_field( (string) $overlay[ $legacy_key ] );
 				}
 			}
-		}
-
-		$captcha = get_option( 'gfb_captcha_settings', array() );
-		if ( is_array( $captcha ) && ! empty( $captcha['hint_text'] ) ) {
-			$migrated['form.captcha_hint'] = sanitize_textarea_field( (string) $captcha['hint_text'] );
 		}
 
 		update_option( self::OPTION, $migrated, false );

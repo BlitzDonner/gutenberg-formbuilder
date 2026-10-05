@@ -24,44 +24,6 @@ function gfb_test_schalter( $name, $vorgabe = '' ) {
 }
 
 /**
- * Antwort des Friendly-Captcha-Servers nachstellen.
- *
- * pass        – Prüfung bestanden
- * fail        – Prüfung abgelehnt
- * unreachable – Server antwortet nicht
- */
-add_filter(
-	'pre_http_request',
-	static function ( $vorab, $args, $url ) {
-		if ( false === strpos( (string) $url, 'frcapi.com' ) ) {
-			return $vorab;
-		}
-		$modus = gfb_test_schalter( 'captcha' );
-		if ( '' === $modus ) {
-			return $vorab;
-		}
-		if ( 'unreachable' === $modus ) {
-			return new WP_Error( 'http_request_failed', 'Testlauf: Captcha-Server nicht erreichbar.' );
-		}
-		$erfolg = ( 'pass' === $modus );
-		return array(
-			'headers'  => array(),
-			'body'     => wp_json_encode(
-				array(
-					'success' => $erfolg,
-					'errors'  => $erfolg ? array() : array( 'verification_failed' ),
-				)
-			),
-			'response' => array( 'code' => $erfolg ? 200 : 200, 'message' => 'OK' ),
-			'cookies'  => array(),
-			'filename' => null,
-		);
-	},
-	10,
-	3
-);
-
-/**
  * Ablehnung durch ein Fremdsystem nachstellen (Prüfpunkt E13).
  */
 add_filter(

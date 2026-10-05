@@ -15,12 +15,11 @@ export default async function gruppeM( u, s ) {
 		await u.wp( 'plugin install /gfb-pakete/vorversion.zip --force' );
 		await u.wp( 'plugin activate gutenberg-formbuilder' );
 		alteVersion = ( await u.wp( 'plugin get gutenberg-formbuilder --field=version' ) ).trim();
+		// Unter der Vorversion: eine Textanpassung und alte Captcha-Einstellungen
+		// mit Schlüssel, wie sie auf Websites bis 2.15.x liegen können.
 		await u.php( `
-			GFB_Captcha::update_settings( array(
-				'enabled'  => true,
-				'site_key' => 'TESTLAUF-SITEKEY',
-				'api_key'  => 'TESTLAUF-APIKEY',
-			) );
+			update_option( 'gfb_texts', array( 'form.submit' => 'Senden TESTLAUF' ), false );
+			update_option( 'gfb_captcha_settings', array( 'enabled' => false, 'site_key' => 'TESTLAUF-SITEKEY', 'api_key' => 'TESTLAUF-APIKEY' ), false );
 			echo 'ok';
 		` ).catch( () => {} );
 		return soll.wahr( !! alteVersion, 'Die Vorversion liess sich nicht lesen.' );
@@ -81,8 +80,12 @@ export default async function gruppeM( u, s ) {
 	} );
 
 	await s.punkt( 'M7', 'Einstellungen bleiben', async () => {
-		const roh = await u.php( `echo wp_json_encode( GFB_Captcha::get_settings() );` );
-		return soll.enthaelt( roh, 'TESTLAUF-SITEKEY', 'Einstellungen nach dem Wechsel' );
+		// Seitenaufruf, damit init einmal läuft.
+		await fetch( `${ u.basis }/gfbt-voll/` );
+		const roh = await u.php( `echo wp_json_encode( array( 'texte' => get_option( 'gfb_texts' ), 'captcha' => get_option( 'gfb_captcha_settings', 'weg' ) ) );` );
+		const texte = soll.enthaelt( roh, 'Senden TESTLAUF', 'Textanpassung nach dem Wechsel' );
+		if ( texte !== true ) return texte;
+		return soll.enthaelt( roh, '"captcha":"weg"', 'Alte Captcha-Einstellungen nach dem Wechsel' );
 	} );
 
 	await s.punkt( 'M8', 'Prüfprotokoll ohne Bruch', async () => {

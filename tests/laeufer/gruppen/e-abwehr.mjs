@@ -105,9 +105,6 @@ export default async function gruppeE( u, s ) {
 		// Der echte Fall: Das Formular wird aus der Seite entfernt, während ein
 		// Browser die alte Fassung noch offen hat.
 		const f = await formularHolen( u, SEITE, FORM );
-		// Ohne Formularblock fehlen die Blockattribute, also greift der globale
-		// Spam-Schutz. Damit wirklich das Schema geprüft wird, lassen wir ihn passieren.
-		await steuern( u, { captcha: 'pass' } );
 		const gesichert = await u.php( `
 			$id = (int) get_page_by_path( 'gfbt-voll' )->ID;
 			$post = get_post( $id );
@@ -116,10 +113,9 @@ export default async function gruppeE( u, s ) {
 			echo 'ok';
 		` );
 		try {
-			const e = await absenden( u, f, { ...werte(), 'frc-captcha-response': 'testlauf-loesung' } );
+			const e = await absenden( u, f, werte() );
 			return soll.gleich( e.code, 'err_schema', 'Fehlercode' );
 		} finally {
-			await steuern( u, { captcha: '' } );
 			await u.php( `
 				$id = (int) get_page_by_path( 'gfbt-voll' )->ID;
 				wp_update_post( array( 'ID' => $id, 'post_content' => wp_slash( get_option( 'gfbt_inhalt_sicherung' ) ) ) );
@@ -189,13 +185,10 @@ export default async function gruppeE( u, s ) {
 		}
 	} );
 
-	await s.punkt( 'E16', 'Captcha nicht gelöst', async () => {
+	await s.punkt( 'E16', 'Sofort-Formular ohne Eingabe-Nachweis', async () => {
 		const f = await formularHolen( u, '/gfbt-instant/', 'gfbt_instant' );
-		const e = await absenden( u, f, werte() );
-		return soll.wahr(
-			[ 'err_captcha', 'err_captcha_unreachable' ].includes( e.code ),
-			`Fehlercode «${ e.code }», erwartet err_captcha.`
-		);
+		const e = await absenden( u, f, werte(), { nachweis: false } );
+		return soll.gleich( e.code, 'err_captcha', 'Fehlercode' );
 	} );
 
 	// Eingabe-Nachweis (seit 2.15.0). Jeder Grund einzeln herbeigeführt.

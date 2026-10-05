@@ -753,25 +753,13 @@
 	}
 
 	/**
-	 * Sofort-Modus verlangt serverseitig ein erzwungenes Captcha (Blocker 2).
-	 * Liefert true, wenn das Captcha für dieses Formular wirksam ist.
+	 * Sofort-Modus verlangt serverseitig einen bestandenen Eingabe-Nachweis
+	 * (Blocker 2). Liefert true, solange der Nachweis nicht per Filter aus ist.
 	 *
-	 * @param {object} attributes gfb/form-Attribute.
 	 * @return {boolean}
 	 */
-	function gfbCaptchaEffectiveForForm( attributes ) {
-		var hasKeys =
-			typeof gfbEditorAssets !== 'undefined' && gfbEditorAssets.captchaHasKeys === '1';
-		var globalActive =
-			typeof gfbEditorAssets !== 'undefined' && gfbEditorAssets.captchaGlobalActive === '1';
-		var mode = attributes.captchaMode || 'inherit';
-		if ( mode === 'off' ) {
-			return false;
-		}
-		if ( mode === 'on' ) {
-			return hasKeys;
-		}
-		return globalActive;
+	function gfbNachweisAktiv() {
+		return typeof gfbEditorAssets === 'undefined' || gfbEditorAssets.nachweisAktiv !== '0';
 	}
 
 	/**
@@ -823,13 +811,13 @@
 				)
 			);
 		}
-		if ( mode === 'instant' && ! gfbCaptchaEffectiveForForm( attributes ) ) {
+		if ( mode === 'instant' && ! gfbNachweisAktiv() ) {
 			notices.push(
 				el(
 					Notice,
-					{ status: 'warning', isDismissible: false, key: 'captcha-required' },
+					{ status: 'warning', isDismissible: false, key: 'nachweis-required' },
 					__(
-						'Der Sofort-Modus versendet nur mit erzwungenem Captcha (Missbrauchsschutz). Captcha für dieses Formular auf «Immer an» stellen und die Schlüssel unter «Sicherheit & Einstellungen» hinterlegen – sonst unterdrückt der Server den Versand.',
+						'Der Sofort-Modus versendet nur mit aktivem Eingabe-Nachweis (Missbrauchsschutz). Auf dieser Website ist der Nachweis per Filter ausgeschaltet – der Server unterdrückt den Versand.',
 						'gutenberg-formbuilder'
 					)
 				)
@@ -2272,23 +2260,6 @@
 					renderEmailNotificationControls( attributes, setAttributes, emailFieldRows || [] ),
 					renderReceiptMailControls( attributes, setAttributes, emailFieldRows || [], receiptInfo ),
 					renderConsentControls( attributes, setAttributes, checkboxFieldRows || [] ),
-					el( PanelBody, {
-						title: __( 'Spam-Schutz (CAPTCHA)', 'gutenberg-formbuilder' ),
-						initialOpen: false,
-					},
-					el( SelectControl, {
-						label: __( 'CAPTCHA für dieses Formular', 'gutenberg-formbuilder' ),
-						help: __( 'Steuert, ob auf diesem Formular ein CAPTCHA erscheint. Voraussetzung: CAPTCHA ist unter «Sicherheit & Einstellungen» global aktiviert und konfiguriert.', 'gutenberg-formbuilder' ),
-						value: attributes.captchaMode || 'inherit',
-						options: [
-							{ label: __( 'Von globaler Einstellung übernehmen', 'gutenberg-formbuilder' ), value: 'inherit' },
-							{ label: __( 'Immer an', 'gutenberg-formbuilder' ), value: 'on' },
-							{ label: __( 'Immer aus', 'gutenberg-formbuilder' ), value: 'off' },
-						],
-						onChange: function ( value ) {
-							setAttributes( { captchaMode: value || 'inherit' } );
-						},
-					} ) ),
 					el( PanelBody, {
 						title: __( 'Erscheinungsbild', 'gutenberg-formbuilder' ),
 						initialOpen: false,

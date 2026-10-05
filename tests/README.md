@@ -95,7 +95,7 @@ tests/
 Fremde Dienste antworten im Wegwerf-Container nicht. Nachgestellt wird nur ihre
 Antwort, der Plugin-Code läuft unverändert:
 
-- **Friendly Captcha**: `pre_http_request` liefert bestanden, abgelehnt oder «Server weg».
+- **Eingabe-Nachweis**: Der Läufer löst die Aufgabe wie das Browser-Skript; die Schalter `nachweis` und `nachweis_mindestzeit` stellen Abschalten und Mindestzeit nach.
 - **Update-Server**: ohne gesetzten Schalter kein Zugriff nach draussen.
 - **Absenderadresse**: WordPress bildet sie aus dem Hostnamen, im Container also
   `wordpress@localhost`. Eine Domain ohne Punkt lehnt PHPMailer ab, deshalb

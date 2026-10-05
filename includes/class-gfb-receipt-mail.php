@@ -40,15 +40,14 @@ class GFB_Receipt_Mail {
 	const OPTION_BRANDING = 'gfb_receipt_branding';
 
 	/**
-	 * Tatsächliches Captcha-Verifikationsergebnis DIESES Requests
-	 * ('' = nicht verifiziert, sonst pass|fail|unreachable). Gesetzt von
-	 * GFB_Submit_Handler::maybe_enforce_captcha(); der Sofort-Versand verlangt
-	 * fail-closed exakt «pass» – is_active_for_form() allein genügt nicht,
-	 * weil der soft-Modus bei nicht erreichbarem Anbieter durchlässt (Chloe M-1).
+	 * Ergebnis des Eingabe-Nachweises DIESES Requests ('' = nicht geprüft,
+	 * sonst pass). Gesetzt von GFB_Submit_Handler::maybe_enforce_nachweis();
+	 * der Sofort-Versand an eine frei wählbare Adresse verlangt fail-closed
+	 * exakt «pass».
 	 *
 	 * @var string
 	 */
-	private static $captcha_request_result = '';
+	private static $nachweis_result = '';
 
 	/**
 	 * Render-Kontext des laufenden gfb_confirm-Requests (state, sid, token,
@@ -61,14 +60,14 @@ class GFB_Receipt_Mail {
 	private static $confirm_ctx = null;
 
 	/**
-	 * Setzt das Captcha-Ergebnis des laufenden Requests.
+	 * Setzt das Ergebnis des Eingabe-Nachweises für den laufenden Request.
 	 *
-	 * @param string $result pass|fail|unreachable.
+	 * @param string $result pass|fail.
 	 * @return void
 	 */
-	public static function set_captcha_request_result( $result ) {
-		$result = is_string( $result ) ? sanitize_key( $result ) : '';
-		self::$captcha_request_result = in_array( $result, array( 'pass', 'fail', 'unreachable' ), true ) ? $result : '';
+	public static function set_nachweis_result( $result ) {
+		$result                = is_string( $result ) ? sanitize_key( $result ) : '';
+		self::$nachweis_result = in_array( $result, array( 'pass', 'fail' ), true ) ? $result : '';
 	}
 
 	/**
@@ -307,19 +306,17 @@ class GFB_Receipt_Mail {
 			return;
 		}
 
-		// Blocker 2: Sofort-Modus mit frei wählbarem Empfänger nur bei
-		// erzwungenem Captcha (serverseitig, nicht nur Editor-Warnung).
-		if ( self::MODE_INSTANT === $mode && ! GFB_Captcha::is_active_for_form( $form_attrs ) ) {
-			self::audit_skip( $submission_id, $form_id, 'captcha_required' );
+		// Blocker 2: Sofort-Modus mit frei wählbarem Empfänger nur mit aktivem
+		// Eingabe-Nachweis (serverseitig, nicht nur Editor-Warnung).
+		if ( self::MODE_INSTANT === $mode && ! GFB_Nachweis::is_active() ) {
+			self::audit_skip( $submission_id, $form_id, 'nachweis_required' );
 			return;
 		}
 
-		// Fail-closed (Chloe M-1): Der Sofort-Versand verlangt das TATSÄCHLICHE
-		// Verifikationsergebnis «pass» dieses Requests. «unreachable» im
-		// soft-Modus lässt zwar die Einsendung durch, aber keine Mail an einen
-		// frei wählbaren Empfänger. Die Einsendung läuft normal weiter.
-		if ( self::MODE_INSTANT === $mode && 'pass' !== self::$captcha_request_result ) {
-			self::audit_skip( $submission_id, $form_id, 'captcha_unverified' );
+		// Fail-closed: Der Sofort-Versand verlangt das tatsächliche Ergebnis
+		// «pass» des Eingabe-Nachweises dieses Requests.
+		if ( self::MODE_INSTANT === $mode && 'pass' !== self::$nachweis_result ) {
+			self::audit_skip( $submission_id, $form_id, 'nachweis_unverified' );
 			return;
 		}
 

@@ -1,3 +1,5 @@
+> Hinweis seit 2.16.0: Wo diese Spezifikation vom erzwungenen Captcha spricht, gilt heute der bestandene Eingabe-Nachweis (`GFB_Nachweis`). Friendly Captcha ist entfernt.
+
 # Feature-Spezifikation: Bestätigungsmail an die ausfüllende Person (Autoresponder + Double-Opt-in)
 
 Status: FREIGABEREIF. Entstanden aus der Planungs-Session vom 20.07.2026 (Stefan + Picard, 10 protokollierte Entscheide), gehärtet durch ein Vier-Perspektiven-Review (Zustellbarkeit, Datenschutz/Recht, WP-Umsetzbarkeit, Sicherheit) am selben Tag. Das Review korrigierte zwei Entscheide (siehe Abschnitt 9). Gebaut wird erst nach Stefans Bau-Freigabe.

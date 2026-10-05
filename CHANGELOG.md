@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.16.0] – 2026-10-06
+
+### Entfernt
+
+- **Friendly Captcha ist nicht mehr dabei.** Den Spam-Schutz übernimmt seit 2.15.0 der eigene Eingabe-Nachweis, ganz ohne Fremddienst. Die Anbindung an Friendly Captcha fällt deshalb weg, ebenso die Einstellungskarte dafür und die Auswahl «Spam-Schutz (CAPTCHA)» im Formularblock. Beim Update löscht das Plugin die alten Einstellungen samt Schlüssel.
+
+### Geändert
+
+- Die Sofort-Bestätigung an die ausfüllende Person geht nur hinaus, wenn die Einsendung den Eingabe-Nachweis bestanden hat. Bisher verlangte sie ein bestandenes Captcha.
+
 ## [2.15.0] – 2026-10-05
 
 ### Neu

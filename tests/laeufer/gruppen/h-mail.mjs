@@ -4,9 +4,6 @@ import { formularHolen, absenden } from '../lib/http.mjs';
 import { steuern } from '../lib/wp.mjs';
 import { Mailfaenger } from '../lib/mailpit.mjs';
 
-// Das Widget legt dieses Feld im Browser an; im Skript setzen wir es selbst.
-// Ob es gilt, entscheidet die nachgestellte Antwort des Anbieters.
-const CAPTCHA = { 'frc-captcha-response': 'testlauf-loesung' };
 
 function werte( zusatz = {} ) {
 	const marke = Math.random().toString( 36 ).slice( 2, 10 );
@@ -74,36 +71,40 @@ export default async function gruppeH( u, s ) {
 	} );
 
 	await s.punkt( 'H6', 'Sofort-Bestätigung: Zustellung', async () => {
-		await steuern( u, { captcha: 'pass' } );
 		await post.leeren();
 		const eigene = werte();
 		const f = await formularHolen( u, '/gfbt-instant/', 'gfbt_instant' );
-		const e = await absenden( u, f, { ...eigene, ...CAPTCHA } );
+		const e = await absenden( u, f, eigene );
 		if ( e.zustand !== 'success' ) return `Einsendung scheiterte: ${ e.code }`;
 		const anPerson = await post.wartenAuf( ( k ) => k.an.includes( eigene.mail ), 1, 30 );
 		return soll.wahr( anPerson.length === 1, `Mails an die ausfüllende Person: ${ anPerson.length }` );
 	} );
 
 	await s.punkt( 'H7', 'Sofort-Bestätigung ohne Spam-Schutz', async () => {
-		await steuern( u, { captcha: '' } );
-		await post.leeren();
-		const eigene = werte();
-		const f = await formularHolen( u, '/gfbt-instant/', 'gfbt_instant' );
-		const e = await absenden( u, f, { ...eigene, ...CAPTCHA } );
-		// Ohne Captcha-Nachweis darf keine Bestätigung an die Person gehen.
-		const mails = await post.warten( 1, 8 );
-		const voll = await Promise.all( mails.map( ( m ) => post.mail( m.ID ) ) );
-		const anPerson = voll.map( Mailfaenger.kurz ).filter( ( k ) => k.an.includes( eigene.mail ) );
-		if ( anPerson.length > 0 ) return 'Bestätigung ging trotz fehlendem Spam-Schutz raus.';
-		return true;
+		// Eingabe-Nachweis per Filter aus: Die Einsendung geht durch, die
+		// Bestätigung an die frei wählbare Adresse darf nicht hinausgehen.
+		await steuern( u, { nachweis: 'aus' } );
+		try {
+			await post.leeren();
+			const eigene = werte();
+			const f = await formularHolen( u, '/gfbt-instant/', 'gfbt_instant' );
+			const e = await absenden( u, f, eigene, { nachweis: false } );
+			if ( e.zustand !== 'success' ) return `Einsendung scheiterte: ${ e.code }`;
+			const mails = await post.warten( 1, 8 );
+			const voll = await Promise.all( mails.map( ( m ) => post.mail( m.ID ) ) );
+			const anPerson = voll.map( Mailfaenger.kurz ).filter( ( k ) => k.an.includes( eigene.mail ) );
+			if ( anPerson.length > 0 ) return 'Bestätigung ging trotz fehlendem Spam-Schutz raus.';
+			return true;
+		} finally {
+			await steuern( u, { nachweis: '' } );
+		}
 	} );
 
 	await s.punkt( 'H8', 'Sofort-Bestätigung, Prüfung nicht bestanden', async () => {
-		await steuern( u, { captcha: 'fail' } );
 		await post.leeren();
 		const eigene = werte();
 		const f = await formularHolen( u, '/gfbt-instant/', 'gfbt_instant' );
-		const e = await absenden( u, f, { ...eigene, ...CAPTCHA } );
+		const e = await absenden( u, f, eigene, { nachweis: false } );
 		return soll.wahr(
 			e.zustand !== 'success',
 			`Einsendung ging durch, obwohl der Spam-Schutz ablehnte (Zustand ${ e.zustand }).`
@@ -113,11 +114,10 @@ export default async function gruppeH( u, s ) {
 	// Double-Opt-in, vollständiger Ablauf.
 	let doiLink = '';
 	await s.punkt( 'H13', 'Double-Opt-in: Link-Mail', async () => {
-		await steuern( u, { captcha: 'pass' } );
 		await post.leeren();
 		const eigene = werte();
 		const f = await formularHolen( u, '/gfbt-doi/', 'gfbt_doi' );
-		const e = await absenden( u, f, { ...eigene, ...CAPTCHA } );
+		const e = await absenden( u, f, eigene );
 		if ( e.zustand !== 'success' ) return `Einsendung scheiterte: ${ e.code }`;
 		const gefunden = await post.wartenAuf( ( k ) => k.an.includes( eigene.mail ), 1, 30 );
 		const anPerson = gefunden[ 0 ];
@@ -238,5 +238,4 @@ export default async function gruppeH( u, s ) {
 		return soll.enthaelt( inhalt, 'Grüsse aus Thun', 'Mailinhalt' );
 	} );
 
-	await steuern( u, { captcha: '' } );
 }

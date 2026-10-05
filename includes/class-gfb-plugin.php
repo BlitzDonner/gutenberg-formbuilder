@@ -34,6 +34,8 @@ class GFB_Plugin {
 		add_action( 'init', array( 'GFB_Submit_Handler', 'maybe_upgrade_submissions_db' ), 0 );
 		// Einmalige Übernahme der 2.10.x-Einzeloptionen in die Textverwaltung.
 		add_action( 'init', array( 'GFB_Texts', 'maybe_migrate_legacy_options' ), 0 );
+		// Seit 2.16.0 ohne Friendly Captcha: alte Einstellungen samt API-Key entfernen.
+		add_action( 'init', array( __CLASS__, 'remove_legacy_captcha_settings' ), 0 );
 		add_action( 'init', array( __CLASS__, 'register_assets' ) );
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_for_redirect_query' ), 5 );
@@ -74,6 +76,20 @@ class GFB_Plugin {
 	}
 
 	/**
+	 * Entfernt die Einstellungen der früheren Friendly-Captcha-Anbindung
+	 * (bis 2.15.x), darunter den gespeicherten API-Key. Läuft, solange die
+	 * Option existiert, danach nur noch als günstige Abfrage aus dem
+	 * Autoload-Cache.
+	 *
+	 * @return void
+	 */
+	public static function remove_legacy_captcha_settings() {
+		if ( false !== get_option( 'gfb_captcha_settings', false ) ) {
+			delete_option( 'gfb_captcha_settings' );
+		}
+	}
+
+	/**
 	 * Register scripts/styles.
 	 *
 	 * @return void
@@ -95,11 +111,10 @@ class GFB_Plugin {
 				'editorChromeStylesUrl'     => GFB_PLUGIN_URL . 'assets/gfb-editor.css',
 				'version'                   => GFB_PLUGIN_VERSION,
 				'adminEmail'                => sanitize_email( (string) get_option( 'admin_email' ) ),
-				// Für die Editor-Warnungen der Bestätigungsmail (Sofort-Modus
-				// verlangt serverseitig erzwungenes Captcha). Strings statt bool:
+				// Für die Editor-Warnung der Bestätigungsmail (Sofort-Modus
+				// verlangt den Eingabe-Nachweis). String statt bool:
 				// wp_localize_script castet Werte zu Strings.
-				'captchaHasKeys'            => GFB_Captcha::has_keys() ? '1' : '0',
-				'captchaGlobalActive'       => GFB_Captcha::is_configured() ? '1' : '0',
+				'nachweisAktiv'             => GFB_Nachweis::is_active() ? '1' : '0',
 			)
 		);
 
@@ -140,25 +155,6 @@ class GFB_Plugin {
 			array(),
 			GFB_PLUGIN_VERSION,
 			true
-		);
-
-		// CAPTCHA-Lazy-Loader: laedt das Friendly-Captcha-SDK erst nach der ersten
-		// Formular-Interaktion (verzoegertes Laden zur Datensparsamkeit). Wird nur
-		// enqueued, wenn CAPTCHA fuer ein gerendertes Formular aktiv ist (siehe
-		// render_form_block).
-		wp_register_script(
-			'gfb-captcha',
-			GFB_PLUGIN_URL . 'assets/captcha.js',
-			array(),
-			GFB_PLUGIN_VERSION,
-			true
-		);
-		wp_localize_script(
-			'gfb-captcha',
-			'gfbCaptchaConfig',
-			array(
-				'scriptUrl' => GFB_Captcha::widget_script_url(),
-			)
 		);
 	}
 
@@ -733,13 +729,6 @@ class GFB_Plugin {
 
 		$has_file_field = self::parsed_blocks_contain_block( $field_only_blocks, 'gfb/field-file' );
 
-		// CAPTCHA-Wirksamkeit pro Formular (global aktiv + vollstaendig
-		// konfiguriert + captchaMode). Nur dann Widget + Lazy-Loader.
-		$captcha_active = GFB_Captcha::is_active_for_form( $attributes );
-		if ( $captcha_active ) {
-			wp_enqueue_script( 'gfb-captcha' );
-		}
-
 		// Eingabe-Nachweis: auf jedem Formular, solange nicht per Filter aus.
 		$nachweis_active = GFB_Nachweis::is_active();
 		if ( $nachweis_active ) {
@@ -861,13 +850,6 @@ class GFB_Plugin {
 				<div class="<?php echo esc_attr( $inner_class ); ?>">
 					<?php echo $safe_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- über wp_kses() vorgefiltert ?>
 				</div>
-				<?php
-				// CAPTCHA-Widget als letztes Element vor dem Absenden (B1).
-				// Nur Site-Key im Markup; das Skript laedt lazy ueber gfb-captcha.
-				if ( $captcha_active ) {
-					echo GFB_Captcha::render_widget( $instance_id, $form_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_widget escaped intern
-				}
-				?>
 			</form>
 		</div>
 			<?php

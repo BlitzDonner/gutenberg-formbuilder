@@ -67,7 +67,7 @@ Am Block **Formular** → Inspector **Bestätigungsmail an Absender/in**. Spezif
 **Sicherheit / Datenschutz (Kurzfassung):**
 
 - **From ist fest** `noreply@site-domain` (Filter `gfb_receipt_from`/`gfb_receipt_from_name`), nie die feldgesteuerte Absenderlogik der Betreiber-Mail. Return-Path wird gesetzt; zuverlässige Zustellung setzt SPF/DKIM/DMARC voraus.
-- **Sofort-Modus nur mit erzwungenem Captcha** (serverseitig) – sonst wäre das Formular eine anonyme Mail-Kanone.
+- **Sofort-Modus nur mit bestandenem Eingabe-Nachweis** (serverseitig) – sonst wäre das Formular eine anonyme Mail-Kanone.
 - **Send-Gate** atomar und fail-closed: 50 Mails/Stunde/Site, 10/Stunde/IP, 3/Stunde/Empfängeradresse (Filter `gfb_receipt_gate_limits`).
 - **Vertrauliche Felder** erscheinen im Sofort-Modus nur als «vertraulich gespeichert»; Klartext erst in der Quittung nach bestätigter Adresse. Dateien nie als Anhang – nur Dateiname.
 - **Bestätigungslink:** 7 Tage gültig, Einmal-Nutzung, Token nur als gepfefferter Hash gespeichert, Bestätigung ausschliesslich per POST auf einer datenfreien Landeseite.
@@ -91,18 +91,7 @@ Jedes Formular ist ohne Einrichtung geschützt. Beim Rendern signiert der Server
 
 SHA-256 rechnet das Skript in reinem JavaScript statt mit `crypto.subtle`, weil `subtle.digest` pro Aufruf asynchron und für tausende kleine Hashes um ein Vielfaches langsamer ist und ausserhalb von HTTPS fehlt.
 
-## Zusätzlicher Schutz (optional): Friendly Captcha
-
-Optionaler, **serverseitig geprüfter** Spam-Schutz über [Friendly Captcha](https://friendlycaptcha.com/de/) – einen EU-Anbieter (Deutschland). Statt Bilderrätsel löst der Browser eine **Proof-of-Work**-Aufgabe. Friendly Captcha setzt **keine Cookies**, betreibt **kein Fingerprinting**, **kein Tracking** und führt **keinen Drittlandtransfer** durch.
-
-| Einstellung | Kurz |
-|-------------|------|
-| **Datensparsamkeit** | Im Standardbetrieb braucht es keine Einwilligung – Rechtsgrundlage ist das **berechtigte Interesse** (Spam-Abwehr). Das Captcha-Element lädt **erst bei Formular-Interaktion**, nicht beim Seitenaufbau – kein Vorab-Aufruf des Anbieters. |
-| **Verifikation** | Serverseitig gegen die offizielle **siteverify**-Schnittstelle (Version 2, `global.frcapi.com`). Im Frontend liegt nur der **Site-Key**; das **Secret** bleibt serverseitig. |
-| **Erzwingungsmodus** | **Mit Ausnahme bei Serverausfall:** Captcha Pflicht; nur wenn der Anbieter nicht erreichbar ist, geht der Versand trotzdem durch. **Streng:** auch bei Serverausfall **kein** Versand. |
-| **Admin-Vorlagen** | Mitgeliefert und kopierbar: ein **Textbaustein für die Datenschutzerklärung** und ein **interner Vermerk zur Interessenabwägung** – jeweils als **unverbindliche Vorlage** gekennzeichnet. |
-
-Die Admin-Bereiche **ClamAV-Einstellungen** und **Datenschutz** sind in einklappbaren Akkordeons dargestellt. Ausführlich: [`docs/CAPTCHA-INTEGRATION-SPEC.md`](docs/CAPTCHA-INTEGRATION-SPEC.md).
+Bis Version 2.15 liess sich zusätzlich Friendly Captcha anbinden. Seit 2.16.0 ist diese Anbindung entfernt; beim Update löscht das Plugin die alten Einstellungen samt API-Key (Option `gfb_captcha_settings`).
 
 ---
 
@@ -146,7 +135,7 @@ Die Admin-Bereiche **ClamAV-Einstellungen** und **Datenschutz** sind in einklapp
 
 - Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`); Frontend **`pattern`** und **`placeholder`** aus **Einstellungen → Allgemein** (`date_format` / `time_format`, z. B. `dd.mm.yyyy`)
 - **Erfolgsbereich** (`gfb/form-success`, nur innerhalb von `gfb/form`): beliebige InnerBlocks, die nach erfolgreichem Absenden **anstelle des Formulars** erscheinen, wenn **keine** Folgeseite gewählt ist. Im Text stehen Platzhalter `{{feldname}}` (technischer Name) und optional `{{label_feldname}}`; die Werte setzt `assets/frontend.js` per `sessionStorage`-Snapshot beim Absenden (Datei-Felder: `[Datei]`). Mit gewählter Folgeseite bleibt das bisherige Verhalten (Hinweiszeile / Redirect-Zielseite). Im Erfolgsbereich kann der Block **Platzhalter-Hilfe** (`gfb/token`) die **technischen Feldnamen** in einem Auswahlfeld anbieten; nach der Wahl wird `{{feldname}}` (übermittelter Wert) an dieser Stelle als Absatz eingefügt (nur Editor). Optional weiterhin `{{label_feldname}}` manuell für die Anzeige-Bezeichnung.
-- Submit über `admin_post` / `admin_post_nopriv` mit gestaffelter Abwehrkette: **Nonce → HMAC-Token → Honeypot → Rate-Limit → Eingabe-Nachweis → Captcha** (Friendly Captcha, optional; siehe Abschnitt **Spam-Schutz** unten)
+- Submit über `admin_post` / `admin_post_nopriv` mit gestaffelter Abwehrkette: **Nonce → HMAC-Token → Honeypot → Rate-Limit → Eingabe-Nachweis** (siehe Abschnitt **Spam-Schutz** unten)
 - **E-Mail-Benachrichtigung** pro Formular (optional): Empfänger, Betreff, Absender — siehe Abschnitt oben und [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen, **CSV-Export**): Export eines einzelnen Formulars als UTF-8-BOM-CSV (Semikolon, RFC-4180); verschlüsselte Felder maskiert oder – mit Cap `gfb_decrypt_submissions` – im Klartext; IP-Adresse nur bei Klartext-Export; CSV-Injection-Härtung; Audit-Einträge für jeden Export
@@ -235,7 +224,7 @@ Seit 2.11.0 gilt: **Jeder Satz, den eine ausfüllende Person zu sehen bekommt, i
 
 | Gruppe | Inhalt |
 |---|---|
-| Formular | Absende-Knopf, Datei-Hinweise, «verschlüsselt»-Kennzeichnung, Captcha-Beschriftung |
+| Formular | Absende-Knopf, Datei-Hinweise, «verschlüsselt»-Kennzeichnung |
 | Overlays beim Absenden | Sende-Animation und Erfolgs-Quittung |
 | Meldungen nach dem Absenden | Erfolgs- und Fehlermeldungen über dem Formular |
 | Feldprüfung | Hinweise zu einzelnen Feldern (Pflichtfeld, ungültige E-Mail …) |

@@ -51,22 +51,7 @@ export async function einrichten( u ) {
 	await u.wp( 'user create redakteur redakteur@example.test --role=editor --user_pass=geheim' ).catch( () => {} );
 	await u.wp( 'user create leser leser@example.test --role=subscriber --user_pass=geheim' ).catch( () => {} );
 
-	// Spam-Schutz konfigurieren: ohne Schlüssel bliebe die ganze Prüfkette aus.
-	// Die Antwort des Anbieters stellt das mu-Plugin nach. In der Umstiegs-
-	// Umgebung passiert das später, nach dem Einspielen der Vorversion.
-	if ( 'umstieg' === u.kennung ) {
-		u.wpVersion = await u.wp( 'core version' );
-		return;
-	}
-	await u.php( `
-		GFB_Captcha::update_settings( array(
-			'enabled'  => true,
-			'site_key' => 'TESTLAUF-SITEKEY',
-			'api_key'  => 'TESTLAUF-APIKEY',
-		) );
-		echo wp_json_encode( GFB_Captcha::get_settings() );
-	` );
-
+	// Der Eingabe-Nachweis braucht keine Einrichtung.
 	u.wpVersion = await u.wp( 'core version' );
 }
 
