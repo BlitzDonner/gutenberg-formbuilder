@@ -1,6 +1,6 @@
 // Gruppe E – Absenden und Abwehr. Jeder Fehlerzustand einzeln herbeigeführt.
 import { soll } from '../lib/pruefung.mjs';
-import { formularHolen, absenden } from '../lib/http.mjs';
+import { formularHolen, absenden, nachweisLoesen } from '../lib/http.mjs';
 import { steuern, einsendungenZaehlen, letzteEinsendung } from '../lib/wp.mjs';
 
 const SEITE = '/gfbt-voll/';
@@ -20,6 +20,17 @@ function werte( zusatz = {} ) {
 		anrede: 'Frau',
 		...zusatz,
 	};
+}
+
+/** Grund der letzten Nachweis-Prüfung aus dem Prüfprotokoll. */
+async function letzterNachweisGrund( u ) {
+	const aus = await u.php( `
+		global $wpdb;
+		$ctx = $wpdb->get_var( "SELECT context_json FROM {$wpdb->prefix}gfb_audit WHERE action = 'nachweis_verify' ORDER BY id DESC LIMIT 1" );
+		$d = json_decode( (string) $ctx, true );
+		echo is_array( $d ) && isset( $d['detail'] ) ? $d['detail'] : ( is_array( $d ) && isset( $d['result'] ) ? $d['result'] : '' );
+	` );
+	return String( aus ).trim();
 }
 
 export default async function gruppeE( u, s ) {
@@ -79,7 +90,7 @@ export default async function gruppeE( u, s ) {
 		let letzterCode = '';
 		for ( let i = 1; i <= 6; i++ ) {
 			const f = await formularHolen( u, SEITE, FORM );
-			const e = await absenden( u, f, werte(), { warten: i === 1 ? 2200 : 2100 } );
+			const e = await absenden( u, f, werte(), { warten: i === 1 ? 3200 : 3100 } );
 			letzterCode = e.code || e.zustand;
 			if ( i < 6 && e.zustand !== 'success' ) {
 				await steuern( u, { rate_limit_max: 999 } );
@@ -185,6 +196,94 @@ export default async function gruppeE( u, s ) {
 			[ 'err_captcha', 'err_captcha_unreachable' ].includes( e.code ),
 			`Fehlercode «${ e.code }», erwartet err_captcha.`
 		);
+	} );
+
+	// Eingabe-Nachweis (seit 2.15.0). Jeder Grund einzeln herbeigeführt.
+	await s.punkt( 'E30', 'Nachweis: Bot ohne JavaScript (gültiger Token, leerer Honigtopf)', async () => {
+		const f = await formularHolen( u, SEITE, FORM );
+		const vorher = await einsendungenZaehlen( u, FORM );
+		const e = await absenden( u, f, werte(), { nachweis: false } );
+		const nachher = await einsendungenZaehlen( u, FORM );
+		if ( e.code !== 'err_captcha' ) return `Fehlercode «${ e.code }», erwartet err_captcha.`;
+		if ( nachher !== vorher ) return 'Einsendung wurde trotzdem gespeichert.';
+		return soll.gleich( await letzterNachweisGrund( u ), 'no_proof', 'Grund im Prüfprotokoll' );
+	} );
+
+	await s.punkt( 'E31', 'Nachweis: veränderte Aufgabe', async () => {
+		const f = await formularHolen( u, SEITE, FORM );
+		const teile = f.felder.gfb_nw_aufgabe.split( '.' );
+		teile[ 1 ] = teile[ 1 ].replace( /^./, ( c ) => ( c === 'a' ? 'b' : 'a' ) );
+		const aufgabe = teile.join( '.' );
+		const e = await absenden( u, f, werte(), { roh: { gfb_nw_aufgabe: aufgabe, gfb_nw_loesung: nachweisLoesen( aufgabe ) } } );
+		if ( e.code !== 'err_captcha' ) return `Fehlercode «${ e.code }», erwartet err_captcha.`;
+		return soll.gleich( await letzterNachweisGrund( u ), 'bad_signature', 'Grund im Prüfprotokoll' );
+	} );
+
+	await s.punkt( 'E32', 'Nachweis: Aufgabe eines anderen Formulars', async () => {
+		const fremd = await formularHolen( u, '/gfbt-doppelt/', 'gfbt_doppelt' );
+		const f = await formularHolen( u, SEITE, FORM );
+		const aufgabe = fremd.felder.gfb_nw_aufgabe;
+		const e = await absenden( u, f, werte(), { roh: { gfb_nw_aufgabe: aufgabe, gfb_nw_loesung: nachweisLoesen( aufgabe ) } } );
+		if ( e.code !== 'err_captcha' ) return `Fehlercode «${ e.code }», erwartet err_captcha.`;
+		return soll.gleich( await letzterNachweisGrund( u ), 'bad_signature', 'Grund im Prüfprotokoll' );
+	} );
+
+	await s.punkt( 'E33', 'Nachweis: zu schnell abgesendet', async () => {
+		// Die Zeitstempel zählen ganze Sekunden; ein Abstand knapp unter 3 Sekunden
+		// wäre deshalb zufällig. Die Teststeuerung hebt die Mindestzeit auf 30 Sekunden.
+		await steuern( u, { nachweis_mindestzeit: 30 } );
+		try {
+			const f = await formularHolen( u, SEITE, FORM );
+			const e = await absenden( u, f, werte() );
+			if ( e.code !== 'err_captcha' ) return `Fehlercode «${ e.code }», erwartet err_captcha.`;
+			return soll.gleich( await letzterNachweisGrund( u ), 'too_fast', 'Grund im Prüfprotokoll' );
+		} finally {
+			await steuern( u, { nachweis_mindestzeit: '' } );
+		}
+	} );
+
+	await s.punkt( 'E34', 'Nachweis: falsche Zahl', async () => {
+		const f = await formularHolen( u, SEITE, FORM );
+		const richtig = nachweisLoesen( f.felder.gfb_nw_aufgabe );
+		const [ salz, zahl ] = richtig.split( '.' );
+		// Die nächste Zahl erfüllt die Null-Bits fast sicher nicht (Wahrscheinlichkeit 1 zu 16'384).
+		const e = await absenden( u, f, werte(), { roh: { gfb_nw_loesung: `${ salz }.${ Number( zahl ) + 1 }` } } );
+		if ( e.code !== 'err_captcha' ) return `Fehlercode «${ e.code }», erwartet err_captcha.`;
+		return soll.gleich( await letzterNachweisGrund( u ), 'bad_proof', 'Grund im Prüfprotokoll' );
+	} );
+
+	await s.punkt( 'E35', 'Nachweis: zweimal derselbe Nachweis', async () => {
+		const f = await formularHolen( u, SEITE, FORM );
+		const loesung = nachweisLoesen( f.felder.gfb_nw_aufgabe );
+		const e1 = await absenden( u, f, werte(), { roh: { gfb_nw_loesung: loesung } } );
+		if ( e1.zustand !== 'success' ) return `Erste Einsendung scheiterte: ${ e1.code }`;
+		const e2 = await absenden( u, f, werte(), { roh: { gfb_nw_loesung: loesung }, warten: 0 } );
+		if ( e2.code !== 'err_captcha' ) return `Fehlercode «${ e2.code }», erwartet err_captcha.`;
+		return soll.gleich( await letzterNachweisGrund( u ), 'replay', 'Grund im Prüfprotokoll' );
+	} );
+
+	await s.punkt( 'E36', 'Nachweis: dieselbe Seite für zwei Personen', async () => {
+		// Wie aus einem Seiten-Zwischenspeicher: eine Aufgabe, zwei Browser mit eigenem Salz.
+		const f = await formularHolen( u, SEITE, FORM );
+		const e1 = await absenden( u, f, werte() );
+		const e2 = await absenden( u, f, werte(), { warten: 0 } );
+		return soll.wahr(
+			e1.zustand === 'success' && e2.zustand === 'success',
+			`Erste: ${ e1.zustand || e1.code }, zweite: ${ e2.zustand || e2.code }.`
+		);
+	} );
+
+	await s.punkt( 'E37', 'Nachweis: Gegenprobe mit ausgeschaltetem Nachweis', async () => {
+		// Belegt, dass E30 den Nachweis misst und nicht eine andere Stufe.
+		await steuern( u, { nachweis: 'aus' } );
+		try {
+			const f = await formularHolen( u, SEITE, FORM );
+			if ( f.felder.gfb_nw_aufgabe !== undefined ) return 'Aufgabe steht trotz ausgeschaltetem Nachweis im Formular.';
+			const e = await absenden( u, f, werte(), { nachweis: false } );
+			return soll.gleich( e.zustand, 'success', 'Zustand' );
+		} finally {
+			await steuern( u, { nachweis: '' } );
+		}
 	} );
 
 	await s.punkt( 'E18', 'Fehlerhafte Anfrage', async () => {

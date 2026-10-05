@@ -548,7 +548,10 @@ class GFB_Admin_Settings {
 		echo '<p class="description">' . esc_html__( 'Schickt das offizielle EICAR-Testmuster (eine harmlose Test-Datei) an deine ClamAV-Konfiguration. Erwartet: «infected» – dann funktioniert der Scanner.', 'gutenberg-formbuilder' ) . '</p>';
 		echo '</form>';
 
-		// 2b) Spam-Schutz (CAPTCHA) – Friendly Captcha
+		// 2b) Spam-Schutz: Eingabe-Nachweis (immer aktiv, ohne Einstellung)
+		self::render_nachweis_section();
+
+		// 2c) Zusätzlicher Schutz (optional) – Friendly Captcha
 		self::render_captcha_section();
 
 		// 2c) Bestätigungsmail (Autoresponder + Double-Opt-in): Zustellbarkeit + Datenschutz
@@ -888,7 +891,51 @@ class GFB_Admin_Settings {
 	}
 
 	/**
-	 * Rendert den Abschnitt «Spam-Schutz (CAPTCHA) – Friendly Captcha»
+	 * Rendert die Karte «Spam-Schutz»: Zustand des Eingabe-Nachweises und
+	 * die Zahl der Pruefungen der letzten 30 Tage, aufgeschluesselt nach
+	 * Grund. Bewusst ohne Schalter; ausschalten nur per Filter
+	 * gfb_nachweis_aktiv.
+	 *
+	 * @return void
+	 */
+	private static function render_nachweis_section() {
+		$active = GFB_Nachweis::is_active();
+		$badge  = $active
+			? self::summary_badge( 'on', __( 'Aktiv', 'gutenberg-formbuilder' ) )
+			: self::summary_badge( 'warn', __( 'Per Filter ausgeschaltet', 'gutenberg-formbuilder' ) );
+		echo '</details><details class="gfb-settings-card" id="gfb-spamschutz"><summary><h2>' . esc_html__( 'Spam-Schutz', 'gutenberg-formbuilder' ) . '</h2>' . $badge . '</summary>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- summary_badge escaped intern
+
+		echo '<p>' . esc_html__( 'Jedes Formular prüft unsichtbar, ob ein Mensch es ausfüllt. Sobald jemand ins Formular tippt oder klickt, löst der Browser eine kleine Rechenaufgabe. Der Server prüft die Lösung beim Absenden. Es braucht kein Konto, keinen Schlüssel und keinen Fremddienst.', 'gutenberg-formbuilder' ) . '</p>';
+
+		if ( ! $active ) {
+			echo '<div class="notice notice-warning inline"><p>'
+				. esc_html__( 'Der Eingabe-Nachweis ist über den Filter «gfb_nachweis_aktiv» ausgeschaltet. Formulare sind nur durch Honeypot, Token und Rate-Limit geschützt.', 'gutenberg-formbuilder' )
+				. '</p></div>';
+		}
+
+		$stats  = GFB_Nachweis::stats( 30 );
+		$labels = array(
+			'no_proof'      => __( 'Kein Nachweis (kein echtes Ausfüllen)', 'gutenberg-formbuilder' ),
+			'bad_signature' => __( 'Aufgabe verändert', 'gutenberg-formbuilder' ),
+			'too_fast'      => __( 'Zu schnell abgesendet', 'gutenberg-formbuilder' ),
+			'expired'       => __( 'Aufgabe abgelaufen', 'gutenberg-formbuilder' ),
+			'bad_proof'     => __( 'Falsche Lösung', 'gutenberg-formbuilder' ),
+			'replay'        => __( 'Nachweis wiederverwendet', 'gutenberg-formbuilder' ),
+		);
+		echo '<h3>' . esc_html__( 'Letzte 30 Tage', 'gutenberg-formbuilder' ) . '</h3>';
+		echo '<table class="widefat striped" style="max-width:34rem"><tbody>';
+		echo '<tr><td>' . esc_html__( 'Bestanden', 'gutenberg-formbuilder' ) . '</td><td style="text-align:right">' . esc_html( number_format_i18n( $stats['pass'] ) ) . '</td></tr>';
+		echo '<tr><td><strong>' . esc_html__( 'Abgewiesen', 'gutenberg-formbuilder' ) . '</strong></td><td style="text-align:right"><strong>' . esc_html( number_format_i18n( $stats['fail'] ) ) . '</strong></td></tr>';
+		foreach ( $stats['reasons'] as $reason => $count ) {
+			$label = isset( $labels[ $reason ] ) ? $labels[ $reason ] : $reason;
+			echo '<tr><td style="padding-left:1.5rem">' . esc_html( $label ) . '</td><td style="text-align:right">' . esc_html( number_format_i18n( $count ) ) . '</td></tr>';
+		}
+		echo '</tbody></table>';
+		echo '<p class="description">' . esc_html__( 'Einzelne Prüfungen stehen im Prüfprotokoll unter «nachweis_verify».', 'gutenberg-formbuilder' ) . '</p>';
+	}
+
+	/**
+	 * Rendert den Abschnitt «Zusätzlicher Schutz (optional): Friendly Captcha»
 	 * (zwischen ClamAV und Berechtigungen). Ein Anbieter, keine Anbieterwahl.
 	 * Gibt nur den Site-Key/API-Key-Eingabe aus; der API-Key wird als
 	 * password-Feld behandelt und beim Rendern nicht echo't (nur «gesetzt»-Status).
@@ -906,7 +953,8 @@ class GFB_Admin_Settings {
 		} else {
 			$captcha_badge = self::summary_badge( 'neutral', __( 'Deaktiviert', 'gutenberg-formbuilder' ) );
 		}
-		echo '</details><details class="gfb-settings-card" id="gfb-captcha"><summary><h2>' . esc_html__( 'Spam-Schutz (CAPTCHA) – Friendly Captcha', 'gutenberg-formbuilder' ) . '</h2>' . $captcha_badge . '</summary>';
+		echo '</details><details class="gfb-settings-card" id="gfb-captcha"><summary><h2>' . esc_html__( 'Zusätzlicher Schutz (optional): Friendly Captcha', 'gutenberg-formbuilder' ) . '</h2>' . $captcha_badge . '</summary>';
+		echo '<p>' . esc_html__( 'Friendly Captcha ist ein Fremddienst mit eigenem Konto. Ist es eingerichtet, läuft es zusätzlich zum Spam-Schutz oben. Für Firmen verlangt Friendly Captcha einen bezahlten Plan.', 'gutenberg-formbuilder' ) . '</p>';
 
 		// A5: nicht-blockierende Warnung bei aktiv + unvollstaendig.
 		if ( $incomplete ) {

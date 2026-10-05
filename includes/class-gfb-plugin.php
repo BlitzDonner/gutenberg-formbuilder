@@ -132,6 +132,16 @@ class GFB_Plugin {
 			GFB_PLUGIN_VERSION
 		);
 
+		// Eingabe-Nachweis: eigener Spam-Schutz ohne Fremddienst. Rechnet erst
+		// nach der ersten echten Interaktion (siehe class-gfb-nachweis.php).
+		wp_register_script(
+			'gfb-nachweis',
+			GFB_PLUGIN_URL . 'assets/eingabe-nachweis.js',
+			array(),
+			GFB_PLUGIN_VERSION,
+			true
+		);
+
 		// CAPTCHA-Lazy-Loader: laedt das Friendly-Captcha-SDK erst nach der ersten
 		// Formular-Interaktion (verzoegertes Laden zur Datensparsamkeit). Wird nur
 		// enqueued, wenn CAPTCHA fuer ein gerendertes Formular aktiv ist (siehe
@@ -730,6 +740,12 @@ class GFB_Plugin {
 			wp_enqueue_script( 'gfb-captcha' );
 		}
 
+		// Eingabe-Nachweis: auf jedem Formular, solange nicht per Filter aus.
+		$nachweis_active = GFB_Nachweis::is_active();
+		if ( $nachweis_active ) {
+			wp_enqueue_script( 'gfb-nachweis' );
+		}
+
 		$wrapper_classes   = array( 'gfb-form-wrapper' );
 		$form_color_style = self::build_form_inline_color_style( $attributes );
 		/* Theme + eigene Farben: form.css bindet --gfb-light-* / --gfb-dark-* an die Felder (siehe .gfb-form-colors-custom). */
@@ -820,6 +836,11 @@ class GFB_Plugin {
 			<form class="gfb-form" method="post" action="<?php echo $action; ?>" data-gfb-key="<?php echo esc_attr( $key ); ?>" data-gfb-webkit-datetime-fallback="<?php echo esc_attr( self::is_webkit_datetime_fallback_enabled() ? '1' : '0' ); ?>" lang="<?php echo esc_attr( str_replace( '_', '-', determine_locale() ) ); ?>"<?php echo $has_file_field ? ' enctype="multipart/form-data"' : ''; ?>>
 				<input type="hidden" name="gfb_token" value="<?php echo esc_attr( $gfb_token ); ?>" />
 				<input type="hidden" name="gfb_instance_id" value="<?php echo esc_attr( $instance_id ); ?>" />
+				<?php
+				if ( $nachweis_active ) {
+					echo GFB_Nachweis::render_fields( $post_id, $form_id, $instance_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_fields escaped intern
+				}
+				?>
 				<input type="text" name="<?php echo esc_attr( $hp_field ); ?>" id="<?php echo esc_attr( $hp_field ); ?>" value="" tabindex="-1" autocomplete="off" class="gfb-hp-field" aria-hidden="true" aria-label="<?php echo esc_attr__( 'Dieses Feld bitte leer lassen.', 'gutenberg-formbuilder' ); ?>" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" />
 				<?php wp_nonce_field( 'gfb_submit_' . $form_id . '_' . $post_id, 'gfb_nonce' ); ?>
 				<input type="hidden" name="action" value="gfb_submit" />

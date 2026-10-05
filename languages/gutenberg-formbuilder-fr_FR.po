@@ -282,8 +282,8 @@ msgstr "Contrat de sous-traitance inclus dans l’offre"
 msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
 msgstr "(modèle non contraignant, sans valeur de conseil juridique)"
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut."
-msgstr "La protection anti-spam n’a pas été confirmée. Veuillez terminer la vérification anti-spam dans le formulaire et renvoyer."
+msgid "Das Formular konnte nicht gesendet werden. Bitte laden Sie die Seite neu und senden Sie es noch einmal."
+msgstr "Le formulaire n’a pas pu être envoyé. Veuillez recharger la page et l’envoyer à nouveau."
 
 msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."
 msgstr "La protection anti-spam est actuellement indisponible. Veuillez réessayer dans quelques minutes."
@@ -710,8 +710,8 @@ msgstr "Le formulaire n’a pas été envoyé. Veuillez vérifier les messages e
 msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
 msgstr "L’enregistrement a échoué. Veuillez réessayer."
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
-msgstr "La protection anti-spam n’a pas été confirmée. Veuillez terminer la vérification anti-spam dans le formulaire et renvoyer."
+msgid "Das Formular konnte nicht gesendet werden. Bitte lade die Seite neu und sende es noch einmal."
+msgstr "Le formulaire n’a pas pu être envoyé. Recharge la page et envoie-le à nouveau."
 
 msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
 msgstr "La protection anti-spam est actuellement indisponible. Veuillez réessayer dans quelques minutes."

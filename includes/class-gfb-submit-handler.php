@@ -236,7 +236,11 @@ class GFB_Submit_Handler {
 		$form_attrs        = GFB_Plugin::get_form_block_attributes_from_post( $post_id, $form_id );
 		$thank_you_page_id = isset( $form_attrs['thankYouPageId'] ) ? absint( $form_attrs['thankYouPageId'] ) : 0;
 
-		// 5. Stufe der Abwehrkette: CAPTCHA (Friendly Captcha), NACH Rate-Limit,
+		// 5. Stufe der Abwehrkette: Eingabe-Nachweis (eigener Spam-Schutz ohne
+		// Fremddienst), NACH Rate-Limit, VOR einem allfaelligen Captcha.
+		self::maybe_enforce_nachweis( $post_id, $form_id, $instance );
+
+		// 6. Stufe der Abwehrkette: CAPTCHA (Friendly Captcha), NACH Rate-Limit,
 		// VOR Schema-/Feldverarbeitung. Greift nur, wenn fuer dieses Formular
 		// aktiv (global an + vollstaendig konfiguriert + captchaMode).
 		self::maybe_enforce_captcha( $post_id, $form_id, $form_attrs, $ip_address );
@@ -1302,6 +1306,43 @@ class GFB_Submit_Handler {
 			'storage_id' => (string) $store['storage_id'],
 			'_ref'       => 'gfb-file:' . (int) $store['file_id'],
 		);
+	}
+
+	/**
+	 * Eingabe-Nachweis-Stufe. Prueft die vom Browser berechnete Loesung zur
+	 * signierten Aufgabe (siehe GFB_Nachweis). Abgewiesen wird bei fehlendem
+	 * Nachweis, falscher Signatur, zu schnellem oder zu spaetem Absenden,
+	 * falscher Loesung und Wiederverwendung. Protokolliert wird nur der Grund,
+	 * nie Aufgabe, Salz oder Zahl.
+	 *
+	 * @param int    $post_id  Post-ID.
+	 * @param string $form_id  Form-ID.
+	 * @param string $instance Instanz-ID.
+	 * @return void
+	 */
+	private static function maybe_enforce_nachweis( $post_id, $form_id, $instance ) {
+		if ( ! class_exists( 'GFB_Nachweis' ) || ! GFB_Nachweis::is_active() ) {
+			return;
+		}
+
+		$aufgabe = isset( $_POST[ GFB_Nachweis::FIELD_AUFGABE ] ) ? sanitize_text_field( wp_unslash( $_POST[ GFB_Nachweis::FIELD_AUFGABE ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce oben geprueft
+		$loesung = isset( $_POST[ GFB_Nachweis::FIELD_LOESUNG ] ) ? sanitize_text_field( wp_unslash( $_POST[ GFB_Nachweis::FIELD_LOESUNG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce oben geprueft
+
+		$base_ctx = array(
+			'form_id' => $form_id,
+			'post_id' => $post_id,
+		);
+
+		$grund = GFB_Nachweis::verify( $aufgabe, $loesung, $post_id, $form_id, $instance );
+		if ( '' === $grund ) {
+			GFB_Security::log_event( 'nachweis_pass', $base_ctx );
+			GFB_Audit::record( 'nachweis_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'pass' ) ) );
+			return;
+		}
+
+		GFB_Security::log_event( 'nachweis_fail', array_merge( $base_ctx, array( 'detail' => $grund ) ) );
+		GFB_Audit::record( 'nachweis_verify', 'security', '', array_merge( $base_ctx, array( 'result' => 'fail', 'detail' => $grund ) ) );
+		self::redirect_with_state( $post_id, $form_id, self::STATUS_ERR_CAPTCHA );
 	}
 
 	/**

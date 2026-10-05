@@ -2,6 +2,18 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.15.0] – 2026-10-05
+
+### Neu
+
+- **Neuer Spam-Schutz ohne Fremddienst.** Formulare sind ab sofort ohne zusätzliches Konto geschützt. Sobald jemand ins Formular tippt oder klickt, löst der Browser unsichtbar eine kleine Rechenaufgabe. Der Server prüft die Lösung beim Absenden. Programme, die Formulare ohne echtes Ausfüllen abschicken, werden damit abgewiesen. Es braucht keinen Schlüssel, keine Einrichtung und keinen Dienst eines anderen Anbieters, und es gehen keine Daten an Dritte.
+- In den Einstellungen zeigt die neue Karte «Spam-Schutz», wie viele Einsendungen in den letzten 30 Tagen bestanden haben und wie viele abgewiesen wurden, mit Grund.
+
+### Geändert
+
+- Friendly Captcha bleibt als zusätzlicher Schutz verfügbar. Wo es eingerichtet ist, läuft es weiter, nun zusätzlich zum neuen Spam-Schutz. Neue Websites brauchen es nicht mehr.
+- Die Meldung bei einer abgewiesenen Einsendung lautet neu: «Das Formular konnte nicht gesendet werden. Bitte laden Sie die Seite neu und senden Sie es noch einmal.»
+
 ## [2.14.2] – 2026-08-24
 
 ### Behoben

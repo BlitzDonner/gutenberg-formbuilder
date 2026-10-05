@@ -92,8 +92,11 @@ export class Browser {
 		await seite.goto( `${ this.u.basis }/wp-login.php`, { waitUntil: 'domcontentloaded' } );
 		await seite.fill( '#user_login', benutzer );
 		await seite.fill( '#user_pass', passwort );
+		// Auf wp-admin warten, nicht auf wp-login: Die Login-Seite ist schon die
+		// aktuelle Adresse, das Warten endete sonst sofort, und das Schliessen
+		// der Seite brach die Anmeldung ab, bevor das Cookie gesetzt war.
 		await Promise.all( [
-			seite.waitForURL( /wp-admin|wp-login/, { timeout: 30000 } ),
+			seite.waitForURL( /\/wp-admin\//, { timeout: 30000 } ),
 			seite.click( '#wp-submit' ),
 		] );
 		await seite.close();

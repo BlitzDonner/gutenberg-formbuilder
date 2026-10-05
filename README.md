@@ -76,7 +76,22 @@ Am Block **Formular** → Inspector **Bestätigungsmail an Absender/in**. Spezif
 
 ---
 
-## Spam-Schutz (Friendly Captcha)
+## Spam-Schutz (Eingabe-Nachweis, seit 2.15.0)
+
+Jedes Formular ist ohne Einrichtung geschützt. Beim Rendern signiert der Server eine Aufgabe (Zeitstempel, 16 Zufallsbytes, Schwierigkeit) per HMAC zusammen mit Post-, Formular- und Instanz-ID. `assets/eingabe-nachweis.js` startet erst nach der ersten echten Interaktion (`focusin`, `pointerdown`, `keydown`, `input` mit `isTrusted`) und sucht zu einem eigenen Zufallssalz eine Zahl, sodass SHA-256(Aufgabe.Salz.Zahl) mit der verlangten Anzahl Null-Bits beginnt. Sendet die Person vorher ab, wartet das Skript und sendet dann selbst.
+
+| Punkt | Verhalten |
+|---|---|
+| Prüfung | `GFB_Nachweis::verify()` nach dem Rate-Limit: Gründe `no_proof`, `bad_signature`, `too_fast` (unter 3 Sekunden), `expired` (über der Token-Lebensdauer), `bad_proof`, `replay` |
+| Wiederverwendung | Jede Kombination aus Aufgabe, Salz und Zahl gilt einmal (Transient `gfb_nw_*`); das Salz pro Browser erlaubt dieselbe Aufgabe aus einer zwischengespeicherten Seite für mehrere Personen |
+| Schwierigkeit | 14 Null-Bits, Filter `gfb_nachweis_schwierigkeit` (8 bis 24) |
+| Notfall | Filter `gfb_nachweis_aktiv` auf `false` schaltet den Nachweis aus; einen Schalter im Admin gibt es bewusst nicht |
+| Protokoll | Audit-Eintrag `nachweis_verify` mit `result` und `detail`, Security-Events `nachweis_pass` und `nachweis_fail`; nie Aufgabe, Salz oder Zahl |
+| Netz | Kein REST, kein `admin-ajax`, kein Fremddienst; eine CSP braucht keine neuen Einträge |
+
+SHA-256 rechnet das Skript in reinem JavaScript statt mit `crypto.subtle`, weil `subtle.digest` pro Aufruf asynchron und für tausende kleine Hashes um ein Vielfaches langsamer ist und ausserhalb von HTTPS fehlt.
+
+## Zusätzlicher Schutz (optional): Friendly Captcha
 
 Optionaler, **serverseitig geprüfter** Spam-Schutz über [Friendly Captcha](https://friendlycaptcha.com/de/) – einen EU-Anbieter (Deutschland). Statt Bilderrätsel löst der Browser eine **Proof-of-Work**-Aufgabe. Friendly Captcha setzt **keine Cookies**, betreibt **kein Fingerprinting**, **kein Tracking** und führt **keinen Drittlandtransfer** durch.
 
@@ -131,7 +146,7 @@ Die Admin-Bereiche **ClamAV-Einstellungen** und **Datenschutz** sind in einklapp
 
 - Container-Block `gfb/form` mit InnerBlocks; Feldblöcke `gfb/field-*` + `gfb/field-submit` (verstecktes Feld: optionales **Label (Hinweis)** nur für Editor/Eintragsdarstellung, nicht im Frontend-Formular); **Datum / Uhrzeit / Termin:** optionaler **Voreingestellter Wert** im Inspector, Standard leer (kein HTML-`value`); Frontend **`pattern`** und **`placeholder`** aus **Einstellungen → Allgemein** (`date_format` / `time_format`, z. B. `dd.mm.yyyy`)
 - **Erfolgsbereich** (`gfb/form-success`, nur innerhalb von `gfb/form`): beliebige InnerBlocks, die nach erfolgreichem Absenden **anstelle des Formulars** erscheinen, wenn **keine** Folgeseite gewählt ist. Im Text stehen Platzhalter `{{feldname}}` (technischer Name) und optional `{{label_feldname}}`; die Werte setzt `assets/frontend.js` per `sessionStorage`-Snapshot beim Absenden (Datei-Felder: `[Datei]`). Mit gewählter Folgeseite bleibt das bisherige Verhalten (Hinweiszeile / Redirect-Zielseite). Im Erfolgsbereich kann der Block **Platzhalter-Hilfe** (`gfb/token`) die **technischen Feldnamen** in einem Auswahlfeld anbieten; nach der Wahl wird `{{feldname}}` (übermittelter Wert) an dieser Stelle als Absatz eingefügt (nur Editor). Optional weiterhin `{{label_feldname}}` manuell für die Anzeige-Bezeichnung.
-- Submit über `admin_post` / `admin_post_nopriv` mit gestaffelter Abwehrkette: **Nonce → HMAC-Token → Honeypot → Rate-Limit → Captcha** (Friendly Captcha, optional; siehe Abschnitt **Spam-Schutz** unten)
+- Submit über `admin_post` / `admin_post_nopriv` mit gestaffelter Abwehrkette: **Nonce → HMAC-Token → Honeypot → Rate-Limit → Eingabe-Nachweis → Captcha** (Friendly Captcha, optional; siehe Abschnitt **Spam-Schutz** unten)
 - **E-Mail-Benachrichtigung** pro Formular (optional): Empfänger, Betreff, Absender — siehe Abschnitt oben und [`docs/EMAIL-BENACHRICHTIGUNG.md`](docs/EMAIL-BENACHRICHTIGUNG.md)
 - Einsendungen in `{prefix}gfb_submissions` (JSON `payload`, inkl. `_gfb_labels` für Labels zum Zeitpunkt des Absendens)
 - Admin-Menü **Formular-Einträge** (Liste, Detail, Löschen, **CSV-Export**): Export eines einzelnen Formulars als UTF-8-BOM-CSV (Semikolon, RFC-4180); verschlüsselte Felder maskiert oder – mit Cap `gfb_decrypt_submissions` – im Klartext; IP-Adresse nur bei Klartext-Export; CSV-Injection-Härtung; Audit-Einträge für jeden Export

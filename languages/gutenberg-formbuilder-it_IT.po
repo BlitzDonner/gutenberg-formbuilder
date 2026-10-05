@@ -282,8 +282,8 @@ msgstr "Contratto di responsabile del trattamento incluso nel piano"
 msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
 msgstr "(modello non vincolante, non costituisce consulenza legale)"
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut."
-msgstr "La protezione anti-spam non è stata confermata. Completa il controllo anti-spam nel modulo e invia di nuovo."
+msgid "Das Formular konnte nicht gesendet werden. Bitte laden Sie die Seite neu und senden Sie es noch einmal."
+msgstr "Non è stato possibile inviare il modulo. Ricarichi la pagina e lo invii di nuovo."
 
 msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."
 msgstr "La protezione anti-spam non è al momento disponibile. Riprova tra qualche minuto."
@@ -710,8 +710,8 @@ msgstr "Il modulo non è stato inviato. Controlla i messaggi e invia di nuovo."
 msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
 msgstr "Salvataggio non riuscito. Riprova."
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
-msgstr "La protezione anti-spam non è stata confermata. Completa il controllo anti-spam nel modulo e invia di nuovo."
+msgid "Das Formular konnte nicht gesendet werden. Bitte lade die Seite neu und sende es noch einmal."
+msgstr "Non è stato possibile inviare il modulo. Ricarica la pagina e invialo di nuovo."
 
 msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
 msgstr "La protezione anti-spam non è al momento disponibile. Riprova tra qualche minuto."

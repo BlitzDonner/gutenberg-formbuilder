@@ -283,8 +283,8 @@ msgstr "Data processing agreement included in the plan"
 msgid "(unverbindliche Vorlage, keine Rechtsberatung)"
 msgstr "(non-binding template, not legal advice)"
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut."
-msgstr "Spam protection was not confirmed. Please complete the spam check in the form and submit again."
+msgid "Das Formular konnte nicht gesendet werden. Bitte laden Sie die Seite neu und senden Sie es noch einmal."
+msgstr "The form could not be sent. Please reload the page and submit it again."
 
 msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."
 msgstr "Spam protection is currently unavailable. Please try again in a few minutes."
@@ -711,8 +711,8 @@ msgstr "The form was not submitted. Please review the messages and submit again.
 msgid "Speichern fehlgeschlagen. Bitte versuche es erneut."
 msgstr "Saving failed. Please try again."
 
-msgid "Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut."
-msgstr "Spam protection was not confirmed. Please complete the spam check in the form and submit again."
+msgid "Das Formular konnte nicht gesendet werden. Bitte lade die Seite neu und sende es noch einmal."
+msgstr "The form could not be sent. Please reload the page and submit it again."
 
 msgid "Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuche es in einigen Minuten erneut."
 msgstr "Spam protection is currently unavailable. Please try again in a few minutes."

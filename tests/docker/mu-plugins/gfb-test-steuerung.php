@@ -88,6 +88,29 @@ add_filter(
 );
 
 /**
+ * Eingabe-Nachweis ausschalten, für die Gegenprobe in Gruppe E.
+ */
+add_filter(
+	'gfb_nachweis_aktiv',
+	static function ( $aktiv ) {
+		return 'aus' === gfb_test_schalter( 'nachweis' ) ? false : $aktiv;
+	},
+	99
+);
+
+/**
+ * Mindestzeit des Eingabe-Nachweises anheben, für den Prüfpunkt «zu schnell».
+ */
+add_filter(
+	'gfb_nachweis_mindestzeit',
+	static function ( $sekunden ) {
+		$wert = gfb_test_schalter( 'nachweis_mindestzeit' );
+		return '' === $wert ? $sekunden : (int) $wert;
+	},
+	99
+);
+
+/**
  * Antwort des Update-Servers nachstellen (Gruppe N).
  */
 add_filter(

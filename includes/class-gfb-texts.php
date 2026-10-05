@@ -230,9 +230,9 @@ class GFB_Texts {
 						'hint'    => __( 'Der Virenscanner hat angeschlagen.', 'gutenberg-formbuilder' ),
 					),
 					'err_captcha'              => array(
-						'default' => __( 'Der Spam-Schutz wurde nicht bestätigt. Bitte schliessen Sie die Spam-Prüfung im Formular ab und senden Sie erneut.', 'gutenberg-formbuilder' ),
-						'du'      => __( 'Der Spam-Schutz wurde nicht bestätigt. Bitte schliesse die Spam-Prüfung im Formular ab und sende erneut.', 'gutenberg-formbuilder' ),
-						'hint'    => __( 'Das Captcha wurde nicht gelöst.', 'gutenberg-formbuilder' ),
+						'default' => __( 'Das Formular konnte nicht gesendet werden. Bitte laden Sie die Seite neu und senden Sie es noch einmal.', 'gutenberg-formbuilder' ),
+						'du'      => __( 'Das Formular konnte nicht gesendet werden. Bitte lade die Seite neu und sende es noch einmal.', 'gutenberg-formbuilder' ),
+						'hint'    => __( 'Der Spam-Schutz hat die Einsendung abgewiesen.', 'gutenberg-formbuilder' ),
 					),
 					'err_captcha_unreachable'  => array(
 						'default' => __( 'Der Spam-Schutz ist derzeit nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut.', 'gutenberg-formbuilder' ),

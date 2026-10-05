@@ -103,7 +103,7 @@ export default async function gruppeK( u, s ) {
 	await s.punkt( 'L5', 'Vermerk im Prüfprotokoll', async () => {
 		const roh = await u.php( `
 			global $wpdb;
-			$zeilen = $wpdb->get_col( "SELECT action FROM {$wpdb->prefix}gfb_audit ORDER BY id DESC LIMIT 20" );
+			$zeilen = $wpdb->get_col( "SELECT action FROM {$wpdb->prefix}gfb_audit WHERE action <> 'nachweis_verify' ORDER BY id DESC LIMIT 20" );
 			echo implode( ',', $zeilen );
 		` );
 		return soll.wahr(

@@ -1,4 +1,28 @@
 // Formular laden, ausfüllen und absenden – auf demselben Weg wie ein Browser.
+import crypto from 'node:crypto';
+
+/** Zählt die führenden Null-Bits eines Hashes. */
+function nullBits( buf ) {
+	let n = 0;
+	for ( const b of buf ) {
+		if ( b === 0 ) { n += 8; continue; }
+		for ( let i = 7; i >= 0; i-- ) { if ( b & ( 1 << i ) ) return n; n++; }
+	}
+	return n;
+}
+
+/**
+ * Löst die Aufgabe des Eingabe-Nachweises wie assets/eingabe-nachweis.js:
+ * eine Zahl, sodass SHA-256(Aufgabe.Salz.Zahl) mit den verlangten Null-Bits beginnt.
+ */
+export function nachweisLoesen( aufgabe ) {
+	const bits = parseInt( String( aufgabe ).split( '.' )[ 2 ], 10 );
+	const salz = crypto.randomBytes( 16 ).toString( 'hex' );
+	for ( let zahl = 0; ; zahl++ ) {
+		const h = crypto.createHash( 'sha256' ).update( `${ aufgabe }.${ salz }.${ zahl }` ).digest();
+		if ( nullBits( h ) >= bits ) return `${ salz }.${ zahl }`;
+	}
+}
 
 /** Liest alle Formularfelder aus dem gelieferten HTML. */
 export function formularLesen( html, formId ) {
@@ -76,11 +100,18 @@ export async function formularHolen( umgebung, pfad, formId ) {
  * Wartet vorgabegemäss die zwei Sekunden ab, die der Token verlangt.
  */
 export async function absenden( umgebung, formular, werte = {}, optionen = {} ) {
-	const { warten = 2200, dateien = {}, ohne = [], roh = {} } = optionen;
+	// 3,2 Sekunden: Der Eingabe-Nachweis verlangt mindestens 3 Sekunden, der Token 2.
+	const { warten = 3200, dateien = {}, ohne = [], roh = {}, nachweis = true } = optionen;
 	if ( warten ) await new Promise( ( r ) => setTimeout( r, warten ) );
 
 	const daten = new FormData();
-	const alle = { ...formular.felder, ...werte, ...roh };
+	const loesung = {};
+	// Wie ein Mensch im Browser: Lösung zum Nachweis mitsenden. nachweis: false
+	// sendet wie ein Bot ohne JavaScript, mit leerem Lösungsfeld.
+	if ( nachweis && formular.felder.gfb_nw_aufgabe ) {
+		loesung.gfb_nw_loesung = nachweisLoesen( formular.felder.gfb_nw_aufgabe );
+	}
+	const alle = { ...formular.felder, ...loesung, ...werte, ...roh };
 	for ( const [ name, wert ] of Object.entries( alle ) ) {
 		if ( ohne.includes( name ) ) continue;
 		daten.append( name, wert );
