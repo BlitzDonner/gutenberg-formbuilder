@@ -20,7 +20,7 @@
  *
  *   require_once __DIR__ . '/includes/bd-update-client-loader.php';
  *   bd_update_client_register(
- *       '3.0.0',                                           // Version DIESER Kopie (Stub-Header)
+ *       '3.1.0',                                           // Version DIESER Kopie (Stub-Header)
  *       __DIR__ . '/includes/class-bd-update-client.php'
  *   );
  *
