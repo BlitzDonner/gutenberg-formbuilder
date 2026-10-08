@@ -111,7 +111,7 @@ bdliz_register(
 // veraltete Kopie eines anderen Plugins kann Updates nicht mehr blockieren).
 require_once GFB_PLUGIN_DIR . 'includes/bd-update-client-loader.php';
 bd_update_client_register(
-	'3.0.0',
+	'3.1.0',
 	GFB_PLUGIN_DIR . 'includes/class-bd-update-client.php'
 );
 

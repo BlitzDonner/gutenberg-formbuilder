@@ -36,7 +36,7 @@
  *                                                   // bdliz-Modul einmalig (legacy_const)
  *   ) );
  *
- * KOPIE-VERSION: 3.0.0 – diese Nummer beim Registrieren ueber den Lader
+ * KOPIE-VERSION: 3.1.0 – diese Nummer beim Registrieren ueber den Lader
  * (bd-update-client-loader.php) als Literal angeben und bei jeder
  * Aktualisierung der Kopie mitfuehren. Der Lader laedt siteweit die
  * hoechste registrierte Kopie (newest wins).
@@ -66,6 +66,9 @@ class BD_Update_Client {
 		'85044a46882e9338' => '85044a46882e93386304cb8329b2407ba7d7f970f727d99d4b546fc79391e2bd',
 		// Inhaber: Blitz & Donner / Max – erzeugt 2026-08-04.
 		'7172641c9899191a' => '7172641c9899191aeac78a5cc8839b0c6bdda015e8b8cd919a6281e6e7f6c523',
+		// Inhaber: Blitz & Donner / Max – Ersatzschluessel nach Verlust des alten
+		// Schluessels, erzeugt 2026-10-08 (Aufgabe #A74).
+		'7e8bcaa281a90d43' => '7e8bcaa281a90d43970385e50b3b09f8cdc92b39d0f42ca064d72a8a6f506cea',
 	);
 
 	/**
