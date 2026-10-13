@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen werden hier dokumentiert. Versionsnummern folgen [SemVer](https://semver.org/lang/de/); Vorab-Releases trugen das Suffix `-beta.N`.
 
+## [2.16.1] – 2026-10-13
+
+### Geändert
+
+- Die Update-Funktion kennt einen zusätzlichen Signaturschlüssel des Entwicklerteams. Damit prüft das Plugin künftige Updates auch dann korrekt, wenn sie mit diesem Schlüssel signiert sind. Die Bedienung bleibt gleich.
+
 ## [2.16.0] – 2026-10-06
 
 ### Entfernt
