@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Berechtigungen &amp; Audit-Log · Gutenberg Formbuilder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #162122;
+      --bg-card:  #1c2c2e;
+      --bg-light: #203335;
+      --text:     #ffffff;
+      --muted:    rgba(255,255,255,0.6);
+      --lime:     #cdff26;
+      --cyan-btn: #e5feff;
+      --dark:     #162122;
+      --border:   rgba(255,255,255,0.12);
+      --font:     'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      background: rgba(22,33,34,0.93);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); text-decoration: none; }
+    .nav-brand span { color: var(--lime); }
+    .nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+    .nav-link { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 0.35rem 0.75rem; border-radius: 9000px; border: 1px solid transparent; transition: all .15s; }
+    .nav-link:hover { color: var(--text); border-color: var(--border); }
+    .nav-link.active { color: var(--lime); border-color: rgba(205,255,38,0.3); }
+    .nav-cta { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.5rem 1.2rem; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: opacity .2s; white-space: nowrap; }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── CONTAINER ── */
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 2rem; }
+    section { padding: 5rem 0; }
+    section:nth-child(even) { background: var(--bg-light); }
+
+    .label { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lime); margin-bottom: 0.85rem; }
+
+    /* ── HERO ── */
+    .hero { padding: 6rem 0 5rem; background: var(--bg); }
+    .hero-inner { max-width: 800px; margin: 0 auto; text-align: center; padding: 0 2rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: normal; color: var(--lime); }
+    .hero-lead { font-size: 1.1rem; color: var(--muted); line-height: 1.75; max-width: 660px; margin: 0 auto 2rem; }
+    .hero-lead strong { color: var(--text); }
+
+    /* ── SECTION HEADERS ── */
+    .sec-h2 { font-size: clamp(1.6rem, 3.5vw, 2.5rem); font-weight: 700; color: var(--lime); line-height: 1.15; margin-bottom: 0.75rem; }
+    .sec-lead { font-size: 1rem; color: var(--muted); max-width: 700px; line-height: 1.7; margin-bottom: 2.5rem; }
+    .sec-lead strong { color: var(--text); }
+
+    /* ── CAP TABLE ── */
+    .cap-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .cap-table th { text-align: left; padding: 0.7rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime); border-bottom: 1px solid var(--border); background: rgba(205,255,38,0.05); }
+    .cap-table td { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--muted); vertical-align: top; }
+    .cap-table tr:last-child td { border-bottom: none; }
+    .cap-table .cap-name { font-weight: 700; color: var(--text); }
+    .cap-table .yes { color: var(--lime); font-weight: 700; font-size: 1rem; text-align: center; }
+    .cap-table .no { color: rgba(255,255,255,0.2); text-align: center; }
+    .cap-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
+
+    /* ── FLOW-STEPS ── */
+    .flow { display: flex; flex-direction: column; gap: 1.5rem; }
+    .flow-step { display: grid; grid-template-columns: 3rem 1fr; gap: 1.25rem; align-items: start; }
+    .flow-num { width: 3rem; height: 3rem; border-radius: 50%; background: var(--lime); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+    .flow-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .flow-body p { font-size: 0.95rem; color: var(--muted); line-height: 1.65; }
+    .flow-body .note { font-size: 0.82rem; color: rgba(205,255,38,0.75); margin-top: 0.4rem; }
+
+    /* ── SEC-ITEMS (grüne Karten) ── */
+    .sec-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .sec-item { background: rgba(205,255,38,0.05); border: 1px solid rgba(205,255,38,0.15); border-radius: 1rem; padding: 1.5rem; }
+    .sec-item-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .sec-item-icon { font-size: 1.4rem; }
+    .sec-item h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .sec-item p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── AUDIT TABLE (Mock) ── */
+    .audit-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .audit-table th { text-align: left; padding: 0.6rem 0.85rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lime); border-bottom: 1px solid var(--border); background: rgba(205,255,38,0.04); }
+    .audit-table td { padding: 0.65rem 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--muted); vertical-align: top; }
+    .audit-table tr:last-child td { border-bottom: none; }
+    .audit-table .event-name { color: var(--text); font-weight: 600; }
+    .audit-table .hash { font-family: 'Menlo','Consolas',monospace; font-size: 0.75rem; color: rgba(205,255,38,0.5); letter-spacing: 0.02em; }
+    .audit-table .ok { color: var(--lime); font-weight: 700; font-size: 0.8rem; }
+    .screen { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; margin-bottom: 1.5rem; }
+    .screen-bar { background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); }
+    .screen-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screen-dot.r { background: rgba(255,90,90,0.6); }
+    .screen-dot.y { background: rgba(255,200,0,0.6); }
+    .screen-dot.g { background: rgba(80,210,80,0.6); }
+    .screen-title { font-size: 0.75rem; color: var(--muted); margin-left: 0.5rem; }
+    .screen-body { padding: 0; overflow-x: auto; }
+
+    /* ── HASH-CHAIN VISUAL ── */
+    .chain { display: flex; flex-direction: column; gap: 0; }
+    .chain-row { display: grid; grid-template-columns: auto 1fr; gap: 0; align-items: stretch; }
+    .chain-line { width: 2px; background: rgba(205,255,38,0.25); margin: 0 auto; }
+    .chain-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--lime); flex-shrink: 0; margin: 0 auto; }
+    .chain-node { display: flex; flex-direction: column; align-items: center; width: 2rem; padding: 0.5rem 0; }
+    .chain-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem 1.25rem; margin: 0.35rem 0 0.35rem 1rem; }
+    .chain-content h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .chain-content p { font-size: 0.83rem; color: var(--muted); line-height: 1.55; }
+    .chain-content .mono { font-family: 'Menlo','Consolas',monospace; font-size: 0.75rem; color: rgba(205,255,38,0.6); margin-top: 0.35rem; display: block; }
+
+    /* ── NUTZUNGSSZENARIEN ── */
+    .use-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .use-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; }
+    .use-item-icon { font-size: 1.6rem; margin-bottom: 0.75rem; }
+    .use-item h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .use-item p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── FINAL CTA ── */
+    .final { text-align: center; padding: 6rem 0; background: var(--bg); }
+    .final-inner { max-width: 640px; margin: 0 auto; padding: 0 2rem; }
+    .final h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1.25rem; }
+    .final h2 em { font-style: normal; color: var(--lime); }
+    .final p { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; line-height: 1.7; }
+    .final-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-p { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 700; font-size: 0.95rem; text-decoration: none; display: inline-block; transition: opacity .2s; }
+    .btn-p:hover { opacity: 0.9; }
+    .btn-g { background: transparent; color: var(--text); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 600; font-size: 0.95rem; text-decoration: none; display: inline-block; border: 1px solid var(--border); transition: all .15s; }
+    .btn-g:hover { border-color: rgba(255,255,255,0.35); }
+    .final-pages { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .page-link { font-size: 0.85rem; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 9000px; padding: 0.4rem 1rem; transition: all .15s; }
+    .page-link:hover { color: var(--text); border-color: rgba(205,255,38,0.3); }
+
+    code { font-family: 'Menlo','Consolas',monospace; font-size: 0.83em; background: rgba(205,255,38,0.1); color: var(--lime); padding: 0.1em 0.4em; border-radius: 0.25rem; }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 2rem 0; font-size: 0.82rem; color: var(--muted); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-brand { font-weight: 700; color: var(--text); }
+    .footer-brand span { color: var(--lime); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 700px) {
+      .cap-table th, .cap-table td { padding: 0.6rem 0.6rem; font-size: 0.78rem; }
+      section { padding: 3.5rem 0; }
+      .hero { padding: 4rem 0 3rem; }
+      .nav { padding: 0.85rem 1.25rem; }
+      .chain-content { margin-left: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-brand" href="https://blitzdonner.ch">Blitz <span>&amp;</span> Donner</a>
+  <div class="nav-links">
+    <a class="nav-link" href="gutenberg-formbuilder-landingpage.html">Verbände &amp; Vereine</a>
+    <a class="nav-link" href="gutenberg-formbuilder-kmu.html">KMU</a>
+    <a class="nav-link" href="gutenberg-formbuilder-funktionen.html">Funktionen</a>
+    <a class="nav-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
+    <a class="nav-link" href="gutenberg-formbuilder-datenschutz.html">Datenschutz</a>
+    <a class="nav-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
+    <a class="nav-link" href="gutenberg-formbuilder-export.html">Export</a>
+    <a class="nav-link active" href="gutenberg-formbuilder-audit.html">Audit</a>
+    <a class="nav-link" href="gutenberg-formbuilder-uploads.html">Uploads</a>
+  </div>
+  <a class="nav-cta" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin holen</a>
+</nav>
+
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <span class="label">Berechtigungen &amp; Audit-Log · Gutenberg Formbuilder</span>
+    <h1>Sie sehen, wer was<br><em>wann gesehen hat.</em></h1>
+    <p class="hero-lead">
+      «Wer hat letzte Woche die Bewerbungsunterlagen heruntergeladen?» – eine Frage, die in den meisten Plugins keine Antwort hat. Bei uns hat sie eine.
+      <strong>30 Sekunden im Audit-Log.</strong> Nicht drei Tage Hosting-Logs.
+    </p>
+  </div>
+</section>
+
+
+<!-- 1. BERECHTIGUNGEN -->
+<section id="berechtigungen">
+  <div class="container">
+    <span class="label">1 – Sechs Berechtigungen</span>
+    <h2 class="sec-h2">Wer sieht was – sauber getrennt.</h2>
+    <p class="sec-lead">
+      Das Plugin trennt sechs Berechtigungen klar voneinander.
+      <strong>Eine Mitarbeiterin kann Anfragen sichten, ohne sie entschlüsseln oder Anhänge laden zu können.</strong>
+      Sie vergeben die Berechtigungen pro WordPress-Benutzerrolle.
+    </p>
+
+    <div class="cap-wrap">
+      <table class="cap-table">
+        <thead>
+          <tr>
+            <th>Berechtigung</th>
+            <th>Was sie erlaubt</th>
+            <th style="text-align:center">Admin</th>
+            <th style="text-align:center">Sachbearb.</th>
+            <th style="text-align:center">DSB</th>
+            <th style="text-align:center">Redaktion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>gfb_view_submissions</code></td>
+            <td class="cap-name">Anfragen sehen</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_decrypt_submissions</code></td>
+            <td class="cap-name">Anfragen entschlüsseln</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_delete_submissions</code></td>
+            <td class="cap-name">Anfragen löschen</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_download_files</code></td>
+            <td class="cap-name">Datei-Anhang herunterladen</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_view_audit</code></td>
+            <td class="cap-name">Audit-Log einsehen</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_manage_settings</code></td>
+            <td class="cap-name">Plugin-Einstellungen ändern</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-top:1rem;line-height:1.65;">
+      Admin, Sachbearb., DSB und Redaktion sind Beispiel-Rollen. Sie können jede WordPress-Benutzerrolle mit beliebigen dieser Berechtigungen ausstatten. Standard: Administrator darf alles.
+    </p>
+  </div>
+</section>
+
+
+<!-- 2. TAMPER-EVIDENT AUDIT-LOG -->
+<section id="audit-log">
+  <div class="container">
+    <span class="label">2 – Tamper-evident Audit-Log</span>
+    <h2 class="sec-h2">Manipulation fällt auf Knopfdruck auf.</h2>
+    <p class="sec-lead">
+      Jeder Zugriff auf Formulardaten landet als Eintrag im Audit-Log.
+      Die Einträge sind durch eine <strong>SHA-256-Hash-Chain</strong> miteinander verbunden –
+      wer eine Zeile ändert, bricht die Kette.
+    </p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;">
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1.25rem;">Wie die Hash-Chain funktioniert</p>
+        <div class="chain">
+          <div class="chain-row">
+            <div class="chain-node">
+              <div class="chain-dot"></div>
+              <div class="chain-line" style="flex:1;min-height:3rem;"></div>
+            </div>
+            <div class="chain-content">
+              <h4>Eintrag 1 – Genesis</h4>
+              <p>Erster Eintrag der Kette. Hash der eigenen Daten wird berechnet.</p>
+              <span class="mono">hash: a3f8c1…</span>
+            </div>
+          </div>
+          <div class="chain-row">
+            <div class="chain-node">
+              <div class="chain-dot"></div>
+              <div class="chain-line" style="flex:1;min-height:3rem;"></div>
+            </div>
+            <div class="chain-content">
+              <h4>Eintrag 2 – verkettet</h4>
+              <p>Enthält Hash des vorherigen Eintrags als Eingabe. Jede Zeile kennt ihren Vorgänger.</p>
+              <span class="mono">prev: a3f8c1… · hash: 7d92e4…</span>
+            </div>
+          </div>
+          <div class="chain-row">
+            <div class="chain-node">
+              <div class="chain-dot"></div>
+            </div>
+            <div class="chain-content">
+              <h4>Verifikation – auf Knopfdruck</h4>
+              <p>Das Plugin prüft die gesamte Kette neu durch. Eine manipulierte Zeile bricht die Sequenz – sichtbar als roter Eintrag im Log.</p>
+              <span class="mono">status: ✓ 48 / 48 Einträge integer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">Audit-Log – Beispielansicht</p>
+        <div class="screen">
+          <div class="screen-bar">
+            <div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div>
+            <span class="screen-title">WordPress Admin → Audit-Log</span>
+          </div>
+          <div class="screen-body">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Zeit</th>
+                  <th>Ereignis</th>
+                  <th>Benutzer</th>
+                  <th>Hash</th>
+                  <th>OK</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="white-space:nowrap;color:var(--muted);font-size:0.78rem;">02.06.2026<br>09:14</td>
+                  <td class="event-name">Submission gelesen</td>
+                  <td style="font-size:0.82rem;">s.wyss</td>
+                  <td class="hash">7d92e4…</td>
+                  <td class="ok">✓</td>
+                </tr>
+                <tr>
+                  <td style="white-space:nowrap;color:var(--muted);font-size:0.78rem;">02.06.2026<br>09:15</td>
+                  <td class="event-name">Submission entschlüsselt</td>
+                  <td style="font-size:0.82rem;">s.wyss</td>
+                  <td class="hash">3c18b7…</td>
+                  <td class="ok">✓</td>
+                </tr>
+                <tr>
+                  <td style="white-space:nowrap;color:var(--muted);font-size:0.78rem;">02.06.2026<br>09:17</td>
+                  <td class="event-name">Datei heruntergeladen</td>
+                  <td style="font-size:0.82rem;">s.wyss</td>
+                  <td class="hash">f041a2…</td>
+                  <td class="ok">✓</td>
+                </tr>
+                <tr>
+                  <td style="white-space:nowrap;color:var(--muted);font-size:0.78rem;">01.06.2026<br>16:03</td>
+                  <td class="event-name">Export CSV</td>
+                  <td style="font-size:0.82rem;">k.meier</td>
+                  <td class="hash">9a55d1…</td>
+                  <td class="ok">✓</td>
+                </tr>
+                <tr>
+                  <td style="white-space:nowrap;color:var(--muted);font-size:0.78rem;">01.06.2026<br>08:30</td>
+                  <td class="event-name">Verifikation</td>
+                  <td style="font-size:0.82rem;">admin</td>
+                  <td class="hash">b72fc9…</td>
+                  <td class="ok">✓</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 3. EINGETRAGENE EREIGNISSE -->
+<section id="ereignisse">
+  <div class="container">
+    <span class="label">3 – Eingetragene Ereignisse</span>
+    <h2 class="sec-h2">Was das Audit-Log aufzeichnet.</h2>
+    <p class="sec-lead">
+      Jedes dieser Ereignisse erzeugt automatisch einen Eintrag – mit Zeitstempel, Benutzer und dem Hash des vorherigen Eintrags.
+    </p>
+
+    <div class="sec-items">
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">👁</span><h3>Submission gelesen</h3></div>
+        <p>Eine Anfrage wurde im Backend geöffnet und betrachtet.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🔓</span><h3>Submission entschlüsselt</h3></div>
+        <p>Vertrauliche Felder wurden entschlüsselt angezeigt. Protokolliert auch, welche Felder betroffen waren.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">📥</span><h3>Datei heruntergeladen</h3></div>
+        <p>Ein Datei-Anhang wurde vom Backend aus heruntergeladen – inklusive Dateiname und Submission-ID.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🗑</span><h3>Submission gelöscht</h3></div>
+        <p>Eine Anfrage wurde aus der Datenbank entfernt. Zeitpunkt und handelnde Person bleiben dauerhaft im Log.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">⚙️</span><h3>Plugin-Konfiguration geändert</h3></div>
+        <p>Einstellungen wurden gespeichert – Verschlüsselungsschlüssel, Berechtigungen, ClamAV-Pfad.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🔍</span><h3>Verifikation durchgeführt</h3></div>
+        <p>Die Hash-Chain wurde auf Integrität geprüft. Ergebnis und geprüfte Eintragsanzahl werden mitprotokolliert.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">📊</span><h3>Einsendungen exportiert CSV / ZIP</h3></div>
+        <p>Ein Export wurde ausgelöst – mit Formular-ID, Exportmodus und Anzahl Datensätze.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🔐</span><h3>Export mit Entschlüsselung</h3></div>
+        <p>Ein Export enthielt entschlüsselte vertrauliche Felder – gesondert markiert, da sensitiver als ein Standard-Export.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">📦</span><h3>Datei exportiert</h3></div>
+        <p>Datei-Anhänge wurden als Teil eines ZIP-Exports heruntergeladen.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-head"><span class="sec-item-icon">🚫</span><h3>Export abgewiesen</h3></div>
+        <p>Ein Export-Versuch wurde blockiert, weil die nötige Berechtigung fehlte. Auch Abweisungen landen im Log.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 4. WOFÜR SIE DAS BRAUCHEN -->
+<section id="nutzen">
+  <div class="container">
+    <span class="label">4 – Wofür Sie das brauchen</span>
+    <h2 class="sec-h2">Drei Situationen, in denen das Log den Unterschied macht.</h2>
+    <p class="sec-lead">
+      Das Audit-Log ist nicht Selbstzweck – es löst konkrete Probleme, die in jedem Verein und in jedem KMU vorkommen.
+    </p>
+
+    <div class="use-items">
+      <div class="use-item">
+        <div class="use-item-icon">📋</div>
+        <h3>Datenschutz-Audits ohne Recherche</h3>
+        <p>Wer hat welche Daten gesehen? Wann wurde exportiert? Das Log beantwortet diese Fragen sofort – für interne Audits, für den Datenschutzbeauftragten oder für den EDÖB, falls es je dazu kommen sollte.</p>
+      </div>
+      <div class="use-item">
+        <div class="use-item-icon">👥</div>
+        <h3>Vier-Augen-Prinzip – technisch erzwungen</h3>
+        <p>Nicht nur per Vereinbarung festgehalten, sondern durch Berechtigungen strukturell verankert. Wer nur lesen darf, kann nicht entschlüsseln. Wer entschlüsseln darf, kann nicht löschen. Das Log beweist, dass es so gelebt wurde.</p>
+      </div>
+      <div class="use-item">
+        <div class="use-item-icon">🔎</div>
+        <h3>Verdacht interner Lecks – belegbar nachvollziehen</h3>
+        <p>Sind vertrauliche Bewerbungsunterlagen nach aussen gelangt? Das Log zeigt, wer die Dateien heruntergeladen hat, wann und von welchem Gerät. Kein Raten, kein gegenseitiger Vorwurf – nur Fakten.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FINAL CTA -->
+<section class="final" id="entscheiden">
+  <div class="final-inner">
+    <h2>Protokolliert, geprüft,<br><em>beweisbar.</em></h2>
+    <p>Das Plugin ist kostenlos und Open Source. Den Quellcode des Audit-Systems finden Sie direkt auf GitHub – <code>class-gfb-capabilities.php</code> und <code>class-gfb-audit.php</code>.</p>
+    <div class="final-btns">
+      <a class="btn-p" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin auf GitHub holen</a>
+      <a class="btn-g" href="mailto:office@blitzdonner.ch">Fragen? Erstgespräch anfragen</a>
+    </div>
+    <div class="final-pages">
+      <a class="page-link" href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-capabilities.php">→ class-gfb-capabilities.php</a>
+      <a class="page-link" href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/includes/class-gfb-audit.php">→ class-gfb-audit.php</a>
+      <a class="page-link" href="gutenberg-formbuilder-verschluesselung.html">→ Verschlüsselung</a>
+      <a class="page-link" href="gutenberg-formbuilder-datenschutz.html">→ Datenschutz</a>
+      <a class="page-link" href="gutenberg-formbuilder-export.html">→ Export</a>
+      <a class="page-link" href="gutenberg-formbuilder-uploads.html">→ Uploads</a>
+      <a class="page-link" href="gutenberg-formbuilder-funktionen.html">→ Alle Funktionen</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div><span class="footer-brand">Blitz <span>&amp;</span> Donner</span> – Bern · <a href="https://blitzdonner.ch">blitzdonner.ch</a> · <a href="tel:+41313066363">+41 31 306 63 63</a></div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder">GitHub</a>
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/SECURITY.md">Security</a>
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/INSTALL.md">INSTALL.md</a>
+        <a href="https://www.edoeb.admin.ch">EDÖB</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

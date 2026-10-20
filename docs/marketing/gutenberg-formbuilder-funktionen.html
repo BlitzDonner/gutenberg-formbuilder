@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gutenberg Formbuilder – Was das Plugin kann. Bevor Sie entscheiden.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #162122;
+      --bg-card:  #1c2c2e;
+      --bg-light: #203335;
+      --text:     #ffffff;
+      --muted:    rgba(255,255,255,0.6);
+      --lime:     #cdff26;
+      --cyan-btn: #e5feff;
+      --dark:     #162122;
+      --border:   rgba(255,255,255,0.12);
+      --red:      rgba(255,80,80,0.18);
+      --red-b:    rgba(255,100,100,0.35);
+      --font:     'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      background: rgba(22,33,34,0.93);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); text-decoration: none; }
+    .nav-brand span { color: var(--lime); }
+    .nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+    .nav-link { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 0.35rem 0.75rem; border-radius: 9000px; border: 1px solid transparent; transition: all .15s; }
+    .nav-link:hover { color: var(--text); border-color: var(--border); }
+    .nav-cta { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.5rem 1.2rem; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: opacity .2s; white-space: nowrap; }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── CONTAINER ── */
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 2rem; }
+    section { padding: 5rem 0; }
+    section:nth-child(even) { background: var(--bg-light); }
+
+    .label { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lime); margin-bottom: 0.85rem; }
+
+    /* ── HERO ── */
+    .hero { padding: 6rem 0 5rem; background: var(--bg); }
+    .hero-inner { max-width: 800px; margin: 0 auto; text-align: center; padding: 0 2rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: normal; color: var(--lime); }
+    .hero-lead { font-size: 1.1rem; color: var(--muted); line-height: 1.75; max-width: 660px; margin: 0 auto 2rem; }
+    .hero-for { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem; }
+    .hero-for-tag { background: var(--bg-card); border: 1px solid var(--border); border-radius: 9000px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+    .hero-for-tag strong { color: var(--lime); }
+    .toc { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+    .toc a { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 0.35rem 0.9rem; border: 1px solid var(--border); border-radius: 9000px; transition: all .15s; }
+    .toc a:hover { color: var(--text); border-color: rgba(205,255,38,0.4); }
+
+    /* ── SECTION HEADERS ── */
+    .sec-h2 { font-size: clamp(1.6rem, 3.5vw, 2.5rem); font-weight: 700; color: var(--lime); line-height: 1.15; margin-bottom: 0.75rem; }
+    .sec-lead { font-size: 1rem; color: var(--muted); max-width: 700px; line-height: 1.7; margin-bottom: 2.5rem; }
+    .sec-lead strong { color: var(--text); }
+
+    /* ── FELDER-GRID ── */
+    .fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
+    .field-chip {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 0.75rem; padding: 0.85rem 1rem;
+      display: flex; align-items: center; gap: 0.65rem;
+    }
+    .field-chip-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .field-chip-text { font-size: 0.88rem; font-weight: 600; line-height: 1.25; }
+    .field-chip-sub { font-size: 0.75rem; color: var(--muted); font-weight: 400; }
+
+    /* ── FLOW-STEPS ── */
+    .flow { display: flex; flex-direction: column; gap: 1.5rem; }
+    .flow-step { display: grid; grid-template-columns: 3rem 1fr; gap: 1.25rem; align-items: start; }
+    .flow-num { width: 3rem; height: 3rem; border-radius: 50%; background: var(--lime); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+    .flow-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .flow-body p { font-size: 0.95rem; color: var(--muted); line-height: 1.65; }
+    .flow-body .note { font-size: 0.82rem; color: rgba(205,255,38,0.75); margin-top: 0.4rem; }
+
+    /* ── SCREEN MOCKUP ── */
+    .screen { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; margin-bottom: 1.5rem; }
+    .screen-bar { background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); }
+    .screen-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screen-dot.r { background: rgba(255,90,90,0.6); }
+    .screen-dot.y { background: rgba(255,200,0,0.6); }
+    .screen-dot.g { background: rgba(80,210,80,0.6); }
+    .screen-title { font-size: 0.75rem; color: var(--muted); margin-left: 0.5rem; }
+    .screen-body { padding: 1.5rem 2rem; }
+
+    /* ── FORMULAR PREVIEW ── */
+    .form-preview { display: flex; flex-direction: column; gap: 1rem; }
+    .fp-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .fp-label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+    .fp-input { background: rgba(255,255,255,0.07); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.6rem 0.9rem; font-size: 0.9rem; color: var(--text); font-family: var(--font); }
+    .fp-input.area { min-height: 80px; resize: none; }
+    .fp-input.select { appearance: none; cursor: pointer; }
+    .fp-check { display: flex; align-items: center; gap: 0.6rem; }
+    .fp-checkbox { width: 16px; height: 16px; border: 1px solid var(--border); border-radius: 3px; background: rgba(255,255,255,0.07); flex-shrink: 0; }
+    .fp-submit { background: var(--lime); color: var(--dark); border: none; border-radius: 0.5rem; padding: 0.7rem 1.5rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; font-family: var(--font); width: fit-content; }
+    .fp-success { background: rgba(205,255,38,0.08); border: 1px solid rgba(205,255,38,0.25); border-radius: 0.5rem; padding: 1rem 1.25rem; }
+    .fp-success-title { font-weight: 700; color: var(--lime); font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .fp-success-text { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── ADMIN TABLE PREVIEW ── */
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .admin-table th { text-align: left; padding: 0.6rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime); border-bottom: 1px solid var(--border); }
+    .admin-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--muted); vertical-align: top; }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table .name { color: var(--text); font-weight: 600; }
+    .admin-table .tag { display: inline-block; background: rgba(205,255,38,0.1); color: var(--lime); border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; }
+    .admin-table .enc { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); border-radius: 4px; padding: 0.1rem 0.5rem; font-size: 0.78rem; font-family: monospace; letter-spacing: 0.04em; }
+
+    /* ── CAP TABLE ── */
+    .cap-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .cap-table th { text-align: left; padding: 0.7rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime); border-bottom: 1px solid var(--border); background: rgba(205,255,38,0.05); }
+    .cap-table td { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--muted); vertical-align: top; }
+    .cap-table tr:last-child td { border-bottom: none; }
+    .cap-table .role { font-weight: 700; color: var(--text); }
+    .cap-table .yes { color: var(--lime); font-weight: 700; font-size: 1rem; text-align: center; }
+    .cap-table .no { color: rgba(255,255,255,0.2); text-align: center; }
+    .cap-table .use { font-size: 0.82rem; font-style: italic; }
+    .cap-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
+
+    /* ── SICHERHEITS-ITEMS ── */
+    .sec-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .sec-item { background: rgba(205,255,38,0.05); border: 1px solid rgba(205,255,38,0.15); border-radius: 1rem; padding: 1.5rem; }
+    .sec-item-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .sec-item-icon { font-size: 1.4rem; }
+    .sec-item h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .sec-item p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .sec-auto { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime); background: rgba(205,255,38,0.12); border-radius: 4px; padding: 0.1rem 0.4rem; margin-bottom: 0.4rem; }
+
+    /* ── NICHT-KANN ── */
+    .nk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .nk-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.25rem 1.5rem; }
+    .nk-item h3 { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+    .nk-item h3::before { content: '✕'; color: rgba(255,100,100,0.6); font-size: 0.85rem; }
+    .nk-item p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── SPRACHEN ── */
+    .lang-chips { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .lang-chip { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+    .lang-flag { font-size: 1.1rem; }
+
+    /* ── ANFORDERUNGEN ── */
+    .req-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .req-item { display: flex; align-items: baseline; gap: 0.75rem; font-size: 0.92rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .req-item:last-child { border-bottom: none; }
+    .req-label { font-weight: 700; color: var(--text); min-width: 200px; flex-shrink: 0; }
+    .req-val { color: var(--muted); }
+    .req-val strong { color: var(--lime); }
+
+    /* ── FINAL CTA ── */
+    .final { text-align: center; padding: 6rem 0; background: var(--bg); }
+    .final-inner { max-width: 640px; margin: 0 auto; padding: 0 2rem; }
+    .final h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1.25rem; }
+    .final h2 em { font-style: normal; color: var(--lime); }
+    .final p { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; line-height: 1.7; }
+    .final-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-p { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 700; font-size: 0.95rem; text-decoration: none; display: inline-block; transition: opacity .2s; }
+    .btn-p:hover { opacity: 0.9; }
+    .btn-g { background: transparent; color: var(--text); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 600; font-size: 0.95rem; text-decoration: none; display: inline-block; border: 1px solid var(--border); transition: all .15s; }
+    .btn-g:hover { border-color: rgba(255,255,255,0.35); }
+    .final-pages { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .page-link { font-size: 0.85rem; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 9000px; padding: 0.4rem 1rem; transition: all .15s; }
+    .page-link:hover { color: var(--text); border-color: rgba(205,255,38,0.3); }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 2rem 0; font-size: 0.82rem; color: var(--muted); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-brand { font-weight: 700; color: var(--text); }
+    .footer-brand span { color: var(--lime); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    code { font-family: 'Menlo','Consolas',monospace; font-size: 0.83em; background: rgba(205,255,38,0.1); color: var(--lime); padding: 0.1em 0.4em; border-radius: 0.25rem; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; }
+      .cap-table th, .cap-table td { padding: 0.6rem 0.6rem; font-size: 0.78rem; }
+      section { padding: 3.5rem 0; }
+      .hero { padding: 4rem 0 3rem; }
+      .nav { padding: 0.85rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-brand" href="https://blitzdonner.ch">Blitz <span>&</span> Donner</a>
+  <div class="nav-links">
+    <a class="nav-link" href="gutenberg-formbuilder-landingpage.html">Verbände &amp; Vereine</a>
+    <a class="nav-link" href="gutenberg-formbuilder-kmu.html">KMU</a>
+    <a class="nav-link" href="#formular-bauen">Formular bauen</a>
+    <a class="nav-link" href="#backend">Im Backend</a>
+    <a class="nav-link" href="#sicherheit">Sicherheit</a>
+    <a class="nav-link" href="#grenzen">Grenzen</a>
+    <a class="nav-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
+    <a class="nav-link" href="gutenberg-formbuilder-datenschutz.html">Datenschutz</a>
+    <a class="nav-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
+    <a class="nav-link" href="gutenberg-formbuilder-export.html">Export</a>
+    <a class="nav-link" href="gutenberg-formbuilder-audit.html">Audit</a>
+    <a class="nav-link" href="gutenberg-formbuilder-uploads.html">Uploads</a>
+  </div>
+  <a class="nav-cta" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin holen</a>
+</nav>
+
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <span class="label">Funktionsbeschreibung · Version 2.5.0</span>
+    <h1>Was das Plugin kann.<br><em>Bevor Sie entscheiden.</em></h1>
+    <p class="hero-lead">
+      Diese Seite zeigt Ihnen Schritt für Schritt, was Sie nach der Installation sehen,
+      was Ihre Besucherinnen erleben und was im Hintergrund passiert – ohne Versprechen,
+      ohne Marketingsprache.
+    </p>
+    <div class="hero-for">
+      <span class="hero-for-tag"><strong>Für:</strong> KMU-Inhaberinnen</span>
+      <span class="hero-for-tag"><strong>Für:</strong> Verbandsvorstände</span>
+      <span class="hero-for-tag"><strong>Für:</strong> Vereinswebsite-Verantwortliche</span>
+      <span class="hero-for-tag"><strong>Für:</strong> Datenschutz-Beauftragte</span>
+    </div>
+    <div class="toc">
+      <a href="#formular-bauen">Formular bauen</a>
+      <a href="#besucher-sehen">Was Besucher sehen</a>
+      <a href="#backend">Im Backend</a>
+      <a href="#berechtigungen">Berechtigungen</a>
+      <a href="#sicherheit">Sicherheit</a>
+      <a href="#grenzen">Ehrliche Grenzen</a>
+      <a href="#anforderungen">Anforderungen</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- 1. FORMULAR BAUEN -->
+<section id="formular-bauen">
+  <div class="container">
+    <span class="label">1 – Formular bauen</span>
+    <h2 class="sec-h2">Sie arbeiten im Gutenberg-Editor – kein neues Werkzeug zu lernen.</h2>
+    <p class="sec-lead">
+      Der Block «Formular» wird wie jeder andere Gutenberg-Block eingefügt.
+      Darin ziehen Sie Feld-Blöcke in beliebiger Reihenfolge hinein.
+      <strong>Was Sie bereits können, genügt.</strong>
+    </p>
+
+    <div class="two-col">
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">Verfügbare Felder</p>
+        <div class="fields-grid">
+          <div class="field-chip"><span class="field-chip-icon">✍️</span><div><div class="field-chip-text">Text</div><div class="field-chip-sub">einzeilig</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📧</span><div><div class="field-chip-text">E-Mail</div><div class="field-chip-sub">mit Validierung</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📞</span><div><div class="field-chip-text">Telefon</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">🌐</span><div><div class="field-chip-text">URL</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📝</span><div><div class="field-chip-text">Textbereich</div><div class="field-chip-sub">mehrzeilig</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">🔢</span><div><div class="field-chip-text">Zahl</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📋</span><div><div class="field-chip-text">Auswahl</div><div class="field-chip-sub">Dropdown</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">☑️</span><div><div class="field-chip-text">Checkbox</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">🔘</span><div><div class="field-chip-text">Radio</div><div class="field-chip-sub">Einfachauswahl</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">🎚️</span><div><div class="field-chip-text">Bereich</div><div class="field-chip-sub">Slider</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📅</span><div><div class="field-chip-text">Datum</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">🕐</span><div><div class="field-chip-text">Uhrzeit</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📆</span><div><div class="field-chip-text">Termin</div><div class="field-chip-sub">Datum + Uhrzeit</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📎</span><div><div class="field-chip-text">Datei-Upload</div><div class="field-chip-sub">mit ClamAV-Scan</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">👁️‍🗨️</span><div><div class="field-chip-text">Verstecktes Feld</div><div class="field-chip-sub">nur intern</div></div></div>
+          <div class="field-chip"><span class="field-chip-icon">📤</span><div><div class="field-chip-text">Absenden</div><div class="field-chip-sub">Button</div></div></div>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">So sieht ein Formular im Editor aus</p>
+        <div class="screen">
+          <div class="screen-bar">
+            <div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div>
+            <span class="screen-title">WordPress Block-Editor</span>
+          </div>
+          <div class="screen-body">
+            <div class="form-preview">
+              <div class="fp-field"><div class="fp-label">Vorname *</div><input class="fp-input" type="text" placeholder="Max" readonly></div>
+              <div class="fp-field"><div class="fp-label">E-Mail *</div><input class="fp-input" type="email" placeholder="max@muster.ch" readonly></div>
+              <div class="fp-field"><div class="fp-label">Betreff</div><select class="fp-input select" disabled><option>Anfrage</option></select></div>
+              <div class="fp-field"><div class="fp-label">Nachricht *</div><textarea class="fp-input area" placeholder="Ihre Nachricht …" readonly></textarea></div>
+              <div class="fp-check"><div class="fp-checkbox"></div><span style="font-size:0.85rem;color:var(--muted)">Ich habe die Datenschutzerklärung gelesen.</span></div>
+              <div><button class="fp-submit">Absenden</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2.5rem;">
+      <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1.25rem;">Was Sie am Formular einstellen können</p>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">A</div>
+          <div class="flow-body">
+            <h3>Felder als «vertraulich» markieren</h3>
+            <p>Jedes Feld kann im Editor als «vertraulich» gekennzeichnet werden. Vertrauliche Felder werden vor dem Speichern automatisch verschlüsselt – sichtbar im Backend nur für Personen mit Entschlüsselungsberechtigung.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">B</div>
+          <div class="flow-body">
+            <h3>Anzeigename des Formulars vergeben</h3>
+            <p>Geben Sie dem Formular einen sprechenden Namen, z.B. «Mitgliedschaftsantrag» oder «Offertanfrage». Dieser Name erscheint in der Backend-Übersicht und im Betreff der E-Mail-Benachrichtigung.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">C</div>
+          <div class="flow-body">
+            <h3>Erfolgsbereich oder Folgeseite wählen</h3>
+            <p>Nach dem Absenden zeigt das Plugin entweder einen <strong>Erfolgsbereich</strong> direkt auf der Seite (mit persönlicher Ansprache wie «Danke, {{vorname}}»), oder leitet auf eine eigene Danke-Seite weiter. Der technische Feldname für jeden Platzhalter ist im Inspector editierbar und bleibt über das Speichern stabil.</p>
+            <div class="note">Beispiel Erfolgsbereich: «Danke, {{vorname}} – wir melden uns innert 2 Arbeitstagen an {{email}}.»</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">D</div>
+          <div class="flow-body">
+            <h3>Farben und Erscheinungsbild anpassen</h3>
+            <p>Das Formular übernimmt automatisch die Farben Ihres Themes – oder Sie setzen eigene Farben pro Formular, inklusive Hell- und Dunkel-Modus. Keine CSS-Kenntnisse nötig.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">E</div>
+          <div class="flow-body">
+            <h3>E-Mail-Benachrichtigung einschalten</h3>
+            <p>Pro Formular können Sie eine Benachrichtigung aktivieren: Bei jeder Einsendung geht eine E-Mail an die gewählten Empfänger. Betreff, Empfänger und Absender sind frei wählbar – der Absender kann die Admin-Adresse, eine feste eigene Adresse oder ein E-Mail-Feld der Einsendung sein (damit Antworten direkt an die anfragende Person gehen). Verschlüsselte Felder und Datei-Anhänge erscheinen nie im Klartext in der Mail; stattdessen steht ein Hinweis, dass der Eintrag im Backend einzusehen ist. Seit Version 2.3.0, eigener Absender seit 2.4.1.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 2. WAS BESUCHER SEHEN -->
+<section id="besucher-sehen">
+  <div class="container">
+    <span class="label">2 – Was Ihre Besucherinnen und Besucher sehen</span>
+    <h2 class="sec-h2">Das Formular auf Ihrer Website – und was danach passiert.</h2>
+    <p class="sec-lead">
+      Das Plugin lädt im Frontend <strong>keine externen Skripte, keine Schriften von Google,
+      keine Tracking-Pixel</strong>. Was die Besucherin sieht, stammt ausschliesslich von Ihrer Site.
+    </p>
+
+    <div class="two-col">
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">Ausgefülltes Formular – Bestätigung</p>
+        <div class="screen">
+          <div class="screen-bar">
+            <div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div>
+            <span class="screen-title">Ihre Website – nach dem Absenden</span>
+          </div>
+          <div class="screen-body">
+            <div class="fp-success">
+              <div class="fp-success-title">Danke, Sarah – Ihre Anfrage ist angekommen.</div>
+              <div class="fp-success-text">Wir melden uns innert 2 Arbeitstagen an sarah@muster.ch. Ihr Anliegen: «Mitgliedschaft Sektion Bern».</div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem;line-height:1.6;">Der Erfolgsbereich erscheint direkt nach dem Absenden – ohne Seitenreload auf eine fremde URL. Die Platzhalter <code>{{vorname}}</code>, <code>{{email}}</code> usw. werden automatisch mit den eingegebenen Werten gefüllt.</p>
+      </div>
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">Schutz im Hintergrund – unsichtbar für Besucher</p>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-num" style="font-size:0.8rem;">①</div>
+            <div class="flow-body">
+              <h3>Spam-Schutz ohne CAPTCHA</h3>
+              <p>Honeypot-Feld pro Formular-Instanz, HMAC-signierter Anti-Replay-Token und Rate-Limiting schützen vor Bots – ohne dass Ihre Besucherinnen Bilder anklicken müssen.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num" style="font-size:0.8rem;">②</div>
+            <div class="flow-body">
+              <h3>Entwurf gespeichert (Browser)</h3>
+              <p>Tippt jemand eine längere Nachricht und schliesst versehentlich den Tab, wird der Entwurf im Browser gespeichert. Beim nächsten Besuch erscheint das Formular bereits ausgefüllt – optional mit Rückfrage.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num" style="font-size:0.8rem;">③</div>
+            <div class="flow-body">
+              <h3>Datei-Uploads sicher entgegengenommen</h3>
+              <p>Wenn das Formular einen Datei-Upload enthält: Die Datei wird sofort geprüft (Dateityp, Doppel-Endungen) und ausserhalb des öffentlich erreichbaren Bereichs gespeichert. Optional mit ClamAV-Virenscan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2.5rem;">
+      <span class="label">Mehrsprachigkeit</span>
+      <p style="font-size:0.95rem;color:var(--muted);margin-bottom:1rem;line-height:1.7;">Alle Fehlermeldungen, Validierungshinweise und Statusmeldungen sind übersetzt. Die Sprache richtet sich nach der WordPress-Einstellung Ihrer Site.</p>
+      <div class="lang-chips">
+        <div class="lang-chip"><span class="lang-flag">🇨🇭</span> Deutsch (Quellsprache)</div>
+        <div class="lang-chip"><span class="lang-flag">🇬🇧</span> Englisch</div>
+        <div class="lang-chip"><span class="lang-flag">🇫🇷</span> Französisch</div>
+        <div class="lang-chip"><span class="lang-flag">🇮🇹</span> Italienisch</div>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);line-height:1.65;">Mehrsprachige Websites (Polylang, WPML) werden unterstützt. Weitere Sprachen können über eigene Übersetzungsdateien hinzugefügt werden.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- 3. IM BACKEND -->
+<section id="backend">
+  <div class="container">
+    <span class="label">3 – Was Sie im Backend sehen</span>
+    <h2 class="sec-h2">Alle Anfragen an einem Ort – filterbar, sortierbar, direkt in WordPress.</h2>
+    <p class="sec-lead">
+      Unter <strong>«Formular-Einträge»</strong> sehen Sie alle eingegangenen Anfragen.
+      Kein externes Dashboard, kein Login bei einem Drittanbieter.
+    </p>
+
+    <div class="screen" style="margin-bottom:2rem;">
+      <div class="screen-bar">
+        <div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div>
+        <span class="screen-title">WordPress Admin → Formular-Einträge</span>
+      </div>
+      <div class="screen-body" style="padding:0; overflow-x:auto;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Formular</th>
+              <th>Absender</th>
+              <th>Vorschau</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>13.05.2026<br><span style="font-size:0.75rem;">10:42</span></td>
+              <td><span class="tag">Mitgliedschaft</span><br><span style="font-size:0.72rem;color:rgba(255,255,255,0.3);">ID 4</span></td>
+              <td class="name">sarah.wyss@muster.ch<br><span style="font-weight:400;color:var(--muted);font-size:0.85rem;">Sarah Wyss</span></td>
+              <td>Sektion Bern, Einzelmitglied …</td>
+              <td><span style="font-size:0.8rem;color:var(--lime);cursor:pointer;">Ansehen · Löschen</span></td>
+            </tr>
+            <tr>
+              <td>12.05.2026<br><span style="font-size:0.75rem;">14:17</span></td>
+              <td><span class="tag">Kontakt</span><br><span style="font-size:0.72rem;color:rgba(255,255,255,0.3);">ID 1</span></td>
+              <td class="name">k.meier@firma.ch<br><span style="font-weight:400;color:var(--muted);font-size:0.85rem;">Kurt Meier</span></td>
+              <td>Offertanfrage für 3 Lizenzen …</td>
+              <td><span style="font-size:0.8rem;color:var(--lime);cursor:pointer;">Ansehen · Löschen</span></td>
+            </tr>
+            <tr>
+              <td>11.05.2026<br><span style="font-size:0.75rem;">09:03</span></td>
+              <td><span class="tag">Bewerbung</span><br><span style="font-size:0.72rem;color:rgba(255,255,255,0.3);">ID 7</span></td>
+              <td class="name">a.mueller@mail.ch<br><span style="font-weight:400;color:var(--muted);font-size:0.85rem;">Anna Müller</span></td>
+              <td><span class="enc">●●● verschlüsselt ●●●</span></td>
+              <td><span style="font-size:0.8rem;color:var(--lime);cursor:pointer;">Ansehen · Löschen</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">→</div>
+        <div class="flow-body">
+          <h3>Filtern nach Formular, Datum und Formularname</h3>
+          <p>Betreiben Sie mehrere Formulare (Kontakt, Mitgliedschaft, Bewerbung), zeigt die Liste entweder alle oder nur die eines bestimmten Formulars. Sortierbar nach Datum und Formularname.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">→</div>
+        <div class="flow-body">
+          <h3>Verschlüsselte Felder: maskiert in der Liste, lesbar im Detail</h3>
+          <p>Felder, die im Editor als «vertraulich» markiert wurden, erscheinen in der Übersicht als «●●● verschlüsselt ●●●». Im Detail-Ansicht werden sie für Personen mit Entschlüsselungsberechtigung automatisch entschlüsselt – und dieser Vorgang wird im Audit-Log protokolliert.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">→</div>
+        <div class="flow-body">
+          <h3>Datei-Anhänge sicher herunterladen</h3>
+          <p>Bewerbungsunterlagen, Belege, Fotos – Datei-Anhänge werden im Backend als Download-Link angezeigt. Der Download funktioniert nur für Personen mit der entsprechenden Berechtigung und wird im Audit-Log mit Datum und Benutzerin festgehalten.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">→</div>
+        <div class="flow-body">
+          <h3>CSV-Export: alle Einträge auf einen Klick</h3>
+          <p>Ein Klick lädt alle Einträge des gewählten Formulars als CSV herunter – Semikolon-getrennt, UTF-8 mit BOM, damit Excel ohne Zeichensalat öffnet. Spaltenüberschriften entsprechen den Feld-Labels. Werte mit führendem <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code> werden gegen CSV-Injection entschärft. Verschlüsselte Felder erscheinen maskiert; wer die Entschlüsselungs-Berechtigung hat, kann sie im Klartext exportieren – dieser Vorgang wird im Audit-Log protokolliert. IP-Adressen erscheinen in der Spalte nur, wenn der Export im Entschlüsseln-Modus läuft.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">→</div>
+        <div class="flow-body">
+          <h3>ZIP-Export: CSV und alle Anhänge zusammen</h3>
+          <p>Wenn das Formular Datei-Uploads enthält, lädt ein zweiter Knopf ein ZIP-Archiv: die CSV plus alle Anhänge, je Einsendung in einem eigenen Ordner. Der Ordnername ist die Absender-E-Mail – so sind Datei und Eintrag ohne Suchen einander zugeordnet. Verschlüsselte Dateien bleiben im Export verschlüsselt; der Klartext-Download ist an die Entschlüsselungs-Berechtigung gebunden und wird protokolliert. Seit Version 2.5.0.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">→</div>
+        <div class="flow-body">
+          <h3>Auskunftsbegehren beantworten (revDSG Art. 25)</h3>
+          <p>Fragt eine Person, welche Daten Sie über sie gespeichert haben, nutzen Sie die WordPress-eigene Datenschutz-Funktion. Das Plugin ist eingehängt: alle Formulardaten der betreffenden Person werden für den Export aufbereitet – inklusive verschlüsselter Felder, entschlüsselt für die Auskunft.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 4. BERECHTIGUNGEN -->
+<section id="berechtigungen">
+  <div class="container">
+    <span class="label">4 – Berechtigungen: wer darf was</span>
+    <h2 class="sec-h2">Sechs Berechtigungen – sauber getrennt.</h2>
+    <p class="sec-lead">
+      Nicht jede Person im Team muss alles sehen, entschlüsseln oder löschen dürfen.
+      Das Plugin trennt das sauber – pro Benutzerrolle einstellbar in den Plugin-Einstellungen.
+    </p>
+
+    <div class="cap-wrap">
+      <table class="cap-table">
+        <thead>
+          <tr>
+            <th>Berechtigung</th>
+            <th>Was sie erlaubt</th>
+            <th style="text-align:center">Admin</th>
+            <th style="text-align:center">Sachbearb.</th>
+            <th style="text-align:center">DSB</th>
+            <th style="text-align:center">Redaktion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>gfb_view_submissions</code></td>
+            <td>Anfragen in der Liste sehen (verschlüsselte Felder maskiert)</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_decrypt_submissions</code></td>
+            <td>Vertrauliche Felder im Detail entschlüsselt lesen (Eintrag im Audit-Log)</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_download_files</code></td>
+            <td>Datei-Anhänge herunterladen (Eintrag im Audit-Log)</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_delete_submissions</code></td>
+            <td>Anfragen löschen (Eintrag im Audit-Log)</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_view_audit</code></td>
+            <td>Audit-Log einsehen und Integrität prüfen</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+          </tr>
+          <tr>
+            <td><code>gfb_manage_settings</code></td>
+            <td>Plugin-Einstellungen, Verschlüsselung, ClamAV, Berechtigungen ändern</td>
+            <td class="yes">✓</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-top:1rem;line-height:1.65;">Admin, Sachbearb., DSB und Redaktion sind Beispiel-Rollen – Sie können jede WordPress-Benutzerrolle mit beliebigen dieser Berechtigungen ausstatten. Standard: Administrator darf alles.</p>
+  </div>
+</section>
+
+
+<!-- 5. SICHERHEIT IM HINTERGRUND -->
+<section id="sicherheit">
+  <div class="container">
+    <span class="label">5 – Sicherheit im Hintergrund</span>
+    <h2 class="sec-h2">Was automatisch passiert – ohne dass Sie etwas tun müssen.</h2>
+    <p class="sec-lead">
+      Nach dem einmaligen Setup laufen alle Sicherheitsmechanismen selbständig.
+      <strong>Sie müssen keine Sicherheitsexpertin sein</strong>, um davon zu profitieren.
+    </p>
+
+    <div class="sec-items">
+      <div class="sec-item">
+        <div class="sec-auto">automatisch</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🔐</span><h3>AES-256-GCM Verschlüsselung</h3></div>
+        <p>Jedes als «vertraulich» markierte Feld und jede Datei wird vor dem Speichern verschlüsselt – mit demselben Algorithmus wie HTTPS-Verbindungen. Der Schlüssel liegt in Ihrer <code>wp-config.php</code>, nicht in der Datenbank. Ein gestohlenes Datenbank-Backup ist ohne diesen Schlüssel wertlos.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">automatisch</div>
+        <div class="sec-item-head"><span class="sec-item-icon">📁</span><h3>Dateien ausserhalb des Web-Pfads</h3></div>
+        <p>Datei-Anhänge werden nie in <code>wp-content/uploads/</code> gespeichert, sondern in einem privaten Verzeichnis (<code>.gfb-private/</code>) mit Zugriffsmodus 0600. Kein direkter URL-Aufruf möglich – weder für Besucherinnen noch für Suchmaschinen.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">automatisch</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🔗</span><h3>Manipulationssicheres Audit-Log</h3></div>
+        <p>Jeder Zugriff auf Formulardaten – Lesen, Entschlüsseln, Herunterladen, Löschen – wird protokolliert. Jeder Eintrag enthält den Prüfsumme des vorherigen: Wer auch nur eine Zeile ändert, macht den Bruch auf Knopfdruck sichtbar.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">automatisch</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🤖</span><h3>Spam-Schutz ohne CAPTCHA</h3></div>
+        <p>Honeypot-Feld (für Bots unsichtbar), HMAC-signierter Einmal-Token gegen Mehrfachabsenden und Rate-Limiting schützen das Formular. Ihre Besucherinnen sehen nichts davon.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">optional einrichten</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🦠</span><h3>ClamAV Virenscan für Uploads</h3></div>
+        <p>Wenn Ihr Hosting ClamAV unterstützt: Datei-Anhänge werden vor der Speicherung gescannt. Ein EICAR-Selbsttest prüft, ob der Scanner korrekt antwortet. Das Plugin liefert alles dafür mit – Sie müssen nur den Pfad eintragen.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">auf Knopfdruck</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🔑</span><h3>Schlüssel-Rotation</h3></div>
+        <p>Sicherheitsempfehlung: den Verschlüsselungsschlüssel regelmässig wechseln. Das Plugin re-verschlüsselt alle alten Daten automatisch im Hintergrund. Sie fügen den neuen Schlüssel hinzu – den Rest erledigt ein stündlicher automatischer Job.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 6. SETUP -->
+<section id="setup">
+  <div class="container">
+    <span class="label">6 – So richten Sie das Plugin ein</span>
+    <h2 class="sec-h2">Drei Schritte – fertig an einem Nachmittag.</h2>
+    <p class="sec-lead">WordPress ≥ 6.6 und PHP ≥ 7.4 vorausgesetzt. Kein npm, kein Build-Prozess.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-body">
+          <h3>Plugin installieren <span style="font-weight:400;font-size:0.85rem;color:var(--muted)">≈ 15 Minuten</span></h3>
+          <p>ZIP von GitHub herunterladen → in WordPress unter «Plugins → Installieren» hochladen → aktivieren. Beim Aktivieren werden automatisch alle Datenbanktabellen und das private Speicherverzeichnis angelegt.</p>
+          <div class="note">✓ Block «Formular» steht sofort im Gutenberg-Editor bereit</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-body">
+          <h3>Verschlüsselungsschlüssel setzen <span style="font-weight:400;font-size:0.85rem;color:var(--muted)">≈ 20 Minuten</span></h3>
+          <p>Zwei Konstanten in <code>wp-config.php</code> eintragen – die mitgelieferte <code>INSTALL.md</code> erklärt jeden Schritt mit Beispielen. Den Schlüssel erzeugen Sie in einer Zeile auf der Kommandozeile oder lassen ihn von uns generieren. Den Schlüssel sicher aufbewahren – er ist der einzige Weg, gespeicherte Daten zu lesen.</p>
+          <div class="note">✓ Alle Formulardaten werden ab dieser Minute verschlüsselt gespeichert</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-body">
+          <h3>Formular bauen und veröffentlichen <span style="font-weight:400;font-size:0.85rem;color:var(--muted)">≈ 30 Minuten</span></h3>
+          <p>Block «Formular» einfügen, Felder hineinziehen, Datenschutzhinweis ergänzen (erfüllt die Informationspflicht nach Art. 19 revDSG), veröffentlichen. Fertig.</p>
+          <div class="note">✓ Anfragen kommen verschlüsselt an – auf Ihrem Server, in Ihrer Datenbank</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 7. EHRLICHE GRENZEN -->
+<section id="grenzen">
+  <div class="container">
+    <span class="label">7 – Was das Plugin nicht kann</span>
+    <h2 class="sec-h2">Ehrlich und vollständig – damit Sie keine Überraschungen erleben.</h2>
+    <p class="sec-lead">Wir zeigen Ihnen, wo die aktuellen Grenzen liegen. Wer diese Funktionen braucht, ist mit einem anderen Werkzeug besser bedient.</p>
+
+    <div class="nk-grid">
+      <div class="nk-item">
+        <h3>Mehrschritt-Formulare</h3>
+        <p>Formulare in mehreren Schritten («Wizard», «Stepper») sind noch nicht unterstützt. Alle Felder erscheinen auf einer Seite. Geplant für eine spätere Version.</p>
+      </div>
+      <div class="nk-item">
+        <h3>Bedingte Felder</h3>
+        <p>Felder, die erst erscheinen, wenn ein anderes Feld einen bestimmten Wert hat («wenn Mitgliedschaft = Ja, zeige Sektionsfeld»), sind noch nicht eingebaut.</p>
+      </div>
+      <div class="nk-item">
+        <h3>CRM- und Webhook-Anbindung</h3>
+        <p>Direkte Integration mit HubSpot, Salesforce, Mailchimp oder eigenen Webhooks ist nicht eingebaut. Formulardaten landen in der WordPress-Datenbank – nicht in Drittanbieter-Systemen.</p>
+      </div>
+      <div class="nk-item">
+        <h3>Keine Formular-Analytics</h3>
+        <p>Das Plugin wertet nicht aus, wie viele Personen ein Formular abgebrochen haben, welche Felder Probleme bereiten oder wie hoch die Konversionsrate ist. Wer diese Daten braucht, kombiniert das Plugin mit einem datenschutzkonformen Analytics-Werkzeug.</p>
+      </div>
+      <div class="nk-item">
+        <h3>Zahlungsabwicklung</h3>
+        <p>Kein PayPal, kein Stripe, kein TWINT. Das Plugin nimmt Anfragen entgegen – für Zahlungen brauchen Sie eine eigene Lösung.</p>
+      </div>
+      <div class="nk-item">
+        <h3>Eigenes Formular-Dashboard ausserhalb WordPress</h3>
+        <p>Alle Formulardaten sind ausschliesslich im WordPress-Backend einsehbar. Kein externes Portal, kein separates Login – das ist Absicht, nicht Lücke.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 8. ANFORDERUNGEN -->
+<section id="anforderungen">
+  <div class="container">
+    <span class="label">8 – Technische Anforderungen</span>
+    <h2 class="sec-h2">Was Ihr Hosting mitbringen muss.</h2>
+    <p class="sec-lead">Das Plugin ist bewusst schlank gehalten – keine Build-Tools, keine externen Abhängigkeiten.</p>
+
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:1rem;padding:1.75rem;">
+      <div class="req-list">
+        <div class="req-item"><span class="req-label">WordPress</span><span class="req-val"><strong>6.6 oder neuer</strong></span></div>
+        <div class="req-item"><span class="req-label">PHP</span><span class="req-val"><strong>7.4 oder neuer</strong> (8.2+ empfohlen)</span></div>
+        <div class="req-item"><span class="req-label">PHP-Erweiterungen</span><span class="req-val"><code>openssl</code>, <code>mbstring</code>, <code>fileinfo</code> – auf praktisch jedem Hosting standardmässig aktiv</span></div>
+        <div class="req-item"><span class="req-label">HTTPS</span><span class="req-val">Pflicht – heute Standard bei jedem seriösen Hosting</span></div>
+        <div class="req-item"><span class="req-label">Schreibrechte</span><span class="req-val">Für das Verzeichnis <code>wp-content/</code> (legt <code>.gfb-private/</code> an)</span></div>
+        <div class="req-item"><span class="req-label">ClamAV</span><span class="req-val">Optional. Nur auf Root- oder VPS-Servern verfügbar. Shared Hosting unterstützt dies selten.</span></div>
+        <div class="req-item"><span class="req-label">Build-Tools</span><span class="req-val">Keine. Kein npm, kein Composer. ZIP installieren, fertig.</span></div>
+        <div class="req-item"><span class="req-label">Lizenz</span><span class="req-val">Open Source (MIT/GPL) – kostenlos, kein Abo</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FINAL CTA -->
+<section class="final" id="entscheiden">
+  <div class="final-inner">
+    <h2>Fragen beantwortet?<br><em>Dann los.</em></h2>
+    <p>Das Plugin ist kostenlos und Open Source. Wer nicht allein einrichten möchte, bucht ein 30-Minuten-Erstgespräch mit Blitz &amp; Donner – unverbindlich, ohne Vorbereitung.</p>
+    <div class="final-btns">
+      <a class="btn-p" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin auf GitHub holen</a>
+      <a class="btn-g" href="mailto:office@blitzdonner.ch">Erstgespräch anfragen</a>
+    </div>
+    <div class="final-pages">
+      <a class="page-link" href="gutenberg-formbuilder-landingpage.html">→ Seite für Verbände &amp; Vereine</a>
+      <a class="page-link" href="gutenberg-formbuilder-kmu.html">→ Seite für KMU</a>
+      <a class="page-link" href="https://github.com/BlitzDonner/gutenberg-formbuilder">→ Code auf GitHub</a>
+      <a class="page-link" href="https://blitzdonner.ch">→ blitzdonner.ch</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div><span class="footer-brand">Blitz <span>&amp;</span> Donner</span> – Bern · <a href="https://blitzdonner.ch">blitzdonner.ch</a> · <a href="tel:+41313066363">+41 31 306 63 63</a></div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder">GitHub</a>
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/SECURITY.md">Security</a>
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/INSTALL.md">INSTALL.md</a>
+        <a href="https://www.edoeb.admin.ch">EDÖB</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

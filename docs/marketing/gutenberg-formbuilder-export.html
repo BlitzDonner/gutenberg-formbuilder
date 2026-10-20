@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Einträge exportieren – Gutenberg Formbuilder · CSV und ZIP mit Anhängen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #162122;
+      --bg-card:  #1c2c2e;
+      --bg-light: #203335;
+      --text:     #ffffff;
+      --muted:    rgba(255,255,255,0.6);
+      --lime:     #cdff26;
+      --cyan-btn: #e5feff;
+      --dark:     #162122;
+      --border:   rgba(255,255,255,0.12);
+      --font:     'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      background: rgba(22,33,34,0.93);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); text-decoration: none; }
+    .nav-brand span { color: var(--lime); }
+    .nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+    .nav-link { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 0.35rem 0.75rem; border-radius: 9000px; border: 1px solid transparent; transition: all .15s; }
+    .nav-link:hover { color: var(--text); border-color: var(--border); }
+    .nav-link.active { color: var(--lime); border-color: rgba(205,255,38,0.3); }
+    .nav-cta { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.5rem 1.2rem; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: opacity .2s; white-space: nowrap; }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── CONTAINER ── */
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 2rem; }
+    section { padding: 5rem 0; }
+    section:nth-child(even) { background: var(--bg-light); }
+
+    .label { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lime); margin-bottom: 0.85rem; }
+
+    /* ── HERO ── */
+    .hero { padding: 6rem 0 5rem; background: var(--bg); }
+    .hero-inner { max-width: 820px; margin: 0 auto; text-align: center; padding: 0 2rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: normal; color: var(--lime); }
+    .hero-lead { font-size: 1.1rem; color: var(--muted); line-height: 1.75; max-width: 680px; margin: 0 auto 2rem; }
+    .hero-before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem; text-align: left; }
+    .before-box, .after-box { border-radius: 0.9rem; padding: 1.25rem 1.5rem; }
+    .before-box { background: rgba(255,80,80,0.08); border: 1px solid rgba(255,100,100,0.2); }
+    .after-box { background: rgba(205,255,38,0.06); border: 1px solid rgba(205,255,38,0.2); }
+    .ba-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem; }
+    .before-box .ba-label { color: rgba(255,120,120,0.8); }
+    .after-box .ba-label { color: var(--lime); }
+    .ba-text { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+    .toc { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+    .toc a { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 0.35rem 0.9rem; border: 1px solid var(--border); border-radius: 9000px; transition: all .15s; }
+    .toc a:hover { color: var(--text); border-color: rgba(205,255,38,0.4); }
+
+    /* ── SECTION HEADERS ── */
+    .sec-h2 { font-size: clamp(1.6rem, 3.5vw, 2.5rem); font-weight: 700; color: var(--lime); line-height: 1.15; margin-bottom: 0.75rem; }
+    .sec-lead { font-size: 1rem; color: var(--muted); max-width: 700px; line-height: 1.7; margin-bottom: 2.5rem; }
+    .sec-lead strong { color: var(--text); }
+
+    /* ── FLOW-STEPS ── */
+    .flow { display: flex; flex-direction: column; gap: 1.5rem; }
+    .flow-step { display: grid; grid-template-columns: 3rem 1fr; gap: 1.25rem; align-items: start; }
+    .flow-num { width: 3rem; height: 3rem; border-radius: 50%; background: var(--lime); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+    .flow-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .flow-body p { font-size: 0.95rem; color: var(--muted); line-height: 1.65; }
+    .flow-body .note { font-size: 0.82rem; color: rgba(205,255,38,0.75); margin-top: 0.4rem; }
+
+    /* ── SCREEN MOCKUP ── */
+    .screen { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; margin-bottom: 1.5rem; }
+    .screen-bar { background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); }
+    .screen-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screen-dot.r { background: rgba(255,90,90,0.6); }
+    .screen-dot.y { background: rgba(255,200,0,0.6); }
+    .screen-dot.g { background: rgba(80,210,80,0.6); }
+    .screen-title { font-size: 0.75rem; color: var(--muted); margin-left: 0.5rem; }
+    .screen-body { padding: 1.5rem 2rem; }
+
+    /* ── CSV-PREVIEW ── */
+    .csv-preview { background: rgba(205,255,38,0.04); border: 1px solid rgba(205,255,38,0.15); border-radius: 0.75rem; padding: 1.25rem 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    .csv-table { border-collapse: collapse; font-size: 0.82rem; font-family: 'Menlo','Consolas',monospace; width: 100%; min-width: 560px; }
+    .csv-table th { text-align: left; padding: 0.45rem 0.9rem; color: var(--lime); font-size: 0.72rem; letter-spacing: 0.06em; border-bottom: 1px solid rgba(205,255,38,0.2); font-weight: 700; }
+    .csv-table td { padding: 0.45rem 0.9rem; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+    .csv-table tr:last-child td { border-bottom: none; }
+    .csv-table .enc { color: rgba(255,255,255,0.2); font-style: italic; }
+    .csv-table .path { color: rgba(205,255,38,0.65); }
+
+    /* ── ZIP-TREE ── */
+    .zip-tree { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.25rem 1.5rem; font-family: 'Menlo','Consolas',monospace; font-size: 0.83rem; line-height: 1.9; overflow-x: auto; }
+    .zip-root { color: var(--lime); font-weight: 700; }
+    .zip-dir { color: rgba(205,255,38,0.7); }
+    .zip-file { color: var(--muted); }
+    .zip-indent { color: rgba(255,255,255,0.15); }
+
+    /* ── SEC-ITEMS ── */
+    .sec-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .sec-item { background: rgba(205,255,38,0.05); border: 1px solid rgba(205,255,38,0.15); border-radius: 1rem; padding: 1.5rem; }
+    .sec-item-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .sec-item-icon { font-size: 1.4rem; }
+    .sec-item h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .sec-item p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .sec-auto { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lime); background: rgba(205,255,38,0.12); border-radius: 4px; padding: 0.1rem 0.4rem; margin-bottom: 0.4rem; }
+
+    /* ── NK-GRID ── */
+    .nk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .nk-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.25rem 1.5rem; }
+    .nk-item h3 { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+    .nk-item h3::before { content: '✕'; color: rgba(255,100,100,0.6); font-size: 0.85rem; }
+    .nk-item p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── FINAL CTA ── */
+    .final { text-align: center; padding: 6rem 0; background: var(--bg); }
+    .final-inner { max-width: 640px; margin: 0 auto; padding: 0 2rem; }
+    .final h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1.25rem; }
+    .final h2 em { font-style: normal; color: var(--lime); }
+    .final p { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; line-height: 1.7; }
+    .final-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-p { background: var(--cyan-btn); color: var(--dark); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 700; font-size: 0.95rem; text-decoration: none; display: inline-block; transition: opacity .2s; }
+    .btn-p:hover { opacity: 0.9; }
+    .btn-g { background: transparent; color: var(--text); border-radius: 9000px; padding: 0.9rem 1.8rem; font-weight: 600; font-size: 0.95rem; text-decoration: none; display: inline-block; border: 1px solid var(--border); transition: all .15s; }
+    .btn-g:hover { border-color: rgba(255,255,255,0.35); }
+    .final-pages { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .page-link { font-size: 0.85rem; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 9000px; padding: 0.4rem 1rem; transition: all .15s; }
+    .page-link:hover { color: var(--text); border-color: rgba(205,255,38,0.3); }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 2rem 0; font-size: 0.82rem; color: var(--muted); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-brand { font-weight: 700; color: var(--text); }
+    .footer-brand span { color: var(--lime); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    code { font-family: 'Menlo','Consolas',monospace; font-size: 0.83em; background: rgba(205,255,38,0.1); color: var(--lime); padding: 0.1em 0.4em; border-radius: 0.25rem; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+
+    /* ── EXPORT-BTN MOCKUP ── */
+    .export-btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .mockup-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.1rem; border-radius: 0.4rem; font-size: 0.85rem; font-weight: 600; font-family: var(--font); cursor: default; }
+    .mockup-btn.primary { background: var(--lime); color: var(--dark); }
+    .mockup-btn.secondary { background: rgba(205,255,38,0.1); color: var(--lime); border: 1px solid rgba(205,255,38,0.25); }
+    .mockup-btn .icon { font-size: 0.9rem; }
+
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; }
+      .hero-before-after { grid-template-columns: 1fr; }
+      section { padding: 3.5rem 0; }
+      .hero { padding: 4rem 0 3rem; }
+      .nav { padding: 0.85rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-brand" href="https://blitzdonner.ch">Blitz <span>&amp;</span> Donner</a>
+  <div class="nav-links">
+    <a class="nav-link" href="gutenberg-formbuilder-landingpage.html">Verbände &amp; Vereine</a>
+    <a class="nav-link" href="gutenberg-formbuilder-kmu.html">KMU</a>
+    <a class="nav-link" href="gutenberg-formbuilder-funktionen.html">Funktionen</a>
+    <a class="nav-link" href="gutenberg-formbuilder-verschluesselung.html">Verschlüsselung</a>
+    <a class="nav-link" href="gutenberg-formbuilder-datenschutz.html">Datenschutz</a>
+    <a class="nav-link" href="gutenberg-formbuilder-benachrichtigung.html">E-Mail</a>
+    <a class="nav-link active" href="gutenberg-formbuilder-export.html">Export</a>
+    <a class="nav-link" href="gutenberg-formbuilder-audit.html">Audit</a>
+    <a class="nav-link" href="gutenberg-formbuilder-uploads.html">Uploads</a>
+  </div>
+  <a class="nav-cta" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin holen</a>
+</nav>
+
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <span class="label">Export · Gutenberg Formbuilder · Version 2.5.0</span>
+    <h1>Einträge exportieren –<br><em>als CSV oder als ZIP mit allen Anhängen.</em></h1>
+    <p class="hero-lead">
+      Früher: Einträge einzeln abschreiben oder Screenshots machen.
+      Jetzt: ein Klick, alles draussen – sauber strukturiert, direkt in Excel zu öffnen.
+    </p>
+    <div class="hero-before-after">
+      <div class="before-box">
+        <div class="ba-label">Vorher</div>
+        <div class="ba-text">Einträge einzeln im Backend aufrufen, Felder abschreiben oder Screenshots machen. Dateien mühsam herunterladen und manuell zuordnen. Fehler vorprogrammiert.</div>
+      </div>
+      <div class="after-box">
+        <div class="ba-label">Seit Version 2.5.0</div>
+        <div class="ba-text">Ein Klick exportiert alle Einträge als CSV – oder als ZIP mit CSV und sämtlichen Anhängen, je Einsendung in einem eigenen Ordner. Sofort zugeordnet.</div>
+      </div>
+    </div>
+    <div class="toc">
+      <a href="#csv-export">CSV-Export</a>
+      <a href="#zip-export">ZIP-Export</a>
+      <a href="#berechtigungsschutz">Berechtigungsschutz</a>
+      <a href="#nicht-exportiert">Was nicht exportiert wird</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- 1. CSV-EXPORT -->
+<section id="csv-export">
+  <div class="container">
+    <span class="label">1 – CSV-Export</span>
+    <h2 class="sec-h2">Alle Einträge eines Formulars auf einen Klick.</h2>
+    <p class="sec-lead">
+      Der CSV-Export lädt alle Einträge des gewählten Formulars als Datei herunter –
+      <strong>semikolon-getrennt, UTF-8 mit BOM</strong>, damit Excel ohne Zeichensalat öffnet.
+    </p>
+
+    <div style="margin-bottom:2rem;">
+      <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">So sieht der Export-Knopf im Backend aus</p>
+      <div class="screen">
+        <div class="screen-bar">
+          <div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div>
+          <span class="screen-title">WordPress Admin → Formular-Einträge → Bewerbung</span>
+        </div>
+        <div class="screen-body">
+          <div style="margin-bottom:1rem;font-size:0.85rem;color:var(--muted);">Formular: <strong style="color:var(--text)">Bewerbung</strong> &nbsp;·&nbsp; 38 Einträge &nbsp;·&nbsp; zuletzt am 01.06.2026</div>
+          <div class="export-btn-row">
+            <div class="mockup-btn primary"><span class="icon">⬇</span> Als CSV exportieren</div>
+            <div class="mockup-btn secondary"><span class="icon">📦</span> Als ZIP exportieren (CSV + Dateien)</div>
+          </div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.25);margin-top:0.5rem;">ZIP-Export erscheint nur, wenn das Formular Datei-Felder enthält und Sie die Berechtigung «gfb_download_files» haben.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-body">
+          <h3>Ein Klick auf «Als CSV exportieren»</h3>
+          <p>Der Browser startet sofort den Download. Kein Laden, kein Warten auf eine E-Mail. Die Datei heisst <code>eintraege-bewerbung-2026-06-03.csv</code> – Formularname und Datum im Dateinamen, damit Sie mehrere Exporte auseinanderhalten.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-body">
+          <h3>Trennzeichen Semikolon, UTF-8 mit BOM</h3>
+          <p>Die CSV verwendet Semikolon als Trennzeichen und UTF-8 mit Byte-Order-Mark. Excel erkennt beides automatisch – Umlaute, Akzente und Sonderzeichen erscheinen korrekt, ohne Importassistent oder manuelle Kodierungsauswahl.</p>
+          <div class="note">Öffnet auch in LibreOffice Calc, Numbers und Google Sheets ohne Konvertierung.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-body">
+          <h3>Spaltenüberschriften = Feld-Labels aus dem Schema</h3>
+          <p>Die erste Zeile enthält die Labels, die Sie im Block-Editor vergeben haben – «Vorname», «E-Mail», «Betreff», «Motivationsschreiben». Keine kryptischen Feldnamen, keine IDs. Die Spaltenreihenfolge entspricht der Reihenfolge der Felder im Formular.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-body">
+          <h3>IP-Spalte nur mit aktiver Entschlüsselung sichtbar</h3>
+          <p>Die IP-Adresse jeder Einsendung wird mitgespeichert – aus rechtlichen Gründen (Missbrauchsnachweis). Im normalen Export erscheint die Spalte nicht. Wer die Option «Felder entschlüsseln» aktiviert und die Berechtigung <code>gfb_decrypt_submissions</code> hat, sieht die IP-Spalte. So bleibt die IP im Alltag unsichtbar, ist aber abrufbar wenn nötig.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-body">
+          <h3>CSV-Injection-Härtung</h3>
+          <p>Zellen, deren Inhalt mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code> beginnt, werden vor dem Export entschärft: das führende Zeichen wird mit einem Apostroph eingeleitet, damit Excel die Zelle nicht als Formel interpretiert. Kein Angreifer kann über ein Formularfeld Makros in Ihre Tabelle schleusen.</p>
+          <div class="note">Betrifft Eingaben wie «=HYPERLINK(...)» oder «+41 31 ...» – letzteres wird korrekt als Text behandelt.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2.5rem;">
+      <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">Beispiel-CSV (Ausschnitt)</p>
+      <div class="csv-preview">
+        <table class="csv-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Vorname</th>
+              <th>Nachname</th>
+              <th>E-Mail</th>
+              <th>Motivationsschreiben</th>
+              <th>Lebenslauf</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2026-05-28 09:14</td>
+              <td>Sarah</td>
+              <td>Wyss</td>
+              <td>sarah.wyss@muster.ch</td>
+              <td class="enc">●●● verschlüsselt ●●●</td>
+              <td class="path">dateien/sarah.wyss@muster.ch/lebenslauf.pdf</td>
+            </tr>
+            <tr>
+              <td>2026-05-27 14:02</td>
+              <td>Kurt</td>
+              <td>Meier</td>
+              <td>k.meier@firma.ch</td>
+              <td class="enc">●●● verschlüsselt ●●●</td>
+              <td class="path">dateien/k.meier@firma.ch/cv-meier.pdf</td>
+            </tr>
+            <tr>
+              <td>2026-05-26 11:33</td>
+              <td>Anna</td>
+              <td>Müller</td>
+              <td>a.mueller@mail.ch</td>
+              <td class="enc">●●● verschlüsselt ●●●</td>
+              <td class="path">dateien/a.mueller@mail.ch/lebenslauf.pdf</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:0.83rem;color:var(--muted);line-height:1.65;">Verschlüsselte Felder erscheinen als «●●● verschlüsselt ●●●». Mit aktiver Option «Felder entschlüsseln» und Berechtigung <code>gfb_decrypt_submissions</code> enthält die Zelle den Klartext – und dieser Export wird im Audit-Log protokolliert.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- 2. ZIP-EXPORT -->
+<section id="zip-export">
+  <div class="container">
+    <span class="label">2 – ZIP-Export: CSV + Dateien</span>
+    <h2 class="sec-h2">CSV und alle Anhänge zusammen – Datei und Eintrag sofort zugeordnet.</h2>
+    <p class="sec-lead">
+      Der zweite Export-Knopf erscheint <strong>nur wenn das Formular Datei-Felder hat</strong>
+      und Sie die Berechtigung <code>gfb_download_files</code> besitzen.
+      Das ZIP enthält die CSV und alle Anhänge – strukturiert, nicht im Durcheinander.
+    </p>
+
+    <div class="two-col">
+      <div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-body">
+              <h3>Inhalt: eintraege.csv + Ordner dateien/</h3>
+              <p>Das ZIP enthält zwei Dinge: die <code>eintraege.csv</code> mit allen Einträgen und einen Ordner <code>dateien/</code>. Darin liegt für jede Einsendung ein Unterordner – benannt nach der Absender-E-Mail der einsendenden Person.</p>
+              <div class="note">Eindeutige Zuordnung: Zeile in der CSV → Ordner im ZIP → kein manuelles Suchen.</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-body">
+              <h3>Mehrere Einsendungen derselben Adresse</h3>
+              <p>Wenn dieselbe E-Mail-Adresse mehrmals einsendete, erhält der zweite Ordner den Suffix <code>-2</code>, der dritte <code>-3</code> usw. – <code>sarah.wyss@muster.ch-2/</code>. Keine Überschreibung, kein Datenverlust.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-body">
+              <h3>CSV-Zelle enthält den ZIP-Pfad</h3>
+              <p>Die Zelle des Datei-Felds in der CSV enthält den relativen Pfad zur Datei im ZIP – z.B. <code>dateien/sarah.wyss@muster.ch/lebenslauf.pdf</code>. Zeile und Datei sind so ohne weiteres Suchen einander zugeordnet.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">4</div>
+            <div class="flow-body">
+              <h3>Entschlüsselter Datei-Inhalt nur mit Berechtigung</h3>
+              <p>Verschlüsselte Datei-Anhänge verlassen den internen Speicher nur dann im Klartext, wenn die exportierende Person die Berechtigung <code>gfb_download_files</code> hat und der Export mit aktiver Entschlüsselung gestartet wird. Jeder solche Export wird im Audit-Log protokolliert.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;">Struktur des ZIP-Archivs</p>
+        <div class="zip-tree">
+          <div><span class="zip-root">bewerbung-export-2026-06-03.zip</span></div>
+          <div><span class="zip-indent">│</span></div>
+          <div><span class="zip-indent">├── </span><span class="zip-file">eintraege.csv</span></div>
+          <div><span class="zip-indent">│</span></div>
+          <div><span class="zip-indent">└── </span><span class="zip-dir">dateien/</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;├── </span><span class="zip-dir">sarah.wyss@muster.ch/</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── </span><span class="zip-file">lebenslauf.pdf</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;├── </span><span class="zip-dir">k.meier@firma.ch/</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── </span><span class="zip-file">cv-meier.pdf</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;├── </span><span class="zip-dir">a.mueller@mail.ch/</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── </span><span class="zip-file">lebenslauf.pdf</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;└── </span><span class="zip-dir">a.mueller@mail.ch-2/</span></div>
+          <div><span class="zip-indent">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── </span><span class="zip-file">portfolio.zip</span></div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-top:0.85rem;line-height:1.6;">Anna Müller hat zweimal eingereicht – ihr zweiter Ordner trägt den Suffix <code>-2</code>. Beide Einträge sind in der CSV mit dem jeweiligen Pfad verknüpft.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 3. BERECHTIGUNGSSCHUTZ -->
+<section id="berechtigungsschutz">
+  <div class="container">
+    <span class="label">3 – Berechtigungsschutz</span>
+    <h2 class="sec-h2">Was exportiert werden darf – und wer das darf.</h2>
+    <p class="sec-lead">
+      Der Export ist kein Sicherheitsloch. Verschlüsselung und Audit-Log greifen auch hier.
+      <strong>Jeder Klartext-Export hinterlässt eine Spur.</strong>
+    </p>
+
+    <div class="sec-items">
+      <div class="sec-item">
+        <div class="sec-auto">standardmässig</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🔒</span><h3>Verschlüsselte Felder bleiben maskiert</h3></div>
+        <p>Ohne aktive Option erscheinen verschlüsselte Felder als «●●● verschlüsselt ●●●» in der CSV. Weder der Browser noch eine CSV-Datei enthält je den Schlüssel oder die Rohdaten. Die Maske ist nicht umgehbar.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">nur mit Berechtigung</div>
+        <div class="sec-item-head"><span class="sec-item-icon">🗝️</span><h3>Klartext nur mit gfb_decrypt_submissions</h3></div>
+        <p>Wer verschlüsselte Felder im Klartext exportieren will, braucht die Berechtigung <code>gfb_decrypt_submissions</code> und muss die Option «Felder entschlüsseln» im Export-Dialog aktivieren. Beides zusammen – ohne eines von beiden bleibt die Maske.</p>
+      </div>
+      <div class="sec-item">
+        <div class="sec-auto">immer protokolliert</div>
+        <div class="sec-item-head"><span class="sec-item-icon">📋</span><h3>Jeder Klartext-Export im Audit-Log</h3></div>
+        <p>Sobald ein Export entschlüsselte Felder enthält, schreibt das Plugin einen Eintrag ins Audit-Log: Benutzerin, Datum, Uhrzeit, Formular, Anzahl entschlüsselter Felder. Dieser Eintrag ist manipulationsgeschützt – Teil der Prüfsummenkette des Logs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 4. WAS NICHT EXPORTIERT WIRD -->
+<section id="nicht-exportiert">
+  <div class="container">
+    <span class="label">4 – Was nicht exportiert wird</span>
+    <h2 class="sec-h2">Klare Grenzen – damit keine Erwartungen enttäuscht werden.</h2>
+    <p class="sec-lead">Diese Einschränkungen sind bewusst – nicht vergessen.</p>
+
+    <div class="nk-grid">
+      <div class="nk-item">
+        <h3>Kein formularübergreifender Export</h3>
+        <p>Jedes Formular hat ein eigenes Schema mit eigenen Feldnamen und eigener Spaltenstruktur. Ein Export über mehrere Formulare gleichzeitig ist nicht möglich – die Spalten würden nicht passen. Exportieren Sie jedes Formular separat.</p>
+      </div>
+      <div class="nk-item">
+        <h3>Keine Binärdaten in der CSV</h3>
+        <p>Datei-Anhänge erscheinen in der CSV als Pfad, nicht als Datei-Inhalt. Binärdaten in eine CSV zu kodieren würde die Datei unlesbar machen. Wer die Dateien will, nutzt den ZIP-Export.</p>
+      </div>
+      <div class="nk-item">
+        <h3>Kein automatischer E-Mail-Versand des Exports</h3>
+        <p>Der Export ist immer ein manueller, bewusster Schritt im Backend. Das Plugin verschickt Exporte nicht automatisch per E-Mail – weder an Admins noch an externe Adressen. Das wäre ein unkontrollierbarer Datenabfluss.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="final-inner">
+    <h2>Klingt nach dem, was Sie brauchen?<br><em>Dann los.</em></h2>
+    <p>Das Plugin ist kostenlos und Open Source. Wer nicht allein einrichten möchte, bucht ein 30-Minuten-Erstgespräch mit Blitz &amp; Donner – unverbindlich, ohne Vorbereitung.</p>
+    <div class="final-btns">
+      <a class="btn-p" href="https://github.com/BlitzDonner/gutenberg-formbuilder/releases">Plugin auf GitHub holen</a>
+      <a class="btn-g" href="mailto:office@blitzdonner.ch">Erstgespräch anfragen</a>
+    </div>
+    <div class="final-pages">
+      <a class="page-link" href="gutenberg-formbuilder-funktionen.html">→ Alle Funktionen</a>
+      <a class="page-link" href="gutenberg-formbuilder-verschluesselung.html">→ Verschlüsselung</a>
+      <a class="page-link" href="gutenberg-formbuilder-datenschutz.html">→ Datenschutz</a>
+      <a class="page-link" href="gutenberg-formbuilder-audit.html">→ Audit-Log</a>
+      <a class="page-link" href="gutenberg-formbuilder-uploads.html">→ Uploads</a>
+      <a class="page-link" href="gutenberg-formbuilder-benachrichtigung.html">→ E-Mail-Benachrichtigung</a>
+      <a class="page-link" href="https://github.com/BlitzDonner/gutenberg-formbuilder">→ Code auf GitHub</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div><span class="footer-brand">Blitz <span>&amp;</span> Donner</span> – Bern · <a href="https://blitzdonner.ch">blitzdonner.ch</a> · <a href="tel:+41313066363">+41 31 306 63 63</a></div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder">GitHub</a>
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/SECURITY.md">Security</a>
+        <a href="https://github.com/BlitzDonner/gutenberg-formbuilder/blob/main/INSTALL.md">INSTALL.md</a>
+        <a href="https://www.edoeb.admin.ch">EDÖB</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
